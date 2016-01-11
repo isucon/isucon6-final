@@ -5,6 +5,11 @@ var XMLNS = 'http://www.w3.org/2000/svg';
 function Stroke(svg, width, red, green, blue, alpha) {
     this.xs = [];
     this.ys = [];
+    this.width = width;
+    this.red = red;
+    this.green = green;
+    this.blue = blue;
+    this.alpha = alpha;
     this.elem = document.createElementNS(XMLNS, 'polyline');
     this.elem.setAttribute('stroke', 'rgba('+red+','+green+','+blue+','+alpha+')');
     this.elem.setAttribute('stroke-width', width);
@@ -16,13 +21,40 @@ function Stroke(svg, width, red, green, blue, alpha) {
 Stroke.prototype.move = function (x, y) {
     this.xs.push(x);
     this.ys.push(y);
+    this.draw();
+};
 
+Stroke.prototype.setPoints = function(xs, ys) {
+    this.xs = xs;
+    this.ys = ys;
+    this.draw();
+}
+
+Stroke.prototype.draw = function () {
     var points = '';
     for (var i = 0; i < this.xs.length; i++) {
         points += this.xs[i] + ',' + this.ys[i] + ' ';
     }
     this.elem.setAttribute('points', points);
-}
+};
+
+Stroke.prototype.send = function() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/stroke');
+    // TODO: fix stroke on success, remove on error
+    xhr.send(JSON.stringify({
+        width: this.width,
+        red: this.red,
+        green: this.green,
+        blue: this.blue,
+        alpha: this.alpha,
+        xs: this.xs,
+        ys: this.ys,
+    }));
+};
+
+var ourStrokes = [];
+var myStrokes = [];
 
 var stroke = null;
 
@@ -55,6 +87,19 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault();
 
         stroke.move(e.offsetX, e.offsetY);
+        stroke.send();
         stroke = null;
     });
+    
+    var es = new EventSource('/api/events');
+    es.onmessage = function(ev) {
+        var data = JSON.parse(ev.data);
+        // TODO: look at event type
+        var stroke = new Stroke(svg,
+            data.width, data.red, data.green, data.blue, data.alpha);
+        stroke.setPoints(data.xs, data.ys);
+    };
+    es.onerror = function(err) {
+        console.log(err);
+    }
 });
