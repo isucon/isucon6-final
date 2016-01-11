@@ -1,0 +1,10 @@
+hash: 983761c6a832d9750a175edcefe78d36676150ea0c898947e05197487db63f04
+updated: 2016-01-09T02:48:05.355746618+09:00
+imports:
+- name: github.com/goji/param
+  version: da86c81e3e3c23b1948bc7a003d381250a032aa7
+- name: github.com/zenazn/goji
+  version: bf843a174a08e846246b8945f8a9a853d84a256a
+  subpackages:
+  - web
+devImports: []
