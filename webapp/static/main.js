@@ -1,5 +1,5 @@
-var WIDTH = '800';
-var HEIGHT = '600';
+var WIDTH = '1028';
+var HEIGHT = '768';
 var XMLNS = 'http://www.w3.org/2000/svg';
 
 function Stroke(svg, width, red, green, blue, alpha) {
