@@ -38,10 +38,21 @@ Stroke.prototype.draw = function () {
     this.elem.setAttribute('points', points);
 };
 
+Stroke.prototype.remove = function() {
+    return this.elem.parentNode.removeChild(this.elem);
+};
+
 Stroke.prototype.send = function() {
+    var it = this;
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/api/stroke');
-    // TODO: fix stroke on success, remove on error
+    xhr.responseType = 'json';
+    xhr.onload = function() {
+        myStrokes.push(xhr.response);
+    };
+    xhr.onerror = function() {
+        it.remove();
+    };
     xhr.send(JSON.stringify({
         width: this.width,
         red: this.red,

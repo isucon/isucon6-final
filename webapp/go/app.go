@@ -115,7 +115,12 @@ func stroke(c web.C, w http.ResponseWriter, r *http.Request) {
 	stroke.ID = randomString()
 	strokes = append(strokes, stroke)
 
-	w.WriteHeader(http.StatusOK)
+	enc := json.NewEncoder(w)
+	err = enc.Encode(stroke)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 }
 
 func randomString() string {
