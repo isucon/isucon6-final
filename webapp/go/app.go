@@ -58,6 +58,8 @@ func GetStrokesSince(id string) []Stroke {
 func events(c web.C, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	lastID := r.Header.Get("Last-Event-ID")
+	// TODO: maybe needed for manual reconnect?
+	// http://stackoverflow.com/questions/24564030/is-an-eventsource-sse-supposed-to-try-to-reconnect-indefinitely
 	// if lastID == "" {
 	// 	lastID = r.URL.Query().Get("last-id")
 	// }
