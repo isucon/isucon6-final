@@ -62,6 +62,16 @@ func events(c web.C, w http.ResponseWriter, r *http.Request) {
 	// 	lastID = r.URL.Query().Get("last-id")
 	// }
 
+	cn, ok := w.(http.CloseNotifier)
+	if !ok {
+		panic("ResponseWriter does not support the CloseNotifier interface")
+	}
+	closed := false
+	go func() {
+		<-cn.CloseNotify()
+		closed = true
+	}()
+
 	for {
 		for _, stroke := range GetStrokesSince(lastID) {
 			var b []byte
@@ -84,8 +94,10 @@ func events(c web.C, w http.ResponseWriter, r *http.Request) {
 
 			lastID = stroke.ID
 		}
+		if closed {
+			break
+		}
 		time.Sleep(1 * time.Second)
-		// TODO: break loop when connection is closed
 	}
 }
 
