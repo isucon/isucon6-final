@@ -111,13 +111,11 @@ func stroke(c web.C, w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	// TODO: save
-	w.WriteHeader(http.StatusOK)
-	// TODO: broadcast
 
 	stroke.ID = randomString()
 	strokes = append(strokes, stroke)
-	// fmt.Println(stroke)
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func randomString() string {
