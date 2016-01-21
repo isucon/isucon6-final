@@ -1,0 +1,20 @@
+<title>ISU-Channel</title>
+<link rel="stylesheet" href="/static/style.css">
+
+<div class="main">
+    <header>
+        <h1>ISU-Channel</h1>
+        <div>
+            <p>匿名便所の落描きサービス</p>
+        </div>
+    </header>
+    <ul class="room-list">
+        {{ range .Rooms }}
+        <li class="room-info">
+            <img class="thumbnail" src="">
+            <p class="name">タイトル</p>
+            <p class="member-count">100人が参加</p>
+        </li>
+        {{ end }}
+    </ul>
+</div>

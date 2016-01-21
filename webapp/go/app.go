@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"flag"
+	"html/template"
 	"net/http"
 	"strconv"
 	"time"
@@ -15,6 +16,7 @@ import (
 )
 
 var staticPath string
+var templatePath string
 
 // Stroke is a single stroke of drawing
 type Stroke struct {
@@ -30,6 +32,7 @@ type Stroke struct {
 
 func init() {
 	flag.StringVar(&staticPath, "staticpath", "", "static file directory")
+	flag.StringVar(&templatePath, "templatepath", "", "template file directory")
 }
 
 // TODO: save to DB
@@ -124,9 +127,23 @@ func randomString() string {
 	return strconv.FormatUint(n, 36)
 }
 
+// RoomData is passed to the template
+type RoomData struct {
+	Title       string
+	ImageURL    string
+	MemberCount int
+}
+
+func index(c web.C, w http.ResponseWriter, r *http.Request) {
+	t := template.Must(template.ParseFiles(templatePath + "/index.html"))
+	var rd [30]RoomData
+	t.Execute(w, struct{ Rooms []RoomData }{rd[:]})
+}
+
 func main() {
 	flag.Parse()
 
+	goji.Get("/", index)
 	goji.Post("/api/stroke", stroke)
 	goji.Get("/api/events", events)
 	goji.Get("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir(staticPath))))
