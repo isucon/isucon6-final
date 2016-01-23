@@ -37,7 +37,7 @@ table{border-collapse:collapse;border-spacing:0}
 
 .room-list .room-info {
     display: inline-block;
-    width: 250px;
+    width: 256px;
 }
 
 .room-list .room-info .thumbnail {
@@ -59,4 +59,26 @@ table{border-collapse:collapse;border-spacing:0}
     float: right;
     width: 280px;
     background-color: yellow;
+}
+
+/* 新規部屋作成フォーム */
+.new-room {
+    border: solid gray 1px;
+    padding: 10px;
+}
+.new-room input {
+    border: inset 1px;
+    width: 30em;
+}
+
+.new-room h3 {
+    font-style: bold;
+}
+
+.new-room button.create {
+    background-color: cornflowerblue;
+    color: white;
+    border-radius: 3px;
+    padding: 1px 1em;
+    cursor: pointer;
 }

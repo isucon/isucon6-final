@@ -3,8 +3,11 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"flag"
+	"fmt"
 	"html/template"
+	"math"
 	"math/rand"
 	"net/http"
 	"time"
@@ -123,7 +126,7 @@ func stroke(c web.C, w http.ResponseWriter, r *http.Request) {
 // RoomData is passed to the template
 type RoomData struct {
 	ID          string
-	Title       string
+	Name        string
 	RoomURL     string
 	ImageURL    string
 	MemberCount int
@@ -142,8 +145,16 @@ func findRoomByID(id string) *RoomData {
 
 func index(c web.C, w http.ResponseWriter, r *http.Request) {
 	t := template.Must(template.ParseFiles(templatePath + "/index.html"))
+
+	token := setCSRFToken(w, r)
 	var rd [30]RoomData
-	t.Execute(w, struct{ Rooms []RoomData }{rd[:]})
+	t.Execute(w, struct {
+		Rooms     []RoomData
+		CSRFToken string
+	}{
+		rd[:],
+		token,
+	})
 }
 
 var store = sessions.NewCookieStore([]byte("isucon-nocusi"))
@@ -153,6 +164,35 @@ func getSession(r *http.Request) *sessions.Session {
 	// when the cookie could not be decoded
 	session, _ := store.Get(r, "ISU-SESSION")
 	return session
+}
+
+func setCSRFToken(w http.ResponseWriter, r *http.Request) string {
+	session := getSession(r)
+
+	val := session.Values["csrf-token"] // session.Values is map[string]interface{}
+	token, ok := val.(string)
+	if !ok {
+		token := randomString(128)
+		session.Values["csrf-token"] = token
+		session.Save(r, w)
+	}
+	return token
+}
+
+func checkCSRFToken(token string, r *http.Request) error {
+	session := getSession(r)
+
+	val := session.Values["csrf-token"] // session.Values is map[string]interface{}
+	t, ok := val.(string)
+	if !ok {
+		return errors.New("CSRF Token not found")
+	}
+
+	if token != t {
+		return errors.New("Invalid CSRF Token")
+	}
+
+	return nil
 }
 
 func room(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -165,15 +205,7 @@ func room(c web.C, w http.ResponseWriter, r *http.Request) {
 	}
 	// room := &RoomData{}
 
-	session := getSession(r)
-
-	val := session.Values["csrf-token"] // session.Values is map[string]interface{}
-	token, ok := val.(string)
-	if !ok {
-		token := randomString(128)
-		session.Values["csrf-token"] = token
-		session.Save(r, w)
-	}
+	token := setCSRFToken(w, r)
 
 	t := template.Must(template.ParseFiles(templatePath + "/room.html"))
 	t.Execute(w, struct {
@@ -197,11 +229,30 @@ func randomString(n int) string {
 	return string(b)
 }
 
+func createRoom(c web.C, w http.ResponseWriter, r *http.Request) {
+	token := r.PostFormValue("token")
+	err := checkCSRFToken(token, r)
+	if err != nil {
+		http.Error(w, "Bad Token", http.StatusBadRequest) // TODO: maybe use flash session?
+	}
+
+	// generate an ID for the new room
+	id := time.Now().Format("20060102150405") + fmt.Sprintf("%010d", rand.Intn(math.MaxInt32))
+
+	name := r.PostFormValue("name")
+	room := RoomData{ID: id, Name: name}
+
+	AllRooms = append(AllRooms, room)
+
+	http.Redirect(w, r, "/rooms/"+id, http.StatusSeeOther)
+}
+
 func main() {
 	flag.Parse()
 
 	goji.Get("/", index)
 	goji.Get("/rooms/:id", room)
+	goji.Post("/rooms", createRoom)
 
 	goji.Post("/api/stroke", stroke)
 	goji.Get("/api/events", events)
