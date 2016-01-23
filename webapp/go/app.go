@@ -30,8 +30,8 @@ type Stroke struct {
 }
 
 func init() {
-	flag.StringVar(&staticPath, "staticpath", "", "static file directory")
-	flag.StringVar(&templatePath, "templatepath", "", "template file directory")
+	flag.StringVar(&staticPath, "staticpath", "../static", "static file directory")
+	flag.StringVar(&templatePath, "templatepath", "templates", "template file directory")
 }
 
 // TODO: save to DB
