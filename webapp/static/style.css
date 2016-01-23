@@ -49,3 +49,14 @@ table{border-collapse:collapse;border-spacing:0}
     width: 240px;
     border: solid lightgray 1px;
 }
+
+.canvas-column {
+    float: left;
+    width: 1010px;
+}
+
+.sidebar-column {
+    float: right;
+    width: 280px;
+    background-color: yellow;
+}

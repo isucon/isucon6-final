@@ -2,15 +2,14 @@ package main
 
 import (
 	"bytes"
-	"crypto/rand"
-	"encoding/binary"
 	"encoding/json"
 	"flag"
 	"html/template"
+	"math/rand"
 	"net/http"
-	"strconv"
 	"time"
 
+	"github.com/gorilla/sessions"
 	"github.com/zenazn/goji"
 	"github.com/zenazn/goji/web"
 )
@@ -115,23 +114,30 @@ func stroke(c web.C, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	stroke.ID = randomString()
+	stroke.ID = randomString(36)
 	strokes = append(strokes, stroke)
 
 	w.WriteHeader(http.StatusOK)
 }
 
-func randomString() string {
-	var n uint64
-	binary.Read(rand.Reader, binary.LittleEndian, &n)
-	return strconv.FormatUint(n, 36)
-}
-
 // RoomData is passed to the template
 type RoomData struct {
+	ID          string
 	Title       string
+	RoomURL     string
 	ImageURL    string
 	MemberCount int
+}
+
+var AllRooms []RoomData
+
+func findRoomByID(id string) *RoomData {
+	for _, room := range AllRooms {
+		if id == room.ID {
+			return &room
+		}
+	}
+	return nil
 }
 
 func index(c web.C, w http.ResponseWriter, r *http.Request) {
@@ -140,10 +146,63 @@ func index(c web.C, w http.ResponseWriter, r *http.Request) {
 	t.Execute(w, struct{ Rooms []RoomData }{rd[:]})
 }
 
+var store = sessions.NewCookieStore([]byte("isucon-nocusi"))
+
+func getSession(r *http.Request) *sessions.Session {
+	// safe to ignore the error because a new session is also returned
+	// when the cookie could not be decoded
+	session, _ := store.Get(r, "ISU-SESSION")
+	return session
+}
+
+func room(c web.C, w http.ResponseWriter, r *http.Request) {
+	roomID := c.URLParams["id"]
+
+	room := findRoomByID(roomID)
+	if room == nil {
+		http.Error(w, "room not found", http.StatusNotFound)
+		return
+	}
+	// room := &RoomData{}
+
+	session := getSession(r)
+
+	val := session.Values["csrf-token"] // session.Values is map[string]interface{}
+	token, ok := val.(string)
+	if !ok {
+		token := randomString(128)
+		session.Values["csrf-token"] = token
+		session.Save(r, w)
+	}
+
+	t := template.Must(template.ParseFiles(templatePath + "/room.html"))
+	t.Execute(w, struct {
+		Room      RoomData
+		CSRFToken string
+		APIURL    string
+	}{
+		*room,
+		token,
+		"http://" + r.Host,
+	})
+}
+
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func randomString(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
 func main() {
 	flag.Parse()
 
 	goji.Get("/", index)
+	goji.Get("/rooms/:id", room)
+
 	goji.Post("/api/stroke", stroke)
 	goji.Get("/api/events", events)
 	goji.Get("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir(staticPath))))

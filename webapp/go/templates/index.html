@@ -4,16 +4,18 @@
 <div class="main">
     <header>
         <h1>ISU-Channel</h1>
-        <div>
-            <p>匿名便所の落描きサービス</p>
-        </div>
     </header>
+    <div>
+        <p>匿名便所の落描きサービス</p>
+    </div>
     <ul class="room-list">
         {{ range .Rooms }}
         <li class="room-info">
-            <img class="thumbnail" src="">
-            <p class="name">タイトル</p>
-            <p class="member-count">100人が参加</p>
+            <a href="/rooms/1234">
+                <img class="thumbnail" src="">
+                <p class="name">タイトル</p>
+                <p class="member-count">100人が参加</p>
+            </a>
         </li>
         {{ end }}
     </ul>
