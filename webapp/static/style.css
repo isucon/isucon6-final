@@ -27,7 +27,6 @@ table{border-collapse:collapse;border-spacing:0}
 @media screen{[hidden~=screen]{display:inherit}
 [hidden~=screen]:not(:active):not(:focus):not(:target){clip:rect(0 0 0 0)!important;position:absolute!important}
 }
-/*# sourceMappingURL=sanitize.css.map */
 
 h1 a {
     color: black;
