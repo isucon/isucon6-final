@@ -109,9 +109,15 @@ func events(c web.C, w http.ResponseWriter, r *http.Request) {
 }
 
 func stroke(c web.C, w http.ResponseWriter, r *http.Request) {
+	token := r.Header.Get("X-CSRF-Token")
+	err := checkCSRFToken(token, r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+	}
+
 	decoder := json.NewDecoder(r.Body)
 	var stroke Stroke
-	err := decoder.Decode(&stroke)
+	err = decoder.Decode(&stroke)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -233,7 +239,7 @@ func createRoom(c web.C, w http.ResponseWriter, r *http.Request) {
 	token := r.PostFormValue("token")
 	err := checkCSRFToken(token, r)
 	if err != nil {
-		http.Error(w, "Bad Token", http.StatusBadRequest) // TODO: maybe use flash session?
+		http.Error(w, err.Error(), http.StatusBadRequest) // TODO: maybe use flash session?
 	}
 
 	// generate an ID for the new room

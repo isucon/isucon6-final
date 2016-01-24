@@ -41,6 +41,7 @@ Stroke.prototype.draw = function () {
 Stroke.prototype.send = function() {
     var xhr = new XMLHttpRequest();
     xhr.open('POST', '/api/stroke');
+    xhr.setRequestHeader('X-CSRF-Token', getCSRFToken());
     // TODO: fix stroke on success, remove on error
     xhr.send(JSON.stringify({
         width: this.width,
@@ -103,3 +104,7 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log(err);
     }
 });
+
+function getCSRFToken() {
+    return document.getElementById('csrf-token').getAttribute('content');
+}
