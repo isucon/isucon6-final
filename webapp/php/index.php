@@ -1,5 +1,8 @@
 <?php
 
+$stderr = fopen('php://stderr', 'w');
+fwrite($stderr, var_export($_SERVER, true) . "\n");
+
 $uri = $_SERVER['REQUEST_URI'];
 if ($uri === '/api/rooms') {
   $rooms = [];
