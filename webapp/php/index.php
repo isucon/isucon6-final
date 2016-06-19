@@ -17,7 +17,24 @@ if ($uri === '/api/rooms') {
   echo json_encode(['room' => $room]);
 } elseif (preg_match('@^/api/rooms/(\d+)/strokes$@', $uri, $m)) {
   while(true) {
-    echo 'data: ' . json_encode(['stroke' => 'black', 'stroke-width' => 1, 'fill' => 'none', 'd' => 'M 0 200 L 25 50 l 50 -25 V 175 H 100 v -50 h 25 m 25 0 l 50 0 L 175 175 z']) . "\n\n";
+    echo 'data: ' . json_encode([
+      'id' => time(),
+      'red' => 128,
+      'green' => 128,
+      'blue' => 128,
+      'alpha' => 0.5,
+      'width' => 1,
+      'points' => [
+        ['x' => 1, 'y' => 2],
+        ['x' => 10, 'y' => 31],
+        ['x' => 44, 'y' => 19],
+        ['x' => 81, 'y' => 61],
+        ['x' => 115, 'y' => 118],
+        ['x' => 174, 'y' => 71],
+        ['x' => 227, 'y' => 124],
+        ['x' => 365, 'y' => 243],
+      ]
+    ]) . "\n\n";
     ob_flush();
     flush();
     sleep(1);
