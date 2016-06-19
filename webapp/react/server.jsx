@@ -9,8 +9,8 @@ import AsyncProps, { loadPropsOnServer } from 'async-props';
 import fetch from 'isomorphic-fetch';
 import proxy from 'http-proxy-middleware';
 
-const apiEndpoint = process.env.API;
-if (!apiEndpoint) {
+const apiBaseUrl = process.env.API;
+if (!apiBaseUrl) {
   throw 'Please set environment variable API=http://...';
 }
 
@@ -18,7 +18,7 @@ const app = express();
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/api/*', proxy({ target: apiEndpoint, changeOrigin: true }));
+app.use('/api/*', proxy({ target: apiBaseUrl, changeOrigin: true }));
 
 app.get('*', (req, res) => {
   // https://github.com/reactjs/react-router/blob/master/docs/guides/ServerRendering.md
@@ -30,11 +30,11 @@ app.get('*', (req, res) => {
       res.redirect(302, redirectLocation.pathname + redirectLocation.search);
     } else if (renderProps) {
 
-      fetch(`${apiEndpoint}/api/csrf_token`)
+      fetch(`${apiBaseUrl}/api/csrf_token`)
         .then((result) => result.json())
         .then((json) => {
           const csrfToken = json.token;
-          const loadContext = { apiEndpoint, csrfToken };
+          const loadContext = { apiBaseUrl, csrfToken };
 
           // https://github.com/ryanflorence/async-props
           loadPropsOnServer(renderProps, loadContext, (err, asyncProps, scriptTag) => {

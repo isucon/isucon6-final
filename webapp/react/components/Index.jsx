@@ -4,9 +4,9 @@ import fetch from 'isomorphic-fetch';
 
 class Index extends React.Component {
   static loadProps(params, cb) {
-    const apiEndpoint = params.loadContext ? params.loadContext.apiEndpoint : window.apiEndpoint;
+    const apiBaseUrl = params.loadContext ? params.loadContext.apiBaseUrl : window.apiBaseUrl;
     const csrfToken = params.loadContext ? params.loadContext.csrfToken : window.csrfToken;
-    fetch(`${apiEndpoint}/api/rooms`, {
+    fetch(`${apiBaseUrl}/api/rooms`, {
       headers: { 'x-csrf-token': csrfToken },
     })
       .then((result) => result.json())

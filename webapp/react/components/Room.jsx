@@ -2,9 +2,9 @@ import React from 'react';
 
 class Room extends React.Component {
   static loadProps({ params, loadContext }, cb) {
-    const apiEndpoint = loadContext ? loadContext.apiEndpoint : window.apiEndpoint;
+    const apiBaseUrl = loadContext ? loadContext.apiBaseUrl : window.apiBaseUrl;
     const csrfToken = loadContext ? loadContext.csrfToken : window.csrfToken;
-    fetch(`${apiEndpoint}/api/rooms/${params.id}`, {
+    fetch(`${apiBaseUrl}/api/rooms/${params.id}`, {
       headers: { 'x-csrf-token': csrfToken },
     })
     .then((result) => result.json())

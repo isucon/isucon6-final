@@ -5,7 +5,7 @@ import routes from './routes';
 import AsyncProps from 'async-props';
 
 window.csrfToken = document.documentElement.dataset.csrfToken;
-window.apiEndpoint = location.origin;
+window.apiBaseUrl = location.origin;
 
 const appElem = document.getElementById('app');
 
