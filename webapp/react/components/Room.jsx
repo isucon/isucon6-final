@@ -1,4 +1,5 @@
 import React from 'react';
+import Canvas from './Canvas';
 
 class Room extends React.Component {
   static loadProps({ params, loadContext }, cb) {
@@ -9,17 +10,15 @@ class Room extends React.Component {
     })
     .then((result) => result.json())
     .then((res) => {
-      cb(null, { id: res.room.id, name: res.room.name });
+      cb(null, { id: res.room.id, name: res.room.name, strokes: res.room.strokes });
     });
   }
 
   render() {
     return (
       <div className="room">
-        <p>{this.props.name}</p>
-        <div className="canvas-column">
-          <div id="canvas"></div>
-        </div>
+        <h2>{this.props.name}</h2>
+        <Canvas strokes={this.props.strokes} followUpdates />
       </div>
     );
   }
@@ -28,6 +27,7 @@ class Room extends React.Component {
 Room.propTypes = {
   id: React.PropTypes.number,
   name: React.PropTypes.string,
+  strokes: React.PropTypes.array,
 };
 
 export default Room;
