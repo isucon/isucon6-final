@@ -1,0 +1,26 @@
+version: '2'
+services:
+  # mysql
+  mysql:
+    image: mysql
+    volumes:
+      - /var/lib/mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+  # php
+  php:
+    image: alpine-php
+    ports:
+      - "9901:9901"
+  # nodejs
+  nodejs:
+    image: alpine-nodejs
+    ports:
+      - "8800:8800"
+    environment:
+      API: http://alpine-php:9901
+    links:
+      - php:alpine-php
+      - mysql:mysql
