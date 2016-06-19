@@ -8,7 +8,7 @@ API -> Node (React SSR) -> User
 Express web server.
 
 ```
-$(npm bin)/babel-node server.js
+API=http://localhost:8801 $(npm bin)/babel-node server.jsx
 ```
 
 # Assets
