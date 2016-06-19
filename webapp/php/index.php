@@ -10,6 +10,8 @@ if ($uri === '/api/rooms') {
     $rooms[] = ['id' => $i, 'name' => 'ひたすら椅子を描く部屋'];
   }
   echo json_encode(['rooms' => $rooms]);
+} elseif ($uri === '/api/csrf_token') {
+  echo json_encode(['token' => md5(rand())]);
 } elseif (preg_match('@^/api/rooms/(\d+)$@', $uri, $m)) {
   $room = ['id' => (int)$m[1], 'name' => 'ひたすら椅子を描く部屋', 'strokes' => []];
   echo json_encode(['room' => $room]);
