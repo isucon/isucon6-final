@@ -9,17 +9,16 @@ class Index extends React.Component {
     fetch(`${apiEndpoint}/api/rooms`, {
       headers: { 'x-csrf-token': csrfToken },
     })
-    .then((result) => result.json())
-    .then((res) => {
-      cb(null, { rooms: res.rooms });
-    });
+      .then((result) => result.json())
+      .then((res) => {
+        cb(null, { rooms: res.rooms });
+      });
   }
 
   render() {
     return (
       <div className="index">
         <div>
-          <p>描ける巨大匿名掲示板サイト！</p>
           <form method="POST" action="/rooms" className="new-room">
             <h3>新規部屋作成</h3>
             <label>
@@ -30,17 +29,28 @@ class Index extends React.Component {
             <button className="create">作成</button>
           </form>
         </div>
-        <ul className="room-list">
+        <div className="mdl-grid">
           {this.props.rooms.map((room) => (
-            <li className="room-info" key={room.id}>
-              <Link to={`/rooms/${room.id}`}>
+            <div className="mdl-cell mdl-cell--3-col mdl-card mdl-shadow--2dp" key={room.id}>
+              <div className="mdl-card__media">
                 <img className="thumbnail" src={`/img/${room.id}`} alt={room.name} />
-                <p className="name">{room.name}</p>
-                <p className="member-count">{room.watcherCount}人が参加</p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+              </div>
+              <div className="mdl-card__supporting-text">
+                <h2 className="mdl-card__title-text">{room.name}</h2>
+                <p>{room.watcherCount}人が参加</p>
+              </div>
+              <div className="mdl-card__actions mdl-card--border">
+                <Link
+                  to={`/rooms/${room.id}`}
+                  className="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"
+                >
+                  入室
+                </Link>
+              </div>
+            </div>
+          ))
+          }
+        </div>
 
       </div>
     );

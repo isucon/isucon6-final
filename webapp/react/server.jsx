@@ -18,7 +18,7 @@ const app = express();
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/api/*', proxy({target: apiEndpoint, changeOrigin: true}));
+app.use('/api/*', proxy({ target: apiEndpoint, changeOrigin: true }));
 
 app.get('*', (req, res) => {
   // https://github.com/reactjs/react-router/blob/master/docs/guides/ServerRendering.md
@@ -31,31 +31,31 @@ app.get('*', (req, res) => {
     } else if (renderProps) {
 
       fetch(`${apiEndpoint}/api/csrf_token`)
-      .then((result) => result.json())
-      .then((json) => {
-        const csrfToken = json.token;
-        const loadContext = {apiEndpoint, csrfToken};
+        .then((result) => result.json())
+        .then((json) => {
+          const csrfToken = json.token;
+          const loadContext = { apiEndpoint, csrfToken };
 
-        // https://github.com/ryanflorence/async-props
-        loadPropsOnServer(renderProps, loadContext, (err, asyncProps, scriptTag) => {
-          if (err) {
-            console.error(err)
-            res.status(500).send(err.message);
-          } else {
-            const appHTML = renderToString(
-              <AsyncProps {...renderProps} {...asyncProps} />
-            );
+          // https://github.com/ryanflorence/async-props
+          loadPropsOnServer(renderProps, loadContext, (err, asyncProps, scriptTag) => {
+            if (err) {
+              console.error(err)
+              res.status(500).send(err.message);
+            } else {
+              const appHTML = renderToString(
+                <AsyncProps {...renderProps} {...asyncProps} />
+              );
 
-            const html = createHtml(appHTML, scriptTag, csrfToken);
+              const html = createHtml(appHTML, scriptTag, csrfToken);
 
-            res.status(200).send(html);
-          }
-        });
+              res.status(200).send(html);
+            }
+          });
 
-      })
-      .catch((err) => {
-        res.status(500).send(err.message);
-      })
+        })
+        .catch((err) => {
+          res.status(500).send(err.message);
+        })
     } else {
       res.status(404).send('Not found')
     }
@@ -72,11 +72,14 @@ function createHtml(appHtml, scriptTag, csrfToken) {
 <html data-csrf-token="${escape(csrfToken)}">
   <head>
     <title>SSR Sample</title>
+    <link rel="stylesheet" href="/mdl/material.min.css">
+    <link rel="stylesheet" href="/iconfont/material-icons.css">
+    <script src="/mdl/material.min.js" async></script>
+    <script src="/bundle.js" async></script>
   </head>
   <body>
     <div id="app">${appHtml}</div>
     ${scriptTag}
-    <script src="/bundle.js"></script>
   </body>
 </html>`;
 }
