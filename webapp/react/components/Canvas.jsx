@@ -1,5 +1,6 @@
 import React from 'react';
 import { SketchPicker } from 'react-color';
+import Svg from './Svg';
 
 class Canvas extends React.Component {
   // static loadProps(params, cb) {
@@ -28,59 +29,45 @@ class Canvas extends React.Component {
     };
   }
 
-  getCoordinates(ev) {
-    const rect = this.refs.svgElement.getBoundingClientRect();
-    return {
-      x: ev.clientX - rect.left,
-      y: ev.clientY - rect.top,
-    };
-  }
-
   addPointToStroke(orig, point) {
     return {
       id: orig.id,
-      red: this.state.red,
-      blue: this.state.blue,
-      green: this.state.green,
-      alpha: this.state.alpha,
-      width: this.state.strokeWidth,
+      red: orig.red,
+      blue: orig.blue,
+      green: orig.green,
+      alpha: orig.alpha,
+      width: orig.width,
       points: orig.points.concat([point]),
     };
   }
 
-  handleMouseDown(ev) {
-    this.mouseDown = true;
+  handleStrokeStart(point) {
     this.setState({
-      tmpStroke: this.addPointToStroke({
+      tmpStroke: {
         id: Date.now(), // TODO:
-        red: 128,
-        blue: 128,
-        green: 128,
-        alpha: 0.5,
+        red: this.state.red,
+        blue: this.state.blue,
+        green: this.state.green,
+        alpha: this.state.alpha,
         width: this.state.strokeWidth,
-        points: [],
-      }, this.getCoordinates(ev)),
+        points: [point],
+      },
     });
   }
 
-  handleMouseUp(ev) {
-    if (this.mouseDown && this.state.tmpStroke) {
-      this.setState({
-        strokes: this.state.strokes.concat(
-          this.addPointToStroke(this.state.tmpStroke, this.getCoordinates(ev))
-        ),
-        tmpStroke: null,
-      });
-    }
-    this.mouseDown = false;
+  handleStrokeMove(point) {
+    this.setState({
+      tmpStroke: this.addPointToStroke(this.state.tmpStroke, point),
+    });
   }
 
-  handleMouseMove(ev) {
-    if (this.mouseDown && this.state.tmpStroke) {
-      this.setState({
-        tmpStroke: this.addPointToStroke(this.state.tmpStroke, this.getCoordinates(ev)),
-      });
-    }
+  handleStrokeEnd(point) {
+    const tmpStroke = this.addPointToStroke(this.state.tmpStroke, point);
+    // TODO: API request
+    this.setState({
+      strokes: this.state.strokes.concat([tmpStroke]),
+      tmpStroke: null,
+    });
   }
 
   handleChangeStrokeWidth(ev) {
@@ -113,6 +100,10 @@ class Canvas extends React.Component {
   }
 
   render() {
+    const strokes = this.state.tmpStroke === null ?
+      this.state.strokes :
+      this.state.strokes.concat([this.state.tmpStroke]);
+
     return (
       <div className="canvas" style={{ width: this.props.width + 2, margin: '0 auto' }}>
         <label>
@@ -169,34 +160,14 @@ class Canvas extends React.Component {
             />
           </div>
         </div>
-        <svg
-          ref="svgElement"
+        <Svg
           width={this.props.width}
           height={this.props.height}
-          style={{
-            width: this.props.width,
-            height: this.props.height,
-            border: 'solid black 1px',
-          }}
-          viewBox={`0 0 ${this.props.width} ${this.props.height}`}
-          onMouseDown={(ev) => this.handleMouseDown(ev)}
-          onMouseUp={(ev) => this.handleMouseUp(ev)}
-          onMouseMove={(ev) => this.handleMouseMove(ev)}
-        >
-          {this.state.strokes
-            .concat(this.state.tmpStroke ? [this.state.tmpStroke] : [])
-            .map((stroke) => (
-              <polyline
-                key={stroke.id}
-                stroke={this.makeRGBAString(stroke)}
-                strokeWidth={stroke.width}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                fill="none"
-                points={stroke.points.map((point) => `${point.x},${point.y}`).join(' ')}
-              />
-          ))}
-        </svg>
+          strokes={strokes}
+          onStrokeStart={(point) => this.handleStrokeStart(point)}
+          onStrokeMove={(point) => this.handleStrokeMove(point)}
+          onStrokeEnd={(point) => this.handleStrokeEnd(point)}
+        />
       </div>
     );
   }
