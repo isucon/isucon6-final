@@ -21,11 +21,11 @@ class Canvas extends React.Component {
     this.state = {
       strokes: props.strokes,
       tmpStroke: null,
-      strokeWidth: 10,
+      strokeWidth: 20,
       red: 128,
       green: 128,
       blue: 128,
-      alpha: 0.5,
+      alpha: 0.7,
     };
   }
 
