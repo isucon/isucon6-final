@@ -191,6 +191,7 @@ class Canvas extends React.Component {
                 stroke={this.makeRGBAString(stroke)}
                 strokeWidth={stroke.width}
                 strokeLinecap="round"
+                strokeLinejoin="round"
                 fill="none"
                 points={stroke.points.map((point) => `${point.x},${point.y}`).join(' ')}
               />
