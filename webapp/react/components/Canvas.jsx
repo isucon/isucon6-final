@@ -1,5 +1,5 @@
 import React from 'react';
-import { SketchPicker } from 'react-color';
+import ColorPicker from 'rc-color-picker';
 import Svg from './Svg';
 
 class Canvas extends React.Component {
@@ -76,27 +76,19 @@ class Canvas extends React.Component {
     });
   }
 
-  handleClickColorPickerToggle(ev) {
-    if (ev.target === ev.currentTarget) {
-      if (this.refs.colorPicker.style.display === 'none') {
-        this.refs.colorPicker.style.display = 'block';
-      } else {
-        this.refs.colorPicker.style.display = 'none';
-      }
+  handleColorChange(colors) {
+    if (/#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/.test(colors.color)) {
+      this.setState({
+        red: parseInt(RegExp.$1, 16),
+        green: parseInt(RegExp.$2, 16),
+        blue: parseInt(RegExp.$3, 16),
+        alpha: colors.alpha / 100,
+      });
     }
   }
 
-  handleColorChange(ev) {
-    this.setState({
-      red: ev.rgb.r,
-      green: ev.rgb.g,
-      blue: ev.rgb.b,
-      alpha: ev.rgb.a,
-    });
-  }
-
-  makeRGBAString({ red, green, blue, alpha }) {
-    return `rgba(${red},${green},${blue},${alpha})`;
+  makeRGBString({ red, green, blue }) {
+    return `#${red.toString(16)}${green.toString(16)}${blue.toString(16)}`;
   }
 
   render() {
@@ -132,34 +124,19 @@ class Canvas extends React.Component {
         <span
           style={{
             display: 'inline-block',
-            width: 220,
             height: this.props.controlHeight,
-            paddingLeft: 30,
+            paddingLeft: 20,
+            paddingRight: 20,
           }}
         >
-          線の色 ({this.makeRGBAString(this.state)})
+          線の色
         </span>
-        <div
-          style={{
-            display: 'inline-block',
-            width: 60,
-            height: this.props.controlHeight,
-            position: 'relative',
-            backgroundColor: this.makeRGBAString(this.state),
-            verticalAlign: 'middle',
-          }}
-          onClick={(ev) => this.handleClickColorPickerToggle(ev)}
-        >
-          <div
-            ref="colorPicker"
-            style={{ display: 'none', position: 'absolute', top: this.props.controlHeight }}
-          >
-            <SketchPicker
-              color={this.makeRGBAString(this.state)}
-              onChange={(ev) => this.handleColorChange(ev)}
-            />
-          </div>
-        </div>
+        <ColorPicker
+          color={this.makeRGBString(this.state)}
+          alpha={this.state.alpha * 100}
+          placement="topLeft"
+          onChange={(ev) => this.handleColorChange(ev)}
+        />
         <Svg
           width={this.props.width}
           height={this.props.height}
@@ -184,7 +161,7 @@ Canvas.propTypes = {
 Canvas.defaultProps = {
   width: 1028,
   height: 768,
-  controlHeight: 20,
+  controlHeight: 40,
 };
 
 export default Canvas;

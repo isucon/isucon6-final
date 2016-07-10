@@ -74,6 +74,7 @@ function createHtml(appHtml, scriptTag, csrfToken) {
     <title>SSR Sample</title>
     <link rel="stylesheet" href="/mdl/material.min.css">
     <link rel="stylesheet" href="/iconfont/material-icons.css">
+    <link rel="stylesheet" href="/css/rc-color-picker.css">
     <script src="/mdl/material.min.js" async></script>
     <script src="/bundle.js" async></script>
   </head>
