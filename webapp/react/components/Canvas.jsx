@@ -1,6 +1,6 @@
 import React from 'react';
 
-class Svg extends React.Component {
+class Canvas extends React.Component {
 
   constructor(props) {
     super(props);
@@ -70,7 +70,7 @@ class Svg extends React.Component {
   }
 }
 
-Svg.propTypes = {
+Canvas.propTypes = {
   width: React.PropTypes.number,
   height: React.PropTypes.number,
   strokes: React.PropTypes.array,
@@ -79,4 +79,4 @@ Svg.propTypes = {
   onStrokeEnd: React.PropTypes.func,
 };
 
-export default Svg;
+export default Canvas;

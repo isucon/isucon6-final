@@ -1,6 +1,6 @@
 import React from 'react';
 import ColorPicker from 'rc-color-picker';
-import Svg from './Svg';
+import Canvas from './Canvas';
 
 class Room extends React.Component {
   static loadProps({ params, loadContext }, cb) {
@@ -139,7 +139,7 @@ class Room extends React.Component {
             placement="topLeft"
             onChange={(ev) => this.handleColorChange(ev)}
           />
-          <Svg
+          <Canvas
             width={this.props.width}
             height={this.props.height}
             strokes={strokes}
