@@ -11,16 +11,26 @@ services:
       MYSQL_ROOT_PASSWORD: password
   # php
   php:
-    image: alpine-php
+    build: ./php
     ports:
       - "9901:9901"
   # nodejs
   nodejs:
-    image: alpine-nodejs
+    build: ./react
     ports:
       - "8800:8800"
     environment:
-      API: http://alpine-php:9901
+      API: http://php:9901
     links:
-      - php:alpine-php
-      - mysql:mysql
+      - php
+      - mysql
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/mysite.template:/etc/nginx/nginx.conf
+    command: "nginx"
+    links:
+      - php
+      - nodejs
