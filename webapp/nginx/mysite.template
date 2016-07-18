@@ -1,0 +1,15 @@
+worker_processes  1;
+daemon off;
+
+events {
+  worker_connections  1024;
+}
+
+http {
+  server {
+    location / {
+      proxy_set_header Host $host;
+      proxy_pass http://nodejs:8800;
+    }
+  }
+}
