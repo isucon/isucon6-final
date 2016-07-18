@@ -40,13 +40,14 @@ class Canvas extends React.Component {
     // console.log(this.props.strokes);
     return (
       <svg
+        version="1.1"
+        baseProfile="full"
         ref="svgElement"
         width={this.props.width}
         height={this.props.height}
         style={{
           width: this.props.width,
           height: this.props.height,
-          border: 'solid black 1px',
         }}
         viewBox={`0 0 ${this.props.width} ${this.props.height}`}
         onMouseDown={(ev) => this.handleMouseDown(ev)}

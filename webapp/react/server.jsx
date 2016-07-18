@@ -1,13 +1,14 @@
 import express from 'express';
 import path from 'path';
 import React from 'react';
-import { renderToString } from 'react-dom/server';
+import { renderToString, renderToStaticMarkup } from 'react-dom/server';
 import escape from 'escape-html';
 import { match, RouterContext } from 'react-router';
 import routes from './routes';
 import AsyncProps, { loadPropsOnServer } from 'async-props';
 import fetch from 'isomorphic-fetch';
 import proxy from 'http-proxy-middleware';
+import Canvas from './components/Canvas';
 
 const apiBaseUrl = process.env.API;
 if (!apiBaseUrl) {
@@ -19,6 +20,29 @@ const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/*', proxy({ target: apiBaseUrl, changeOrigin: true }));
+
+app.get('/img/:id', (req, res) => {
+  fetch(`${apiBaseUrl}/api/rooms/${req.params.id}`)
+    .then((result) => result.json())
+    .then((json) => {
+      const svg = renderToStaticMarkup(
+        <Canvas
+          width={1028}
+          height={768}
+          strokes={json.room.strokes}
+        />
+      );
+      res.type('image/svg+xml').send(
+        // Waiting for React 15.3.0 https://github.com/facebook/react/pull/6471#event-722021290
+        '<?xml version="1.0" standalone="no"?>' +
+        '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' +
+        svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" ')
+      );
+    })
+    .catch((err) => {
+      res.status(500).send(err.message);
+    });
+});
 
 app.get('*', (req, res) => {
   // https://github.com/reactjs/react-router/blob/master/docs/guides/ServerRendering.md
@@ -55,7 +79,7 @@ app.get('*', (req, res) => {
         })
         .catch((err) => {
           res.status(500).send(err.message);
-        })
+        });
     } else {
       res.status(404).send('Not found')
     }

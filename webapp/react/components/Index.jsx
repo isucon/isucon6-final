@@ -33,7 +33,12 @@ class Index extends React.Component {
           {this.props.rooms.map((room) => (
             <div className="mdl-cell mdl-cell--3-col mdl-card mdl-shadow--2dp" key={room.id}>
               <div className="mdl-card__media">
-                <img className="thumbnail" src={`/img/${room.id}`} alt={room.name} />
+                <img
+                  style={{ maxWidth: '100%' }}
+                  className="thumbnail"
+                  src={`/img/${room.id}`}
+                  alt={room.name}
+                />
               </div>
               <div className="mdl-card__supporting-text">
                 <h2 className="mdl-card__title-text">{room.name}</h2>

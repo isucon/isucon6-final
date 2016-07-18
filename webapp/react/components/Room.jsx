@@ -139,14 +139,16 @@ class Room extends React.Component {
             placement="topLeft"
             onChange={(ev) => this.handleColorChange(ev)}
           />
-          <Canvas
-            width={this.props.width}
-            height={this.props.height}
-            strokes={strokes}
-            onStrokeStart={(point) => this.handleStrokeStart(point)}
-            onStrokeMove={(point) => this.handleStrokeMove(point)}
-            onStrokeEnd={(point) => this.handleStrokeEnd(point)}
-          />
+          <div style={{ border: 'solid black 1px' }}>
+            <Canvas
+              width={this.props.width}
+              height={this.props.height}
+              strokes={strokes}
+              onStrokeStart={(point) => this.handleStrokeStart(point)}
+              onStrokeMove={(point) => this.handleStrokeMove(point)}
+              onStrokeEnd={(point) => this.handleStrokeEnd(point)}
+            />
+          </div>
         </div>
 
       </div>
