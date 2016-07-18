@@ -14,8 +14,8 @@ services:
     build: ./php
     ports:
       - "9901:9901"
-  # nodejs
-  nodejs:
+  # react
+  react:
     build: ./react
     ports:
       - "8800:8800"
@@ -29,8 +29,8 @@ services:
     ports:
       - "80:80"
     volumes:
-      - ./nginx/mysite.template:/etc/nginx/nginx.conf
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
     command: "nginx"
     links:
       - php
-      - nodejs
+      - react
