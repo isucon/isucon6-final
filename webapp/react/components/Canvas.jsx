@@ -48,6 +48,7 @@ class Canvas extends React.Component {
         style={{
           width: this.props.width,
           height: this.props.height,
+          backgroundColor: 'white',
         }}
         viewBox={`0 0 ${this.props.width} ${this.props.height}`}
         onMouseDown={(ev) => this.handleMouseDown(ev)}
