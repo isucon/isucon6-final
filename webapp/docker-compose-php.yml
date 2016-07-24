@@ -10,6 +10,8 @@ services:
     build: ./php
   react:
     build: ./react
+    volumes:
+      - ./react/build:/app:ro
     environment:
       API: http://api
     links:
