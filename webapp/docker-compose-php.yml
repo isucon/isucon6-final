@@ -1,26 +1,19 @@
 version: '2'
 services:
-  # mysql
   mysql:
     image: mysql
     volumes:
       - /var/lib/mysql
-    ports:
-      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: password
-  # php
-  php:
+  api:
     build: ./php
-  # react
   react:
     build: ./react
-    ports:
-      - "8800:8800"
     environment:
-      API: http://php
+      API: http://api
     links:
-      - php
+      - api
       - mysql
   nginx:
     image: nginx:alpine
@@ -30,5 +23,5 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
     command: "nginx"
     links:
-      - php
+      - api
       - react
