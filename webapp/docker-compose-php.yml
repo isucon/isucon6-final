@@ -19,6 +19,8 @@ services:
     links:
       - api
       - mysql
+    environment:
+      API: http://api:80
   nginx:
     image: nginx:alpine
     ports:
