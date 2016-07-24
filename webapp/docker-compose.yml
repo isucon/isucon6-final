@@ -12,15 +12,13 @@ services:
   # php
   php:
     build: ./php
-    ports:
-      - "9901:9901"
   # react
   react:
     build: ./react
     ports:
       - "8800:8800"
     environment:
-      API: http://php:9901
+      API: http://php
     links:
       - php
       - mysql

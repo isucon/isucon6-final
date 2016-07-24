@@ -1,9 +1,5 @@
-FROM php:alpine
+FROM php:apache
 
-RUN mkdir /myapp
-WORKDIR /myapp
-ADD . /myapp
+RUN a2enmod rewrite
 
-ENTRYPOINT php -S 0.0.0.0:9901 index.php
-
-EXPOSE 9901
+ADD . /var/www/html
