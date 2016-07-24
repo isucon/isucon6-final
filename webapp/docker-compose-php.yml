@@ -8,6 +8,8 @@ services:
       MYSQL_ROOT_PASSWORD: password
   api:
     build: ./php
+    volumes:
+      - ./php:/var/www:ro
   react:
     build: ./react
     volumes:
