@@ -41,9 +41,10 @@ class Room extends React.Component {
   }
 
   handleStrokeStart(point) {
+    // TODO: return if this.state.tmpStroke already exists
     this.setState({
       tmpStroke: {
-        id: Date.now(), // TODO:
+        id: 'tmp',
         red: this.state.red,
         blue: this.state.blue,
         green: this.state.green,
@@ -61,11 +62,35 @@ class Room extends React.Component {
   }
 
   handleStrokeEnd(point) {
-    const tmpStroke = this.addPointToStroke(this.state.tmpStroke, point);
-    // TODO: API request
     this.setState({
-      strokes: this.state.strokes.concat([tmpStroke]),
-      tmpStroke: null,
+      tmpStroke: this.addPointToStroke(this.state.tmpStroke, point),
+    });
+
+    const apiBaseUrl = window.apiBaseUrl;
+    const csrfToken = window.csrfToken;
+
+    fetch(`${apiBaseUrl}/api/rooms/${this.props.id}/strokes`, {
+      method: 'POST',
+      body: JSON.stringify(this.state.tmpStroke),
+      headers: { 'x-csrf-token': csrfToken },
+    })
+    .then((result) => {
+      if (result.status === 200) {
+        return result.json();
+      }
+      throw result.json() || (`status ${result.status}`);
+    })
+    .then((res) => {
+      const stroke = res.stroke;
+      // TODO: check response
+      this.setState({
+        strokes: this.state.strokes.concat([stroke]),
+        tmpStroke: null,
+      });
+    })
+    .catch((error) => {
+      // TODO: Flash
+      console.log(error.message || 'Unknown error');
     });
   }
 

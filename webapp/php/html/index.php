@@ -35,27 +35,35 @@ if ($uri === '/api/rooms') {
   ]];
   echo json_encode(['room' => $room]);
 } elseif (preg_match('@^/api/rooms/(\d+)/strokes$@', $uri, $m)) {
-  while(true) {
-    echo 'data: ' . json_encode([
-      'id' => microtime(true) * 1000000,
-      'red' => 128,
-      'green' => 128,
-      'blue' => 128,
-      'alpha' => 0.5,
-      'width' => 5,
-      'points' => [
-        ['x' => 1, 'y' => 2],
-        ['x' => 10, 'y' => 31],
-        ['x' => 44, 'y' => 19],
-        ['x' => 81, 'y' => 61],
-        ['x' => 115, 'y' => 118],
-        ['x' => 174, 'y' => 71],
-        ['x' => 227, 'y' => 124],
-        ['x' => 365, 'y' => 243],
-      ]
-    ]) . "\n\n";
-    ob_flush();
-    flush();
-    sleep(1);
+  if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $stroke_json = file_get_contents('php://input');
+    $stroke = json_decode($stroke_json, true);
+    $stroke['id'] = microtime(true) * 1000000;
+    header('Content-Type: application/json');
+    echo json_encode(['stroke' => $stroke]);
+  } else {
+    while(true) {
+      echo 'data: ' . json_encode([
+        'id' => microtime(true) * 1000000,
+        'red' => 128,
+        'green' => 128,
+        'blue' => 128,
+        'alpha' => 0.5,
+        'width' => 5,
+        'points' => [
+          ['x' => 1, 'y' => 2],
+          ['x' => 10, 'y' => 31],
+          ['x' => 44, 'y' => 19],
+          ['x' => 81, 'y' => 61],
+          ['x' => 115, 'y' => 118],
+          ['x' => 174, 'y' => 71],
+          ['x' => 227, 'y' => 124],
+          ['x' => 365, 'y' => 243],
+        ]
+      ]) . "\n\n";
+      ob_flush();
+      flush();
+      sleep(1);
+    }
   }
 }
