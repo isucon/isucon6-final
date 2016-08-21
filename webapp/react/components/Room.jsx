@@ -69,10 +69,10 @@ class Room extends React.Component {
     const apiBaseUrl = window.apiBaseUrl;
     const csrfToken = window.csrfToken;
 
-    fetch(`${apiBaseUrl}/api/rooms/${this.props.id}/strokes`, {
+    fetch(`${apiBaseUrl}/api/strokes/rooms/${this.props.id}`, {
       method: 'POST',
       body: JSON.stringify(this.state.tmpStroke),
-      headers: { 'x-csrf-token': csrfToken },
+      headers: { 'x-csrf-token': csrfToken, 'content-type': 'application/json' },
     })
     .then((result) => {
       if (result.status === 200) {
