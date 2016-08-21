@@ -1,4 +1,8 @@
 ---
 - name: create isucon user
-  user: name=isucon groups=sudo,docker password=$1$t7oyPBt7$NWbEo.XUV2gA9dUyDK4Dz1 createhome=yes shell=/bin/bash
-  become: yes
+  user:
+    name=isucon
+    groups=sudo,docker
+    password=$1$t7oyPBt7$NWbEo.XUV2gA9dUyDK4Dz1
+    createhome=yes
+    shell=/bin/bash
