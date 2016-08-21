@@ -57,8 +57,6 @@ var DOMRenderer = ReactFiberReconciler({
   deleteInstance: function (instance) {
     // Noop
   },
-
-
   scheduleHighPriCallback: window.requestAnimationFrame,
 
   scheduleLowPriCallback: window.requestIdleCallback
