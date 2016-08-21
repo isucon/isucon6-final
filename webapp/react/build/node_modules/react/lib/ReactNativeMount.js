@@ -48,7 +48,8 @@ TopLevelWrapper.prototype.render = function () {
  * @param {ReactReconcileTransaction} transaction
  */
 function mountComponentIntoNode(componentInstance, containerTag, transaction) {
-  var markup = ReactReconciler.mountComponent(componentInstance, transaction, null, ReactNativeContainerInfo(containerTag), emptyObject);
+  var markup = ReactReconciler.mountComponent(componentInstance, transaction, null, ReactNativeContainerInfo(containerTag), emptyObject, 0 /* parentDebugID */
+  );
   componentInstance._renderedComponent._topLevelWrapper = componentInstance;
   ReactNativeMount._mountImageIntoNode(markup, containerTag);
 }
@@ -114,10 +115,6 @@ var ReactNativeMount = {
     // according to the current batching strategy.
 
     ReactUpdates.batchedUpdates(batchedMountComponentIntoNode, instance, containerTag);
-    if (process.env.NODE_ENV !== 'production') {
-      // The instance here is TopLevelWrapper so we report mount for its child.
-      ReactInstrumentation.debugTool.onMountRootComponent(instance._renderedComponent._debugID);
-    }
     var component = instance.getPublicInstance();
     if (callback) {
       callback.call(component);

@@ -27445,9 +27445,10 @@
 	  }, {
 	    key: 'handleStrokeStart',
 	    value: function handleStrokeStart(point) {
+	      // TODO: return if this.state.tmpStroke already exists
 	      this.setState({
 	        tmpStroke: {
-	          id: Date.now(), // TODO:
+	          id: 'tmp',
 	          red: this.state.red,
 	          blue: this.state.blue,
 	          green: this.state.green,
@@ -27467,11 +27468,34 @@
 	  }, {
 	    key: 'handleStrokeEnd',
 	    value: function handleStrokeEnd(point) {
-	      var tmpStroke = this.addPointToStroke(this.state.tmpStroke, point);
-	      // TODO: API request
+	      var _this2 = this;
+
 	      this.setState({
-	        strokes: this.state.strokes.concat([tmpStroke]),
-	        tmpStroke: null
+	        tmpStroke: this.addPointToStroke(this.state.tmpStroke, point)
+	      });
+
+	      var apiBaseUrl = window.apiBaseUrl;
+	      var csrfToken = window.csrfToken;
+
+	      fetch(apiBaseUrl + '/api/strokes/rooms/' + this.props.id, {
+	        method: 'POST',
+	        body: JSON.stringify(this.state.tmpStroke),
+	        headers: { 'x-csrf-token': csrfToken, 'content-type': 'application/json' }
+	      }).then(function (result) {
+	        if (result.status === 200) {
+	          return result.json();
+	        }
+	        throw result.json() || 'status ' + result.status;
+	      }).then(function (res) {
+	        var stroke = res.stroke;
+	        // TODO: check response
+	        _this2.setState({
+	          strokes: _this2.state.strokes.concat([stroke]),
+	          tmpStroke: null
+	        });
+	      }).catch(function (error) {
+	        // TODO: Flash
+	        console.log(error.message || 'Unknown error');
 	      });
 	    }
 	  }, {
@@ -27505,7 +27529,7 @@
 	  }, {
 	    key: 'render',
 	    value: function render() {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      var strokes = this.state.tmpStroke === null ? this.state.strokes : this.state.strokes.concat([this.state.tmpStroke]);
 
@@ -27547,7 +27571,7 @@
 	                verticalAlign: 'middle'
 	              },
 	              onChange: function onChange(ev) {
-	                return _this2.handleChangeStrokeWidth(ev);
+	                return _this3.handleChangeStrokeWidth(ev);
 	              }
 	            })
 	          ),
@@ -27568,7 +27592,7 @@
 	            alpha: this.state.alpha * 100,
 	            placement: 'topLeft',
 	            onChange: function onChange(ev) {
-	              return _this2.handleColorChange(ev);
+	              return _this3.handleColorChange(ev);
 	            }
 	          }),
 	          _react2.default.createElement(
@@ -27579,13 +27603,13 @@
 	              height: this.props.height,
 	              strokes: strokes,
 	              onStrokeStart: function onStrokeStart(point) {
-	                return _this2.handleStrokeStart(point);
+	                return _this3.handleStrokeStart(point);
 	              },
 	              onStrokeMove: function onStrokeMove(point) {
-	                return _this2.handleStrokeMove(point);
+	                return _this3.handleStrokeMove(point);
 	              },
 	              onStrokeEnd: function onStrokeEnd(point) {
-	                return _this2.handleStrokeEnd(point);
+	                return _this3.handleStrokeEnd(point);
 	              }
 	            })
 	          )
