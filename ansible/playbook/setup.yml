@@ -1,0 +1,7 @@
+---
+- hosts: "build_servers"
+  gather_facts: False
+  roles:
+    - { role: base, tags: [base, app] }
+    - { role: docker, tags: [ app ] }
+    - { role: user, tags: [ app ] }
