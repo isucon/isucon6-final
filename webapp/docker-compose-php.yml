@@ -11,6 +11,13 @@ services:
     build: ./php
     volumes:
       - ./php:/var/www:ro
+    links:
+      - mysql
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
   react:
     build: ./react
     volumes:
@@ -19,7 +26,6 @@ services:
       API: http://api
     links:
       - api
-      - mysql
     environment:
       API: http://api:80
   nginx:
