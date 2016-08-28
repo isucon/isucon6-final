@@ -6,3 +6,4 @@
     - { role: base, tags: [base, app] }
     - { role: docker, tags: [ app ] }
     - { role: user, tags: [ app ] }
+    - { role: app, tags: [ app ] }
