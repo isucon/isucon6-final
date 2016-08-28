@@ -4,6 +4,7 @@ services:
     image: mysql
     volumes:
       - ./.data:/var/lib/mysql
+      - ./sql:/sql
     environment:
       MYSQL_ROOT_PASSWORD: password
   api:
