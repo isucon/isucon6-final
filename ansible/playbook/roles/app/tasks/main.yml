@@ -34,3 +34,22 @@
   file:
     path=/home/isucon/.ssh/
     state=absent
+- name: symoblic link docker-compose.yml
+  become_user: isucon
+  file:
+    src=/home/isucon/webapp/docker-compose-php.yml
+    dest=/home/isucon/webapp/docker-compose.yml
+    state=link
+- name: remove .gitignore
+  file:
+    path=/home/isucon/webapp/.gitignore
+    state=absent
+- name: place the file of systemd
+  copy:
+    src=etc/systemd/system/isu.service
+    dest=/etc/systemd/system/isu.service
+    owner=root
+    mode=644
+  notify: reload systemctl
+- name: running default application
+  service: name=isu state=running enabled=true

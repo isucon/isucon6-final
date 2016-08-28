@@ -1,0 +1,14 @@
+[Unit]
+Description=isu-service container
+Requires=docker.service
+After=docker.service
+
+[Service]
+Restart=always
+User=isucon
+Group=isucon
+ExecStart=/usr/local/bin/docker-compose -f /home/isucon/webapp/docker-compose.yml up
+ExecStop=/usr/local/bin/docker-compose -f /home/isucon/webapp/docker-compose.yml stop
+
+[Install]
+WantedBy=multi-user.target
