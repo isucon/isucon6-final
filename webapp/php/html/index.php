@@ -4,6 +4,36 @@ require __DIR__ . '/../vendor/autoload.php';
 
 //session_start();
 
+function getPDO() {
+    $host = getenv('MYSQL_HOST') ?: 'localhost';
+    $port = getenv('MYSQL_PORT') ?: 3306;
+    $user = getenv('MYSQL_USER') ?: 'root';
+    $pass = getenv('MYSQL_PASS') ?: '';
+    $dbname = 'isuchannel';
+    $dbh = new PDO("mysql:host={$host};port={$port};dbname={$dbname}", $user, $pass);
+    $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $dbh->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    return $dbh;
+}
+
+function execute($dbh, $sql, array $params = []) {
+    $stmt = $dbh->prepare($sql);
+    $stmt->execute($params);
+    return $dbh->lastInsertId();
+}
+
+function selectOne($dbh, $sql, array $params = []) {
+    $stmt = $dbh->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+function selectAll($dbh, $sql, array $params = []) {
+    $stmt = $dbh->prepare($sql);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
 // Instantiate the app
 $settings = [
     'displayErrorDetails' => true, // set to false in production
@@ -32,10 +62,15 @@ $container['logger'] = function ($c) {
 // Routes
 
 $app->get('/api/rooms', function ($request, $response, $args) {
-    $rooms = [];
-    for ($i = 1; $i <= 10; $i++) {
-        $rooms[] = ['id' => $i, 'name' => 'ひたすら椅子を描く部屋'];
-    }
+    $dbh = getPDO();
+    // TODO: max_created_at も使うべきか？
+    $sql = 'SELECT `room`.`name`, `room`.`created_at`, `room`.`canvas_width`, `room`.`canvas_height` FROM `room` JOIN';
+    $sql .= ' (SELECT `room_id`, MAX(`created_at`) AS `max_created_at` FROM `stroke`';
+    $sql .= ' GROUP BY `room_id` ORDER BY `max_created_at` DESC LIMIT 30) AS `t`';
+    $sql .= ' ON `room`.`id` = `t`.`room_id`';
+    // TODO: これだと一画も描かれてない部屋が取得できない
+    $rooms = selectAll($dbh, $sql);
+    //$this->logger->info(var_export($rooms, true));
     return $response->withJson(['rooms' => $rooms]);
 });
 
@@ -44,59 +79,94 @@ $app->get('/api/csrf_token', function ($request, $response, $args) {
 });
 
 $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
-    $room = ['id' => (int)$m[1], 'name' => 'ひたすら椅子を描く部屋', 'strokes' => [
-        [
-            'id' => microtime(true) * 1000000,
-            'red' => 128,
-            'green' => 128,
-            'blue' => 128,
-            'alpha' => 0.5,
-            'width' => 5,
-            'points' => [
-                ['x' => 1, 'y' => 2],
-                ['x' => 10, 'y' => 31],
-                ['x' => 44, 'y' => 19],
-                ['x' => 81, 'y' => 61],
-                ['x' => 115, 'y' => 118],
-                ['x' => 174, 'y' => 71],
-                ['x' => 227, 'y' => 124],
-                ['x' => 365, 'y' => 243],
-            ]
-        ]
-    ]];
+    $dbh = getPDO();
+
+    $sql = 'SELECT * FROM `room` WHERE `room`.`id` = :id';
+    $room = selectOne($dbh, $sql, [':id' => $args['id']]);
+
+    if ($room === false) {
+        // TODO: 404
+        return $response->withJson(['room' => null]);
+    }
+
+    $sql = 'SELECT * FROM `stroke` WHERE `room_id` = :id ORDER BY `id` ASC';
+    $strokes = selectAll($dbh, $sql, [':id' => $args['id']]);
+
+    foreach ($strokes as &$stroke) {
+        $sql = 'SELECT * FROM `path` WHERE `stroke_id` = :id ORDER BY `id` ASC';
+        $stroke['path'] = selectAll($dbh, $sql, [':id' => $stroke['id']]);
+    }
+
+    $room['strokes'] = $strokes;
     return $response->withJson(['room' => $room]);
 });
 
+// TODO: $app->post('/api/rooms', ...)
+
 $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
+    $dbh = getPDO();
+
+    $sql = 'SELECT * FROM `room` WHERE `room`.`id` = :id';
+    $room = selectOne($dbh, $sql, [':id' => $args['id']]);
+
+    if ($room === false) {
+        // TODO: 404
+        return $response->withJson(['room' => null]);
+    }
+    // TODO: bad request if strokes have reached a certain limit (1000?)
+
     $stroke = $request->getParsedBody();
 
-    $stroke['id'] = microtime(true) * 1000000;
+    $dbh->query('BEGIN');
+    try {
+        $sql = 'INSERT INTO `stroke` (`room_id`, `created_at`, `stroke_width`, `red`, `green`, `blue`, `alpha`)';
+        $sql .= ' VALUES(:room_id, :created_at, :stroke_width, :red, :green, :blue, :alpha)';
+        $id = execute($dbh, $sql, [':room_id' => $args['id'], ':stroke_width' => $stroke['width'], ':red' => $stroke['red'], ':green' => $stroke['green'], ':blue' => $stroke['blue'], ':alpha' => $stroke['alpha']]);
+
+        $stroke['id'] = $id;
+
+        $sql = 'INSERT INTO `path` (`stroke_id`, `x`, `y`) VALUES (:stroke_id, :x, :y)';
+        foreach ($stroke['path'] as $coord) {
+            execute($dbh, $sql, ['stroke_id' => $id, 'x' => $coord['x'], 'y' => $coord['y']]);
+        }
+
+        $dbh->query('COMMIT');
+    } catch (Exception $e) {
+        $dbh->query('ROLLBACK');
+        // TODO: 500
+    }
+
     return $response->withJson(['stroke' => $stroke]);
 });
 
 $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
+
     sleep(1);
+
+    $dbh = getPDO();
+
+    if ($request->hasHeader('Last-Event-ID')) {
+        $id = $request->getHeaderLine('Last-Event-ID');
+        $sql = 'SELECT * FROM `stroke` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
+        $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':id' => $id]);
+    } else {
+        $sql = 'SELECT * FROM `stroke` WHERE `room_id` = :room_id ORDER BY `id` ASC';
+        $strokes = selectAll($dbh, $sql, [':room_id' => $args['id']]);
+    }
+
+    $body = "retry:500\n\n";
+    foreach ($strokes as &$stroke) {
+        $sql = 'SELECT * FROM `path` WHERE `stroke_id` = :id ORDER BY `id` ASC';
+        $stroke['path'] = selectAll($dbh, $sql, [':id' => $stroke['id']]);
+
+        $body .= 'id:' . $stroke['id'] . "\n\n";
+        $body .= 'data:' . json_encode($stroke) . "\n\n";
+    }
+
     return $response
         //->withHeader('Transfer-Encoding', 'chunked') // TODO: これを付けるとなぜかApacheがbodyを出力しない
         ->withHeader('Content-type', 'text/event-stream')
-        ->write('data: ' . json_encode([
-            'id' => microtime(true) * 1000000,
-            'red' => 128,
-            'green' => 128,
-            'blue' => 128,
-            'alpha' => 0.5,
-            'width' => 5,
-            'points' => [
-                ['x' => 1, 'y' => 2],
-                ['x' => 10, 'y' => 31],
-                ['x' => 44, 'y' => 19],
-                ['x' => 81, 'y' => 61],
-                ['x' => 115, 'y' => 118],
-                ['x' => 174, 'y' => 71],
-                ['x' => 227, 'y' => 124],
-                ['x' => 365, 'y' => 243],
-            ]
-        ]) . "\n\n");
+        ->write($body);
 });
 
 $app->get('/[{name}]', function ($request, $response, $args) {
