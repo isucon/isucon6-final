@@ -44,6 +44,18 @@
   file:
     path=/home/isucon/webapp/.gitignore
     state=absent
+- name: docker pull
+  command: docker pull {{ item }}
+  become_user: isucon
+  with_items:
+    - mysql
+    - nginx:alpine
+- name: docker build
+  command: chdir="/home/isucon/webapp/{{ item }}" docker build .
+  become_user: isucon
+  with_items:
+    - php
+    - react
 - name: place the file of systemd
   copy:
     src=etc/systemd/system/isu.service
@@ -52,4 +64,11 @@
     mode=644
   notify: reload systemctl
 - name: running default application
-  service: name=isu state=running enabled=true
+  service: name=isu state=restarted enabled=true
+- pause: seconds=30
+- name: set mysql data
+  command: "{{ item }}"
+  become_user: isucon
+  with_items:
+    - docker exec webapp_mysql_1 sh -c 'MYSQL_PWD=password mysql -uroot < /sql/create_database.sql'
+    - docker exec webapp_mysql_1 sh -c 'MYSQL_PWD=password mysql -uroot -Disuchannel < /sql/schema.sql'
