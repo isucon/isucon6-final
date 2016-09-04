@@ -20,7 +20,7 @@ CREATE TABLE `stroke` (
   KEY `room_id` (`room_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `path` (
+CREATE TABLE `point` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `stroke_id` int(10) unsigned NOT NULL,
   `x` float NOT NULL,
