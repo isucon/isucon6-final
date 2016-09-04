@@ -118,8 +118,9 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     // TODO: bad request if strokes have reached a certain limit (1000?)
 
     $stroke = $request->getParsedBody();
+    $this->logger->info(var_export($stroke, true));
 
-    $dbh->query('BEGIN');
+    $dbh->beginTransaction();
     try {
         $sql = 'INSERT INTO `stroke` (`room_id`, `created_at`, `stroke_width`, `red`, `green`, `blue`, `alpha`)';
         $sql .= ' VALUES(:room_id, :created_at, :stroke_width, :red, :green, :blue, :alpha)';
@@ -132,9 +133,9 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
             execute($dbh, $sql, ['stroke_id' => $id, 'x' => $coord['x'], 'y' => $coord['y']]);
         }
 
-        $dbh->query('COMMIT');
+        $dbh->commit();
     } catch (Exception $e) {
-        $dbh->query('ROLLBACK');
+        $dbh->rollback;
         // TODO: 500
     }
 
