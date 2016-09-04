@@ -26,7 +26,7 @@ function execute($dbh, $sql, array $params = []) {
 function selectOne($dbh, $sql, array $params = []) {
     $stmt = $dbh->prepare($sql);
     $stmt->execute($params);
-    return $stmt->fetch();
+    return array_pop($stmt->fetchAll());
 }
 
 function selectAll($dbh, $sql, array $params = []) {
@@ -84,7 +84,7 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
     $sql = 'SELECT * FROM `room` WHERE `room`.`id` = :id';
     $room = selectOne($dbh, $sql, [':id' => $args['id']]);
 
-    if ($room === false) {
+    if ($room === null) {
         // TODO: 404
         return $response->withJson(['room' => null]);
     }
@@ -111,7 +111,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     $sql = 'SELECT * FROM `room` WHERE `room`.`id` = :id';
     $room = selectOne($dbh, $sql, [':id' => $args['id']]);
 
-    if ($room === false) {
+    if ($room === null) {
         // TODO: 404
         return $response->withJson(['room' => null]);
     }
