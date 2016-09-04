@@ -16,6 +16,7 @@
   "bugs": {
     "url": "https://github.com/catatsuy/react-ssr-test/issues"
   },
+  "private": true,
   "homepage": "https://github.com/catatsuy/react-ssr-test#readme",
   "dependencies": {
     "async-props": "^0.3.2",
@@ -24,8 +25,8 @@
     "http-proxy-middleware": "^0.15.2",
     "isomorphic-fetch": "^2.2.1",
     "rc-color-picker": "^1.0.0",
-    "react": "^15.1.0",
-    "react-dom": "^15.1.0",
+    "react": "^15.3.0",
+    "react-dom": "^15.3.0",
     "react-router": "^2.4.1"
   },
   "devDependencies": {

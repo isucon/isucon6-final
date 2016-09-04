@@ -64,9 +64,7 @@ app.get('/img/:id', function (req, res) {
       height: 768,
       strokes: json.room.strokes
     }));
-    res.type('image/svg+xml').send(
-    // Waiting for React 15.3.0 https://github.com/facebook/react/pull/6471#event-722021290
-    '<?xml version="1.0" standalone="no"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + svg.replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '));
+    res.type('image/svg+xml').send('<?xml version="1.0" standalone="no"?>' + '<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">' + svg);
   }).catch(function (err) {
     res.status(500).send(err.message);
   });

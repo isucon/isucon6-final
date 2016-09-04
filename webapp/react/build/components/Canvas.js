@@ -24,7 +24,7 @@ var Canvas = function (_React$Component) {
   function Canvas(props) {
     _classCallCheck(this, Canvas);
 
-    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Canvas).call(this, props));
+    var _this = _possibleConstructorReturn(this, (Canvas.__proto__ || Object.getPrototypeOf(Canvas)).call(this, props));
 
     _this.isMouseDown = false;
     return _this;
@@ -71,6 +71,7 @@ var Canvas = function (_React$Component) {
       return _react2.default.createElement(
         "svg",
         {
+          xmlns: "http://www.w3.org/2000/svg",
           version: "1.1",
           baseProfile: "full",
           ref: "svgElement",

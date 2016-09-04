@@ -50,7 +50,7 @@ var Room = function (_React$Component) {
   function Room(props) {
     _classCallCheck(this, Room);
 
-    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Room).call(this, props));
+    var _this = _possibleConstructorReturn(this, (Room.__proto__ || Object.getPrototypeOf(Room)).call(this, props));
 
     _this.state = {
       strokes: props.strokes,
