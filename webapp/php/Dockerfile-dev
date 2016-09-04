@@ -8,4 +8,4 @@ COPY . /var/www
 
 WORKDIR /var/www
 
-RUN ./composer.phar install --dev
+RUN ./composer.phar install

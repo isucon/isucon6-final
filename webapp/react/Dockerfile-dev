@@ -1,0 +1,12 @@
+FROM alpine:3.4
+
+RUN apk update \
+  && apk --update add nodejs
+
+RUN mkdir -p /react
+WORKDIR /react
+
+RUN npm install -g node-dev
+
+# /react/build ディレクトリは外側のディレクトリをマウントする
+ENTRYPOINT ["node-dev", "/react/build/server.js"]

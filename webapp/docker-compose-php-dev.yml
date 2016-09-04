@@ -22,9 +22,11 @@ services:
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
   react:
-    build: ./react
+    build:
+      context: ./react
+      dockerfile: Dockerfile-dev
     volumes:
-      - ./react/build:/app:ro
+      - ./react/build:/react/build:ro
     environment:
       API: http://api
     links:

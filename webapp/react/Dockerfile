@@ -3,6 +3,15 @@ FROM alpine:3.4
 RUN apk update \
   && apk --update add nodejs
 
-VOLUME ["/app"]
+RUN mkdir -p /react
+WORKDIR /react
 
-ENTRYPOINT ["node", "/app/server.js"]
+# キャッシュ効率を上げるためにまずpackage.jsonだけcopyしてnpm installする
+COPY ./package.json /react/package.json
+RUN npm install
+
+# その後他のファイルも含めてcopyしてbabelやwebpackの生成を行う
+COPY . /react
+RUN npm run build
+
+ENTRYPOINT ["node", "/react/build/server.js"]
