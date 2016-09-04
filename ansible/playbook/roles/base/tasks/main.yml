@@ -1,0 +1,5 @@
+---
+- name: apt-get update
+  raw: apt-get update -qq
+- name: Install python
+  raw: apt-get install -qq python
