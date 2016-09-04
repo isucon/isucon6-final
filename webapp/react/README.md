@@ -1,15 +1,8 @@
-# react-ssr-test
+# react
 
-## build
-
-```
-npm run build
-```
-
-This builds everyting in the `build` directory
-
-## run
+Use https://github.com/cortesi/modd to build everyting into `build/`
 
 ```
-node build/server.js
+npm install
+modd
 ```
