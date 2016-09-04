@@ -13,6 +13,7 @@ function getPDO() {
     $dbh = new PDO("mysql:host={$host};port={$port};dbname={$dbname}", $user, $pass);
     $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $dbh->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
+    $dbh->setAttribute(PDO::ATTR_EMULATE_PREPARES, false); // キャストしなくてよくなる
     return $dbh;
 }
 
@@ -25,7 +26,7 @@ function execute($dbh, $sql, array $params = []) {
 function selectOne($dbh, $sql, array $params = []) {
     $stmt = $dbh->prepare($sql);
     $stmt->execute($params);
-    return $stmt->fetchAll();
+    return $stmt->fetch();
 }
 
 function selectAll($dbh, $sql, array $params = []) {
@@ -98,7 +99,7 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
 
     $room['strokes'] = $strokes;
 
-    $this->logger->info(var_export($rooms, true));
+    $this->logger->info(var_export($room, true));
     return $response->withJson(['room' => $room]);
 });
 
