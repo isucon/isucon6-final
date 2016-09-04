@@ -42,11 +42,11 @@ $settings = [
     // Monolog settings
     'logger' => [
         'name' => 'isucon6',
-        'path' => __DIR__ . '/../logs/app.log',
+        'path' => 'php://stdout',
         'level' => \Monolog\Logger::DEBUG,
     ],
 ];
-$app = new \Slim\App($settings);
+$app = new \Slim\App(['settings' => $settings]);
 
 $container = $app->getContainer();
 
@@ -54,7 +54,6 @@ $container = $app->getContainer();
 $container['logger'] = function ($c) {
     $settings = $c->get('settings')['logger'];
     $logger = new Monolog\Logger($settings['name']);
-    $logger->pushProcessor(new Monolog\Processor\UidProcessor());
     $logger->pushHandler(new Monolog\Handler\StreamHandler($settings['path'], $settings['level']));
     return $logger;
 };
@@ -64,13 +63,13 @@ $container['logger'] = function ($c) {
 $app->get('/api/rooms', function ($request, $response, $args) {
     $dbh = getPDO();
     // TODO: max_created_at も使うべきか？
-    $sql = 'SELECT `room`.`name`, `room`.`created_at`, `room`.`canvas_width`, `room`.`canvas_height` FROM `room` JOIN';
+    $sql = 'SELECT `room`.* FROM `room` JOIN';
     $sql .= ' (SELECT `room_id`, MAX(`created_at`) AS `max_created_at` FROM `stroke`';
     $sql .= ' GROUP BY `room_id` ORDER BY `max_created_at` DESC LIMIT 30) AS `t`';
     $sql .= ' ON `room`.`id` = `t`.`room_id`';
     // TODO: これだと一画も描かれてない部屋が取得できない
     $rooms = selectAll($dbh, $sql);
-    //$this->logger->info(var_export($rooms, true));
+    $this->logger->info(var_export($rooms, true));
     return $response->withJson(['rooms' => $rooms]);
 });
 
@@ -98,6 +97,8 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
     }
 
     $room['strokes'] = $strokes;
+
+    $this->logger->info(var_export($rooms, true));
     return $response->withJson(['room' => $room]);
 });
 
@@ -167,14 +168,6 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         //->withHeader('Transfer-Encoding', 'chunked') // TODO: これを付けるとなぜかApacheがbodyを出力しない
         ->withHeader('Content-type', 'text/event-stream')
         ->write($body);
-});
-
-$app->get('/[{name}]', function ($request, $response, $args) {
-    // Sample log message
-    $this->logger->info("Slim-Skeleton '/' route");
-
-    // Render index view
-    return $this->renderer->render($response, 'index.phtml', $args);
 });
 
 // Run app
