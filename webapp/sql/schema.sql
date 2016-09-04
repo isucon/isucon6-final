@@ -15,7 +15,7 @@ CREATE TABLE `stroke` (
   `red` tinyint(3) unsigned NOT NULL,
   `green` tinyint(3) unsigned NOT NULL,
   `blue` tinyint(3) unsigned NOT NULL,
-  `alpha` tinyint(3) unsigned NOT NULL,
+  `alpha` float unsigned NOT NULL,
   PRIMARY KEY (`id`),
   KEY `room_id` (`room_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
