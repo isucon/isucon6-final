@@ -118,15 +118,15 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     // TODO: bad request if strokes have reached a certain limit (1000?)
 
     $stroke = $request->getParsedBody();
-    $this->logger->info(var_export($stroke, true));
 
     $dbh->beginTransaction();
     try {
+        // TODO: created_atはDEFAULT CURRENT_TIMESTAMPでもいいか悩む
         $sql = 'INSERT INTO `stroke` (`room_id`, `created_at`, `stroke_width`, `red`, `green`, `blue`, `alpha`)';
         $sql .= ' VALUES(:room_id, :created_at, :stroke_width, :red, :green, :blue, :alpha)';
-        $id = execute($dbh, $sql, [':room_id' => $args['id'], ':stroke_width' => $stroke['width'], ':red' => $stroke['red'], ':green' => $stroke['green'], ':blue' => $stroke['blue'], ':alpha' => $stroke['alpha']]);
+        $id = execute($dbh, $sql, [':room_id' => $args['id'], ':created_at' => date('Y-m-d H:i:s'), ':stroke_width' => $stroke['width'], ':red' => $stroke['red'], ':green' => $stroke['green'], ':blue' => $stroke['blue'], ':alpha' => $stroke['alpha']]);
 
-        $stroke['id'] = $id;
+        $stroke['id'] = (int)$id;
 
         $sql = 'INSERT INTO `point` (`stroke_id`, `x`, `y`) VALUES (:stroke_id, :x, :y)';
         foreach ($stroke['points'] as $coord) {
@@ -136,9 +136,11 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         $dbh->commit();
     } catch (Exception $e) {
         $dbh->rollback;
+        $this->logger->error($e->getMessage());
         // TODO: 500
     }
 
+    $this->logger->info(var_export($stroke, true));
     return $response->withJson(['stroke' => $stroke]);
 });
 
