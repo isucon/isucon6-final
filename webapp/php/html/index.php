@@ -37,7 +37,7 @@ function selectAll($dbh, $sql, array $params = []) {
 
 // Instantiate the app
 $settings = [
-    'displayErrorDetails' => true, // set to false in production
+    'displayErrorDetails' => getenv('MYSQL_HOST') !== 'production',
     'addContentLengthHeader' => false, // Allow the web server to send the content-length header
 
     // Monolog settings

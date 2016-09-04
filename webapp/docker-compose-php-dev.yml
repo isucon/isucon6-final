@@ -10,13 +10,13 @@ services:
   api:
     build:
       context: ./php
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile-dev
     volumes:
       - ./php/html:/var/www/html:ro
     links:
       - mysql
     environment:
-      ISUCON_ENV: production
+      ISUCON_ENV: development
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
