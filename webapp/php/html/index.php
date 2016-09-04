@@ -122,9 +122,9 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     $dbh->beginTransaction();
     try {
         // TODO: created_atはDEFAULT CURRENT_TIMESTAMPでもいいか悩む
-        $sql = 'INSERT INTO `stroke` (`room_id`, `created_at`, `stroke_width`, `red`, `green`, `blue`, `alpha`)';
-        $sql .= ' VALUES(:room_id, :created_at, :stroke_width, :red, :green, :blue, :alpha)';
-        $id = execute($dbh, $sql, [':room_id' => $args['id'], ':created_at' => date('Y-m-d H:i:s'), ':stroke_width' => $stroke['width'], ':red' => $stroke['red'], ':green' => $stroke['green'], ':blue' => $stroke['blue'], ':alpha' => $stroke['alpha']]);
+        $sql = 'INSERT INTO `stroke` (`room_id`, `created_at`, `width`, `red`, `green`, `blue`, `alpha`)';
+        $sql .= ' VALUES(:room_id, :created_at, :width, :red, :green, :blue, :alpha)';
+        $id = execute($dbh, $sql, [':room_id' => $args['id'], ':created_at' => date('Y-m-d H:i:s'), ':width' => $stroke['width'], ':red' => $stroke['red'], ':green' => $stroke['green'], ':blue' => $stroke['blue'], ':alpha' => $stroke['alpha']]);
 
         $stroke['id'] = (int)$id;
 

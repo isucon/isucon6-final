@@ -11,7 +11,7 @@ CREATE TABLE `stroke` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `room_id` int(10) unsigned NOT NULL,
   `created_at` datetime NOT NULL,
-  `stroke_width` tinyint(3) unsigned NOT NULL,
+  `width` tinyint(3) unsigned NOT NULL,
   `red` tinyint(3) unsigned NOT NULL,
   `green` tinyint(3) unsigned NOT NULL,
   `blue` tinyint(3) unsigned NOT NULL,
