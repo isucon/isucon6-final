@@ -103,7 +103,20 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
     return $response->withJson(['room' => $room]);
 });
 
-// TODO: $app->post('/api/rooms', ...)
+$app->post('/api/rooms', function ($request, $response, $args) {
+    $dbh = getPDO();
+
+    $room = $request->getParsedBody();
+    // TODO: param check
+
+    $sql = 'INSERT INTO `room` (`name`, `created_at`, `canvas_width`, `canvas_height`)';
+    $sql .= ' VALUES (:name, :created_at, :canvas_width, :canvas_height)';
+    $id = execute($dbh, $sql, [':name' => $room['name'], ':created_at' => date('Y-m-d H:i:s'), ':canvas_width' => $room['canvas_width'], ':canvas_height' => $room['canvas_height']]);
+
+    $room['id'] = (int)$id;
+    $room['strokes'] = [];
+    return $response->withJson(['room' => $room]);
+});
 
 $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     $dbh = getPDO();
@@ -118,6 +131,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     // TODO: bad request if strokes have reached a certain limit (1000?)
 
     $stroke = $request->getParsedBody();
+    // TODO: param check
 
     $dbh->beginTransaction();
     try {

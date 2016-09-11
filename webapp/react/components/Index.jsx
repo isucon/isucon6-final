@@ -15,18 +15,44 @@ class Index extends React.Component {
       });
   }
 
+  handleCreateNewRoom(ev) {
+    ev.preventDefault();
+
+    const apiBaseUrl = window.apiBaseUrl;
+    const csrfToken = window.csrfToken;
+
+    const room = {
+      name: this.refs.newRoomName.value,
+      canvas_width: 1028,
+      canvas_height: 768,
+    };
+
+    if (room.name === '') {
+      return; // エラーメッセージ
+    }
+
+    fetch(`${apiBaseUrl}/api/rooms`, {
+      method: 'POST',
+      body: JSON.stringify(room),
+      headers: { 'x-csrf-token': csrfToken, 'content-type': 'application/json' },
+    })
+      .then((result) => result.json())
+      .then((res) => { // TODO: エラー処理
+        this.context.router.push({pathname: `/rooms/${res.room.id}`, query: '', state: ''});
+      });
+  }
+
   render() {
     return (
       <div className="index">
         <div>
-          <form method="POST" action="/rooms" className="new-room">
-            <h3>新規部屋作成</h3>
+          <form onSubmit={(ev) => this.handleCreateNewRoom(ev)}>
             <label>
-              部屋名:
-              <input type="text" placeholder="例: ひたすら椅子を描く部屋" required name="name" />
+              新規部屋名:
+              <input type="text" placeholder="例: ひたすら椅子を描く部屋" ref="newRoomName" />
             </label>
             <input type="hidden" name="token" value="" />
-            <button className="create">作成</button>
+            <button type="submit">作成</button>
           </form>
         </div>
         <div className="mdl-grid">
@@ -65,5 +91,9 @@ class Index extends React.Component {
 Index.propTypes = {
   rooms: React.PropTypes.array,
 };
+
+Index.contextTypes = {
+  router: React.PropTypes.object.isRequired,
+}
 
 export default Index;
