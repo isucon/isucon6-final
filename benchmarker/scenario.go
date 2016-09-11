@@ -94,7 +94,7 @@ func makeNewRoomScenario(s *checker.Session) {
 	var csrfToken string
 
 	indexChecker := checkHTML(func(doc *goquery.Document) error {
-		csrfToken = "token"
+		csrfToken, _ = doc.Find("html").Attr("data-csrf-token")
 		return nil
 	})
 
@@ -133,11 +133,13 @@ func makeNewRoomScenario(s *checker.Session) {
 	}
 	apiRooms := checker.NewAction("POST", "/api/rooms")
 	apiRooms.Description = "ルーム作成のPOSTができる"
+	apiRooms.Headers = map[string]string{
+		"x-csrf-token": csrfToken,
+	}
 	apiRooms.PostData = map[string]string{
 		"canvas_height": "1000",
 		"canvas_width":  "1000",
 		"name":          util.RandomLUNStr(10),
-		"csrf_token":    csrfToken,
 	}
 	apiRooms.CheckFunc = apiRoomsChecker
 	arerr := apiRooms.Play(s)
