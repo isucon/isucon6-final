@@ -70,7 +70,7 @@ $app->get('/api/rooms', function ($request, $response, $args) {
     $sql .= ' ON `room`.`id` = `t`.`room_id`';
     // TODO: これだと一画も描かれてない部屋が取得できない
     $rooms = selectAll($dbh, $sql);
-    $this->logger->info(var_export($rooms, true));
+    //$this->logger->info(var_export($rooms, true));
     return $response->withJson(['rooms' => $rooms]);
 });
 
@@ -109,7 +109,7 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
 
     $room['strokes'] = $strokes;
 
-    $this->logger->info(var_export($room, true));
+    //$this->logger->info(var_export($room, true));
     return $response->withJson(['room' => $room]);
 });
 
