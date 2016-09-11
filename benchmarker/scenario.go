@@ -12,8 +12,8 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/catatsuy/private-isu/benchmarker/checker"
-	"github.com/catatsuy/private-isu/benchmarker/util"
+	"github.com/catatsuy/isucon6-final/benchmarker/checker"
+	"github.com/catatsuy/isucon6-final/benchmarker/util"
 )
 
 func checkHTML(f func(*goquery.Document) error) func(io.Reader) error {

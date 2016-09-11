@@ -11,7 +11,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/catatsuy/private-isu/benchmarker/cache"
+	"github.com/catatsuy/isucon6-final/benchmarker/cache"
 )
 
 type Action struct {
