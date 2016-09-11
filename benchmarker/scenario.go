@@ -1,11 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -88,7 +91,71 @@ func loadAssets(s *checker.Session) {
 }
 
 func makeNewRoomScenario(s *checker.Session) {
+	var csrfToken string
 
+	indexChecker := checkHTML(func(doc *goquery.Document) error {
+		csrfToken = "token"
+		return nil
+	})
+
+	index := checker.NewAction("GET", "/")
+	index.Description = "インデックスページが表示できること"
+	index.CheckFunc = indexChecker
+	err := index.Play(s)
+	if err != nil {
+		return
+	}
+
+	var roomID int
+
+	apiRoomsChecker := func(body io.Reader) error {
+		b, err := ioutil.ReadAll(body)
+		if err != nil {
+			return err
+		}
+		// {"room":{"name":"abc","canvas_width":1028,"canvas_height":768,"id":5,"strokes":[]}}
+		type roomInfo struct {
+			Name         string `json:"name"`
+			CanvasWidth  int    `json:"canvas_width"`
+			CanvasHeight int    `json:"canvas_height"`
+			ID           int    `json:"id"`
+		}
+		type room struct {
+			Room roomInfo `json:"room"`
+		}
+		v := room{}
+		e := json.Unmarshal(b, &v)
+		if e != nil {
+			return e
+		}
+		roomID = v.Room.ID
+		return nil
+	}
+	apiRooms := checker.NewAction("POST", "/api/rooms")
+	apiRooms.Description = "ルーム作成のPOSTができる"
+	apiRooms.PostData = map[string]string{
+		"canvas_height": "1000",
+		"canvas_width":  "1000",
+		"name":          util.RandomLUNStr(10),
+		"csrf_token":    csrfToken,
+	}
+	apiRooms.CheckFunc = apiRoomsChecker
+	arerr := apiRooms.Play(s)
+	if arerr != nil {
+		return
+	}
+
+	apiRoomsIDChecker := checkHTML(func(doc *goquery.Document) error {
+		return nil
+	})
+
+	apiRoomsID := checker.NewAction("GET", "/api/rooms/"+strconv.Itoa(roomID))
+	apiRoomsID.Description = "作成したルームが見れる"
+	apiRoomsID.CheckFunc = apiRoomsIDChecker
+	ariderr := apiRoomsID.Play(s)
+	if ariderr != nil {
+		return
+	}
 }
 
 // インデックスにリクエストして「もっと見る」を最大10ページ辿る
