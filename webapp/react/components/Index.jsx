@@ -38,7 +38,7 @@ class Index extends React.Component {
     })
       .then((result) => result.json())
       .then((res) => { // TODO: エラー処理
-        this.context.router.push({pathname: `/rooms/${res.room.id}`, query: '', state: ''});
+        this.context.router.push({ pathname: `/rooms/${res.room.id}`, query: '', state: '' });
       });
   }
 
@@ -52,7 +52,7 @@ class Index extends React.Component {
               <input type="text" placeholder="例: ひたすら椅子を描く部屋" ref="newRoomName" />
             </label>
             <input type="hidden" name="token" value="" />
-            <button type="submit">作成</button>
+            <button type="submit">作成する</button>
           </form>
         </div>
         <div className="mdl-grid">
