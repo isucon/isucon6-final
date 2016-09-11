@@ -27,8 +27,8 @@ app.get('/img/:id', (req, res) => {
     .then((json) => {
       const svg = renderToStaticMarkup(
         <Canvas
-          width={1028}
-          height={768}
+          width={json.room.canvas_width}
+          height={json.room.canvas_height}
           strokes={json.room.strokes}
         />
       );
