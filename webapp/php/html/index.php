@@ -74,8 +74,18 @@ $app->get('/api/rooms', function ($request, $response, $args) {
     return $response->withJson(['rooms' => $rooms]);
 });
 
-$app->get('/api/csrf_token', function ($request, $response, $args) {
-    return $response->withJson(['token' => md5(rand())]);
+$app->post('/api/csrf_token', function ($request, $response, $args) {
+    $dbh = getPDO();
+
+    $sql = 'INSERT INTO `csrf_token` (`token`, `created_at`) VALUES';
+    $sql .= ' (SHA2(RAND(), 512), NOW())';
+
+    $id = execute($dbh, $sql);
+
+    $sql = 'SELECT * FROM `csrf_token` WHERE id = :id';
+    $token = selectOne($dbh, $sql, [':id' => $id]);
+
+    return $response->withJson(['token' => $token['token']]);
 });
 
 $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {

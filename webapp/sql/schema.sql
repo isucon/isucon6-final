@@ -28,3 +28,11 @@ CREATE TABLE `point` (
   PRIMARY KEY (`id`),
   KEY `room_id` (`stroke_id`)
 );
+
+CREATE TABLE `csrf_token` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `token` varbinary(128) NOT NULL,
+  `created_at` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY (`token`)
+);

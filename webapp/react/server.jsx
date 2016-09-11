@@ -53,7 +53,9 @@ app.get('*', (req, res) => {
       res.redirect(302, redirectLocation.pathname + redirectLocation.search);
     } else if (renderProps) {
 
-      fetch(`${apiBaseUrl}/api/csrf_token`)
+      fetch(`${apiBaseUrl}/api/csrf_token`, {
+        method: 'POST',
+      })
         .then((result) => result.json())
         .then((json) => {
           const csrfToken = json.token;
