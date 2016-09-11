@@ -28,6 +28,8 @@ services:
     volumes:
       - ./react/build:/react/build:ro
     environment:
+      ISUCON_ENV: development
+      NODE_ENV: development
       API: http://api
     links:
       - api

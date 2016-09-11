@@ -26,6 +26,8 @@ services:
       context: ./react
       dockerfile: Dockerfile
     environment:
+      ISUCON_ENV: production
+      NODE_ENV: production
       API: http://api
     links:
       - api
