@@ -37,6 +37,24 @@ class Room extends React.Component {
     };
   }
 
+  componentDidMount() {
+    this.eventSource = new EventSource(`/api/strokes/rooms/${this.props.id}`);
+    this.eventSource.onmessage = (ev) => {
+      if (ev.data) {
+        const strokes = this.state.strokes;
+        const stroke = JSON.parse(ev.data);
+        const isNew = !strokes.some((s) => s.id === stroke.id);
+        if (isNew) {
+          this.setState({ strokes: strokes.concat([stroke]).sort((a, b) => b.id - a.id) });
+        }
+      }
+    };
+  }
+
+  componentWillUnmount() {
+    this.eventSource.close();
+  }
+
   addPointToStroke(orig, point) {
     return {
       id: orig.id,

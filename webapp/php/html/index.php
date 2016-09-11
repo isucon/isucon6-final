@@ -205,14 +205,12 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
     $dbh = getPDO();
 
+    $lastId = 0;
     if ($request->hasHeader('Last-Event-ID')) {
-        $id = $request->getHeaderLine('Last-Event-ID');
-        $sql = 'SELECT * FROM `stroke` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
-        $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':id' => $id]);
-    } else {
-        $sql = 'SELECT * FROM `stroke` WHERE `room_id` = :room_id ORDER BY `id` ASC';
-        $strokes = selectAll($dbh, $sql, [':room_id' => $args['id']]);
+        $lastId = (int)$request->getHeaderLine('Last-Event-ID');
     }
+    $sql = 'SELECT * FROM `stroke` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
+    $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':id' => $lastId]);
 
     $body = "retry:500\n\n";
     foreach ($strokes as &$stroke) {
