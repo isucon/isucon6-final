@@ -109,17 +109,17 @@ func (cli *CLI) Run(args []string) int {
 		return ExitCodeError
 	}
 
-	indexMoreAndMoreScenarioCh := makeChanBool(2)
+	makeNewRoomScenarioCh := makeChan(2)
 
 	timeoutCh := time.After(BenchmarkTimeout)
 
 L:
 	for {
 		select {
-		case <-indexMoreAndMoreScenarioCh:
+		case <-makeNewRoomScenarioCh:
 			go func() {
-				indexMoreAndMoreScenario(checker.NewSession())
-				indexMoreAndMoreScenarioCh <- true
+				makeNewRoomScenario(checker.NewSession())
+				makeNewRoomScenarioCh <- struct{}{}
 			}()
 		case <-timeoutCh:
 			break L
@@ -160,10 +160,10 @@ func outputNeedToContactUs(message string) {
 	outputResultJson(false, []string{"！！！主催者に連絡してください！！！", message})
 }
 
-func makeChanBool(len int) chan bool {
-	ch := make(chan bool, len)
+func makeChan(len int) chan struct{} {
+	ch := make(chan struct{}, len)
 	for i := 0; i < len; i++ {
-		ch <- true
+		ch <- struct{}{}
 	}
 	return ch
 }

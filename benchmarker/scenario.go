@@ -87,6 +87,10 @@ func loadAssets(s *checker.Session) {
 	a.Play(s)
 }
 
+func makeNewRoomScenario(s *checker.Session) {
+
+}
+
 // インデックスにリクエストして「もっと見る」を最大10ページ辿る
 // WaitAfterTimeout秒たったら問答無用で打ち切る
 func indexMoreAndMoreScenario(s *checker.Session) {
