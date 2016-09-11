@@ -35,6 +35,25 @@ function selectAll($dbh, $sql, array $params = []) {
     return $stmt->fetchAll();
 }
 
+
+class TokenException extends Exception {}
+
+function checkToken($request) {
+    if (!$request->hasHeader('x-csrf-token')) {
+        throw new TokenException('Token not set. Please reload your browser window.');
+    }
+
+    $dbh = getPDO();
+    $sql = 'SELECT * FROM `csrf_token` WHERE `token` = :token';
+    $token = selectOne($dbh, $sql, [':token' => $request->getHeaderLine('x-csrf-token')]);
+    if (is_null($token)) {
+        throw new TokenException('Invalid token. Please reload your browser window.');
+    }
+    if (time() - strtotime($token['created_at']) > 60 * 60 * 24 * 7) {
+        throw new TokenException('Expired token. Please reload your browser window.');
+    }
+}
+
 // Instantiate the app
 $settings = [
     'displayErrorDetails' => getenv('ISUCON_ENV') !== 'production',
@@ -114,6 +133,12 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
 });
 
 $app->post('/api/rooms', function ($request, $response, $args) {
+    try {
+        checkToken($request);
+    } catch (TokenException $e) {
+        return $response->withStatus(400)->withJson(['error' => $e->getMessage()]);
+    }
+
     $dbh = getPDO();
 
     $room = $request->getParsedBody();
@@ -129,6 +154,12 @@ $app->post('/api/rooms', function ($request, $response, $args) {
 });
 
 $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
+    try {
+        checkToken($request);
+    } catch (TokenException $e) {
+        return $response->withStatus(400)->withJson(['error' => $e->getMessage()]);
+    }
+
     $dbh = getPDO();
 
     $sql = 'SELECT * FROM `room` WHERE `room`.`id` = :id';
@@ -164,7 +195,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         // TODO: 500
     }
 
-    $this->logger->info(var_export($stroke, true));
+    //$this->logger->info(var_export($stroke, true));
     return $response->withJson(['stroke' => $stroke]);
 });
 
