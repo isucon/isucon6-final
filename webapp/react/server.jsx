@@ -53,7 +53,7 @@ app.get('*', (req, res) => {
     } else if (redirectLocation) {
       res.redirect(302, redirectLocation.pathname + redirectLocation.search);
     } else if (!renderProps) {
-      res.status(404).send('Not found')
+      res.status(404).send('Not found');
     }
 
     fetch(`${apiBaseUrl}/api/csrf_token`, {
