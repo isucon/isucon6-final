@@ -4,6 +4,10 @@ import { Router, browserHistory } from 'react-router';
 import routes from './routes';
 import AsyncProps from 'async-props';
 
+// for material-ui https://www.npmjs.com/package/material-ui
+import injectTapEventPlugin from 'react-tap-event-plugin';
+injectTapEventPlugin();
+
 window.csrfToken = document.documentElement.dataset.csrfToken;
 window.apiBaseUrl = location.origin;
 

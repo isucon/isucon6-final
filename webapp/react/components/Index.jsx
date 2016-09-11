@@ -2,6 +2,10 @@ import React from 'react';
 import { Link } from 'react-router';
 import fetchJson from '../util/fetch-json';
 import NotificationSystem from 'react-notification-system';
+import { GridList, GridTile } from 'material-ui/GridList';
+import IconButton from 'material-ui/IconButton';
+import ModeEdit from 'material-ui/svg-icons/editor/mode-edit';
+// import StarBorder from 'material-ui/svg-icons/toggle/star-border';
 
 class Index extends React.Component {
   static loadProps({ params, loadContext }, cb) {
@@ -64,33 +68,32 @@ class Index extends React.Component {
             <button type="submit">作成する</button>
           </form>
         </div>
-        <div className="mdl-grid">
+        <GridList
+          cellHeight={222}
+          cols={4}
+        >
           {this.props.rooms.map((room) => (
-            <div className="mdl-cell mdl-cell--3-col mdl-card mdl-shadow--2dp" key={room.id}>
-              <div className="mdl-card__media">
-                <img
-                  style={{ maxWidth: '100%' }}
-                  className="thumbnail"
-                  src={`/img/${room.id}`}
-                  alt={room.name}
-                />
-              </div>
-              <div className="mdl-card__supporting-text">
-                <h2 className="mdl-card__title-text">{room.name}</h2>
-                <p>{room.watcherCount}人が参加</p>
-              </div>
-              <div className="mdl-card__actions mdl-card--border">
-                <Link
-                  to={`/rooms/${room.id}`}
-                  className="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect"
-                >
-                  入室
-                </Link>
-              </div>
-            </div>
+            <GridTile
+              key={room.id}
+              title={room.name}
+              subtitle={`${room.watcherCount}人が参加`}
+              actionIcon={
+                  <Link to={`/rooms/${room.id}`}>
+                    <IconButton>
+                      <ModeEdit color="white" />
+                    </IconButton>
+                  </Link>
+                }
+            >
+              <img
+                style={{ maxWidth: '100%' }}
+                src={`/img/${room.id}`}
+                alt={room.name}
+              />
+            </GridTile>
           ))
           }
-        </div>
+        </GridList>
 
       </div>
     );
@@ -107,3 +110,4 @@ Index.contextTypes = {
 };
 
 export default Index;
+
