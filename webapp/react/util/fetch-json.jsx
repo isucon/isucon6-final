@@ -10,6 +10,7 @@ export default function fetchJson(...args) {
       return response.json();
     })
     .catch((err) => {
+      console.error(err.message);
       throw new Error('Unexpected response from server');
     })
     .then((json) => {
