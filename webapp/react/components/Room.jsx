@@ -1,13 +1,13 @@
 import React from 'react';
 import ColorPicker from 'rc-color-picker';
 import Canvas from './Canvas';
+import fetchJson from '../util/fetch-json';
 
 class Room extends React.Component {
   static loadProps({ params, loadContext }, cb) {
     const apiBaseUrl = (loadContext || window).apiBaseUrl;
 
-    fetch(`${apiBaseUrl}/api/rooms/${params.id}`)
-    .then((result) => result.json())
+    fetchJson(`${apiBaseUrl}/api/rooms/${params.id}`)
     .then((res) => {
       cb(null, {
         id: res.room.id,
@@ -17,6 +17,9 @@ class Room extends React.Component {
         height: res.room.canvas_height,
         csrfToken: (loadContext || window).csrfToken,
       });
+    })
+    .catch((err) => {
+      cb(err);
     });
   }
 
@@ -71,16 +74,10 @@ class Room extends React.Component {
       tmpStroke: this.addPointToStroke(this.state.tmpStroke, point),
     });
 
-    fetch(`/api/strokes/rooms/${this.props.id}`, {
+    fetchJson(`/api/strokes/rooms/${this.props.id}`, {
       method: 'POST',
       body: JSON.stringify(this.state.tmpStroke),
       headers: { 'x-csrf-token': this.props.csrfToken, 'content-type': 'application/json' },
-    })
-    .then((result) => {
-      if (result.status === 200) {
-        return result.json();
-      }
-      throw result.json() || (`status ${result.status}`);
     })
     .then((res) => {
       const stroke = res.stroke;

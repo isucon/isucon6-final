@@ -1,18 +1,20 @@
 import React from 'react';
 import { Link } from 'react-router';
-import fetch from 'isomorphic-fetch';
+import fetchJson from '../util/fetch-json';
 
 class Index extends React.Component {
   static loadProps({ params, loadContext }, cb) {
     const apiBaseUrl = (loadContext || window).apiBaseUrl;
 
-    fetch(`${apiBaseUrl}/api/rooms`)
-      .then((result) => result.json())
+    fetchJson(`${apiBaseUrl}/api/rooms`)
       .then((res) => {
         cb(null, {
           rooms: res.rooms,
           csrfToken: (loadContext || window).csrfToken,
         });
+      })
+      .catch((err) => {
+        cb(err); // TODO
       });
   }
 
@@ -26,17 +28,20 @@ class Index extends React.Component {
     };
 
     if (room.name === '') {
-      return; // エラーメッセージ
+      return; // TODO: エラーメッセージ
     }
 
-    fetch('/api/rooms', {
+    fetchJson('/api/rooms', {
       method: 'POST',
       body: JSON.stringify(room),
       headers: { 'x-csrf-token': this.props.csrfToken, 'content-type': 'application/json' },
     })
-      .then((result) => result.json())
-      .then((res) => { // TODO: エラー処理
+      .then((res) => {
         this.context.router.push({ pathname: `/rooms/${res.room.id}`, query: '', state: '' });
+      })
+      .catch((err) => {
+        console.log(err);
+        // TODO: エラー処理
       });
   }
 

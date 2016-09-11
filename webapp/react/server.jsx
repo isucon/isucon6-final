@@ -6,7 +6,7 @@ import escape from 'escape-html';
 import { match, RouterContext } from 'react-router';
 import routes from './routes';
 import AsyncProps, { loadPropsOnServer } from 'async-props';
-import fetch from 'isomorphic-fetch';
+import fetchJson from './util/fetch-json';
 import proxy from 'http-proxy-middleware';
 import Canvas from './components/Canvas';
 
@@ -22,8 +22,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/*', proxy({ target: apiBaseUrl, changeOrigin: true }));
 
 app.get('/img/:id', (req, res) => {
-  fetch(`${apiBaseUrl}/api/rooms/${req.params.id}`)
-    .then((result) => result.json())
+  fetchJson(`${apiBaseUrl}/api/rooms/${req.params.id}`)
     .then((json) => {
       const svg = renderToStaticMarkup(
         <Canvas
@@ -39,7 +38,8 @@ app.get('/img/:id', (req, res) => {
       );
     })
     .catch((err) => {
-      res.status(500).send(err.message);
+      res.status(500);
+      console.log(`error: ${err.message}`);
     });
 });
 
@@ -48,42 +48,42 @@ app.get('*', (req, res) => {
   match({ routes, location: req.url }, (err, redirectLocation, renderProps) => {
     if (err) {
       console.error(err)
-      res.status(500).send(err.message);
+      res.status(500);
+      console.log(err.message);
     } else if (redirectLocation) {
       res.redirect(302, redirectLocation.pathname + redirectLocation.search);
-    } else if (renderProps) {
-
-      fetch(`${apiBaseUrl}/api/csrf_token`, {
-        method: 'POST',
-      })
-        .then((result) => result.json())
-        .then((json) => {
-          const csrfToken = json.token;
-          const loadContext = { apiBaseUrl, csrfToken };
-
-          // https://github.com/ryanflorence/async-props
-          loadPropsOnServer(renderProps, loadContext, (err, asyncProps, scriptTag) => {
-            if (err) {
-              console.error(err)
-              res.status(500).send(err.message);
-            } else {
-              const appHTML = renderToString(
-                <AsyncProps {...renderProps} {...asyncProps} />
-              );
-
-              const html = createHtml(appHTML, scriptTag, csrfToken);
-
-              res.status(200).send(html);
-            }
-          });
-
-        })
-        .catch((err) => {
-          res.status(500).send(err.message);
-        });
-    } else {
+    } else if (!renderProps) {
       res.status(404).send('Not found')
     }
+
+    fetch(`${apiBaseUrl}/api/csrf_token`, {
+      method: 'POST',
+    })
+      .then((result) => result.json())
+      .then((json) => {
+        const csrfToken = json.token;
+        const loadContext = { apiBaseUrl, csrfToken };
+
+        // https://github.com/ryanflorence/async-props
+        loadPropsOnServer(renderProps, loadContext, (err, asyncProps, scriptTag) => {
+          if (err) {
+            console.error(err)
+            res.status(500).send(err.message);
+          } else {
+            const appHTML = renderToString(
+              <AsyncProps {...renderProps} {...asyncProps} />
+            );
+
+            const html = createHtml(appHTML, scriptTag, csrfToken);
+
+            res.status(200).send(html);
+          }
+        });
+
+      })
+      .catch((err) => {
+        res.status(500).send(err.message);
+      });
   });
 });
 
