@@ -33,13 +33,6 @@ services:
       - api
     environment:
       API: http://api:80
-  nginx:
-    image: nginx:alpine
+      PORT: 8800
     ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-    command: "nginx"
-    links:
-      - api
-      - react
+      - "80:8800"
