@@ -4,11 +4,9 @@ import Canvas from './Canvas';
 
 class Room extends React.Component {
   static loadProps({ params, loadContext }, cb) {
-    const apiBaseUrl = loadContext ? loadContext.apiBaseUrl : window.apiBaseUrl;
-    const csrfToken = loadContext ? loadContext.csrfToken : window.csrfToken;
-    fetch(`${apiBaseUrl}/api/rooms/${params.id}`, {
-      headers: { 'x-csrf-token': csrfToken },
-    })
+    const apiBaseUrl = (loadContext || window).apiBaseUrl;
+
+    fetch(`${apiBaseUrl}/api/rooms/${params.id}`)
     .then((result) => result.json())
     .then((res) => {
       cb(null, {
@@ -17,6 +15,7 @@ class Room extends React.Component {
         strokes: res.room.strokes,
         width: res.room.canvas_width,
         height: res.room.canvas_height,
+        csrfToken: (loadContext || window).csrfToken,
       });
     });
   }
@@ -72,13 +71,10 @@ class Room extends React.Component {
       tmpStroke: this.addPointToStroke(this.state.tmpStroke, point),
     });
 
-    const apiBaseUrl = window.apiBaseUrl;
-    const csrfToken = window.csrfToken;
-
-    fetch(`${apiBaseUrl}/api/strokes/rooms/${this.props.id}`, {
+    fetch(`/api/strokes/rooms/${this.props.id}`, {
       method: 'POST',
       body: JSON.stringify(this.state.tmpStroke),
-      headers: { 'x-csrf-token': csrfToken, 'content-type': 'application/json' },
+      headers: { 'x-csrf-token': this.props.csrfToken, 'content-type': 'application/json' },
     })
     .then((result) => {
       if (result.status === 200) {
@@ -194,6 +190,7 @@ Room.propTypes = {
   width: React.PropTypes.number,
   height: React.PropTypes.number,
   controlHeight: React.PropTypes.number,
+  csrfToken: React.PropTypes.string,
 };
 
 Room.defaultProps = {

@@ -3,23 +3,21 @@ import { Link } from 'react-router';
 import fetch from 'isomorphic-fetch';
 
 class Index extends React.Component {
-  static loadProps(params, cb) {
-    const apiBaseUrl = params.loadContext ? params.loadContext.apiBaseUrl : window.apiBaseUrl;
-    const csrfToken = params.loadContext ? params.loadContext.csrfToken : window.csrfToken;
-    fetch(`${apiBaseUrl}/api/rooms`, {
-      headers: { 'x-csrf-token': csrfToken },
-    })
+  static loadProps({ params, loadContext }, cb) {
+    const apiBaseUrl = (loadContext || window).apiBaseUrl;
+
+    fetch(`${apiBaseUrl}/api/rooms`)
       .then((result) => result.json())
       .then((res) => {
-        cb(null, { rooms: res.rooms });
+        cb(null, {
+          rooms: res.rooms,
+          csrfToken: (loadContext || window).csrfToken,
+        });
       });
   }
 
   handleCreateNewRoom(ev) {
     ev.preventDefault();
-
-    const apiBaseUrl = window.apiBaseUrl;
-    const csrfToken = window.csrfToken;
 
     const room = {
       name: this.refs.newRoomName.value,
@@ -31,10 +29,10 @@ class Index extends React.Component {
       return; // エラーメッセージ
     }
 
-    fetch(`${apiBaseUrl}/api/rooms`, {
+    fetch('/api/rooms', {
       method: 'POST',
       body: JSON.stringify(room),
-      headers: { 'x-csrf-token': csrfToken, 'content-type': 'application/json' },
+      headers: { 'x-csrf-token': this.props.csrfToken, 'content-type': 'application/json' },
     })
       .then((result) => result.json())
       .then((res) => { // TODO: エラー処理
@@ -90,6 +88,7 @@ class Index extends React.Component {
 
 Index.propTypes = {
   rooms: React.PropTypes.array,
+  csrfToken: React.PropTypes.string,
 };
 
 Index.contextTypes = {
