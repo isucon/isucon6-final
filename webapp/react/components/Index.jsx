@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router';
 import fetchJson from '../util/fetch-json';
+import NotificationSystem from 'react-notification-system';
 
 class Index extends React.Component {
   static loadProps({ params, loadContext }, cb) {
@@ -40,14 +41,19 @@ class Index extends React.Component {
         this.context.router.push({ pathname: `/rooms/${res.room.id}`, query: '', state: '' });
       })
       .catch((err) => {
-        console.log(err);
-        // TODO: エラー処理
+        this.refs.notificationSystem.addNotification({
+          title: 'エラーが発生しました',
+          message: err.message,
+          level: 'error',
+          position: 'bc',
+        });
       });
   }
 
   render() {
     return (
       <div className="index">
+        <NotificationSystem ref="notificationSystem" />
         <div>
           <form onSubmit={(ev) => this.handleCreateNewRoom(ev)}>
             <label>

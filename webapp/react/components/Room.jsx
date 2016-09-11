@@ -2,6 +2,7 @@ import React from 'react';
 import ColorPicker from 'rc-color-picker';
 import Canvas from './Canvas';
 import fetchJson from '../util/fetch-json';
+import NotificationSystem from 'react-notification-system';
 
 class Room extends React.Component {
   static loadProps({ params, loadContext }, cb) {
@@ -79,18 +80,22 @@ class Room extends React.Component {
       body: JSON.stringify(this.state.tmpStroke),
       headers: { 'x-csrf-token': this.props.csrfToken, 'content-type': 'application/json' },
     })
-    .then((res) => {
-      const stroke = res.stroke;
-      // TODO: check response
-      this.setState({
-        strokes: this.state.strokes.concat([stroke]),
-        tmpStroke: null,
+      .then((res) => {
+        const stroke = res.stroke;
+        // TODO: check response
+        this.setState({
+          strokes: this.state.strokes.concat([stroke]),
+          tmpStroke: null,
+        });
+      })
+      .catch((err) => {
+        this.refs.notificationSystem.addNotification({
+          title: 'エラーが発生しました',
+          message: err.message,
+          level: 'error',
+          position: 'bc',
+        });
       });
-    })
-    .catch((error) => {
-      // TODO: Flash
-      console.log(error.message || 'Unknown error');
-    });
   }
 
   handleChangeStrokeWidth(ev) {
@@ -121,6 +126,8 @@ class Room extends React.Component {
 
     return (
       <div className="room">
+        <NotificationSystem ref="notificationSystem" />
+
         <h2>{this.props.name}</h2>
 
         <div className="canvas" style={{ width: this.props.width + 2, margin: '0 auto' }}>
