@@ -11,7 +11,6 @@ import (
 
 	"github.com/catatsuy/isucon6-final/benchmarker/checker"
 	"github.com/catatsuy/isucon6-final/benchmarker/score"
-	"github.com/catatsuy/isucon6-final/benchmarker/util"
 )
 
 // Exit codes are int values that represent an exit code for a particular error.
@@ -93,11 +92,7 @@ func (cli *CLI) Run(args []string) int {
 
 	setupInitialize(targetHost, initialize)
 
-	users, _, adminUsers, sentences, images, err := prepareUserdata(userdata)
-	if err != nil {
-		outputNeedToContactUs(err.Error())
-		return ExitCodeError
-	}
+	// 初期データ用意
 
 	initReq := <-initialize
 
@@ -108,14 +103,6 @@ func (cli *CLI) Run(args []string) int {
 	}
 
 	// 最初にDOMチェックなどをやってしまい、通らなければさっさと失敗させる
-	commentScenario(checker.NewSession(), randomUser(users), randomUser(users).AccountName, randomSentence(sentences))
-	postImageScenario(checker.NewSession(), randomUser(users), randomImage(images), randomSentence(sentences))
-	cannotLoginNonexistentUserScenario(checker.NewSession())
-	cannotLoginWrongPasswordScenario(checker.NewSession(), randomUser(users))
-	cannotAccessAdminScenario(checker.NewSession(), randomUser(users))
-	cannotPostWrongCSRFTokenScenario(checker.NewSession(), randomUser(users), randomImage(images))
-	loginScenario(checker.NewSession(), randomUser(users))
-	banScenario(checker.NewSession(), checker.NewSession(), randomUser(users), randomUser(adminUsers), randomImage(images), randomSentence(sentences))
 
 	if score.GetInstance().GetFails() > 0 {
 		fmt.Println(outputResultJson(false, score.GetFailErrorsStringSlice()))
@@ -123,12 +110,6 @@ func (cli *CLI) Run(args []string) int {
 	}
 
 	indexMoreAndMoreScenarioCh := makeChanBool(2)
-	loadIndexScenarioCh := makeChanBool(2)
-	userAndPostPageScenarioCh := makeChanBool(2)
-	commentScenarioCh := makeChanBool(1)
-	postImageScenarioCh := makeChanBool(1)
-	loginScenarioCh := makeChanBool(2)
-	banScenarioCh := makeChanBool(1)
 
 	timeoutCh := time.After(BenchmarkTimeout)
 
@@ -139,40 +120,6 @@ L:
 			go func() {
 				indexMoreAndMoreScenario(checker.NewSession())
 				indexMoreAndMoreScenarioCh <- true
-			}()
-		case <-loadIndexScenarioCh:
-			go func() {
-				loadIndexScenario(checker.NewSession())
-				loadIndexScenarioCh <- true
-			}()
-		case <-userAndPostPageScenarioCh:
-			go func() {
-				userAndPostPageScenario(checker.NewSession(), randomUser(users).AccountName)
-				userAndPostPageScenarioCh <- true
-			}()
-		case <-commentScenarioCh:
-			go func() {
-				commentScenario(checker.NewSession(), randomUser(users), randomUser(users).AccountName, randomSentence(sentences))
-				commentScenarioCh <- true
-			}()
-		case <-postImageScenarioCh:
-			go func() {
-				postImageScenario(checker.NewSession(), randomUser(users), randomImage(images), randomSentence(sentences))
-				cannotPostWrongCSRFTokenScenario(checker.NewSession(), randomUser(users), randomImage(images))
-				postImageScenarioCh <- true
-			}()
-		case <-loginScenarioCh:
-			go func() {
-				loginScenario(checker.NewSession(), randomUser(users))
-				cannotLoginNonexistentUserScenario(checker.NewSession())
-				cannotLoginWrongPasswordScenario(checker.NewSession(), randomUser(users))
-				loginScenarioCh <- true
-			}()
-		case <-banScenarioCh:
-			go func() {
-				banScenario(checker.NewSession(), checker.NewSession(), randomUser(users), randomUser(adminUsers), randomImage(images), randomSentence(sentences))
-				cannotAccessAdminScenario(checker.NewSession(), randomUser(users))
-				banScenarioCh <- true
 			}()
 		case <-timeoutCh:
 			break L
@@ -219,18 +166,6 @@ func makeChanBool(len int) chan bool {
 		ch <- true
 	}
 	return ch
-}
-
-func randomUser(users []user) user {
-	return users[util.RandomNumber(len(users))]
-}
-
-func randomImage(images []*checker.Asset) *checker.Asset {
-	return images[util.RandomNumber(len(images))]
-}
-
-func randomSentence(sentences []string) string {
-	return sentences[util.RandomNumber(len(sentences))]
 }
 
 func setupInitialize(targetHost string, initialize chan bool) {
