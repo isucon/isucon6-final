@@ -11,7 +11,13 @@ class Room extends React.Component {
     })
     .then((result) => result.json())
     .then((res) => {
-      cb(null, { id: res.room.id, name: res.room.name, strokes: res.room.strokes });
+      cb(null, {
+        id: res.room.id,
+        name: res.room.name,
+        strokes: res.room.strokes,
+        width: res.room.canvas_width,
+        height: res.room.canvas_height,
+      });
     });
   }
 
@@ -191,8 +197,6 @@ Room.propTypes = {
 };
 
 Room.defaultProps = {
-  width: 1028,
-  height: 768,
   controlHeight: 40,
 };
 
