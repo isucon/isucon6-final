@@ -100,7 +100,6 @@ class Room extends React.Component {
     })
       .then((res) => {
         const stroke = res.stroke;
-        // TODO: check response
         this.setState({
           strokes: this.state.strokes.concat([stroke]),
           tmpStroke: null,
