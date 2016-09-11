@@ -4,12 +4,18 @@ export default function fetchJson(...args) {
   return fetch(...args)
     .then((response) => {
       const contentType = response.headers.get('content-type');
-      if (response.status !== 200
-        || !contentType
-        || contentType.indexOf('application/json') === -1
-      ) {
-        throw new Error(`Bad response ${response.status}: ${response.text()}`);
+      if (!contentType || contentType.indexOf('application/json') === -1) {
+        throw new Error(response.text());
       }
       return response.json();
+    })
+    .catch((err) => {
+      throw new Error('Unexpected response from server');
+    })
+    .then((json) => {
+      if (json.error) {
+        throw new Error(json.error);
+      }
+      return json;
     });
 }
