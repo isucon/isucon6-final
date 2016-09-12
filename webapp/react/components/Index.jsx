@@ -25,7 +25,7 @@ class Index extends React.Component {
       });
   }
 
-  handleCreateNewRoom(ev) {
+  handleCreateNewRoom() {
     const room = {
       name: this.refs.newRoomName.input.value,
       canvas_width: 1028,
@@ -73,7 +73,7 @@ class Index extends React.Component {
           />
           <RaisedButton
             label="作成する"
-            primary={true}
+            primary
             style={{ margin: 12 }}
             onTouchTap={(ev) => this.handleCreateNewRoom(ev)}
           />
