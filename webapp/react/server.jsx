@@ -10,6 +10,10 @@ import fetchJson from './util/fetch-json';
 import proxy from 'http-proxy-middleware';
 import Canvas from './components/Canvas';
 
+// for material-ui https://www.npmjs.com/package/material-ui
+import injectTapEventPlugin from 'react-tap-event-plugin';
+injectTapEventPlugin();
+
 const apiBaseUrl = process.env.API;
 if (!apiBaseUrl) {
   throw 'Please set environment variable API=http://...';
