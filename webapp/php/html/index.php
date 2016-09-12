@@ -113,7 +113,9 @@ $app->post('/api/rooms', function ($request, $response, $args) {
     $dbh = getPDO();
 
     $room = $request->getParsedBody();
-    // TODO: param check
+    if (empty($room['name']) || empty($room['canvas_width']) || empty($room['canvas_height']))) {
+        return $response->withStatus(400)->withJson(['error' => 'Request parameter is incorrect']);
+    }
 
     $sql = 'INSERT INTO `room` (`name`, `canvas_width`, `canvas_height`)';
     $sql .= ' VALUES (:name, :canvas_width, :canvas_height)';
@@ -131,8 +133,7 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
     $room = selectOne($dbh, $sql, [':id' => $args['id']]);
 
     if ($room === null) {
-        // TODO: 404
-        return $response->withJson(['room' => null]);
+        return $response->withStatus(404)->withJson(['error' => 'Room not found']);
     }
 
     $sql = 'SELECT * FROM `stroke` WHERE `room_id` = :id ORDER BY `id` ASC';
@@ -190,13 +191,14 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     $room = selectOne($dbh, $sql, [':id' => $args['id']]);
 
     if ($room === null) {
-        // TODO: 404
-        return $response->withJson(['room' => null]);
+        return $response->withStatus(404)->withJson(['error' => 'Room not found']);
     }
     // TODO: bad request if strokes have reached a certain limit (1000?)
 
     $stroke = $request->getParsedBody();
-    // TODO: param check
+    if (empty($stroke['width']) || empty($stroke['points'])) {
+        return $response->withStatus(400)->withJson(['error' => 'Request parameter is incorrect']);
+    }
 
     $dbh->beginTransaction();
     try {
@@ -215,7 +217,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     } catch (Exception $e) {
         $dbh->rollback();
         $this->logger->error($e->getMessage());
-        // TODO: 500
+        return $response->withStatus(500)->withJson(['error' => 'Something went wrong...']);
     }
 
     //$this->logger->info(var_export($stroke, true));
