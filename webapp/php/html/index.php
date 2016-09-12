@@ -187,7 +187,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
         $dbh->commit();
     } catch (Exception $e) {
-        $dbh->rollback;
+        $dbh->rollback();
         $this->logger->error($e->getMessage());
         // TODO: 500
     }
