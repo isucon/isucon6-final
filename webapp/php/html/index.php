@@ -139,9 +139,9 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
     $sql = 'SELECT * FROM `stroke` WHERE `room_id` = :id ORDER BY `id` ASC';
     $strokes = selectAll($dbh, $sql, [':id' => $args['id']]);
 
-    foreach ($strokes as &$stroke) {
+    foreach ($strokes as $i => $stroke) {
         $sql = 'SELECT * FROM `point` WHERE `stroke_id` = :id ORDER BY `id` ASC';
-        $stroke['points'] = selectAll($dbh, $sql, [':id' => $stroke['id']]);
+        $strokes[$i]['points'] = selectAll($dbh, $sql, [':id' => $stroke['id']]);
     }
 
     $room['strokes'] = $strokes;
@@ -164,9 +164,9 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':id' => $lastId]);
 
     $body = "retry:500\n\n";
-    foreach ($strokes as &$stroke) {
+    foreach ($strokes as $i => $stroke) {
         $sql = 'SELECT * FROM `point` WHERE `stroke_id` = :id ORDER BY `id` ASC';
-        $stroke['points'] = selectAll($dbh, $sql, [':id' => $stroke['id']]);
+        $strokes[$i]['points'] = selectAll($dbh, $sql, [':id' => $stroke['id']]);
 
         $body .= 'id:' . $stroke['id'] . "\n\n";
         $body .= 'data:' . json_encode($stroke) . "\n\n";
