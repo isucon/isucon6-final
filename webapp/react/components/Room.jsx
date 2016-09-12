@@ -71,7 +71,7 @@ class Room extends React.Component {
     // TODO: return if this.state.tmpStroke already exists
     this.setState({
       tmpStroke: {
-        id: 'tmp',
+        id: 0,
         red: this.state.red,
         blue: this.state.blue,
         green: this.state.green,
