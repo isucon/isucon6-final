@@ -94,8 +94,8 @@ $app->get('/api/rooms', function ($request, $response, $args) {
 $app->post('/api/csrf_token', function ($request, $response, $args) {
     $dbh = getPDO();
 
-    $sql = 'INSERT INTO `csrf_token` (`token`, `created_at`) VALUES';
-    $sql .= ' (SHA2(RAND(), 512), NOW())';
+    $sql = 'INSERT INTO `csrf_token` (`token`) VALUES';
+    $sql .= ' (SHA2(RAND(), 512))';
 
     $id = execute($dbh, $sql);
 
@@ -142,9 +142,9 @@ $app->post('/api/rooms', function ($request, $response, $args) {
     $room = $request->getParsedBody();
     // TODO: param check
 
-    $sql = 'INSERT INTO `room` (`name`, `created_at`, `canvas_width`, `canvas_height`)';
-    $sql .= ' VALUES (:name, :created_at, :canvas_width, :canvas_height)';
-    $id = execute($dbh, $sql, [':name' => $room['name'], ':created_at' => date('Y-m-d H:i:s'), ':canvas_width' => $room['canvas_width'], ':canvas_height' => $room['canvas_height']]);
+    $sql = 'INSERT INTO `room` (`name`, `canvas_width`, `canvas_height`)';
+    $sql .= ' VALUES (:name, :canvas_width, :canvas_height)';
+    $id = execute($dbh, $sql, [':name' => $room['name'], ':canvas_width' => $room['canvas_width'], ':canvas_height' => $room['canvas_height']]);
 
     $room['id'] = (int)$id;
     $room['strokes'] = [];
@@ -174,10 +174,9 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
     $dbh->beginTransaction();
     try {
-        // TODO: created_atはDEFAULT CURRENT_TIMESTAMPでもいいか悩む
-        $sql = 'INSERT INTO `stroke` (`room_id`, `created_at`, `width`, `red`, `green`, `blue`, `alpha`)';
-        $sql .= ' VALUES(:room_id, :created_at, :width, :red, :green, :blue, :alpha)';
-        $id = execute($dbh, $sql, [':room_id' => $args['id'], ':created_at' => date('Y-m-d H:i:s'), ':width' => $stroke['width'], ':red' => $stroke['red'], ':green' => $stroke['green'], ':blue' => $stroke['blue'], ':alpha' => $stroke['alpha']]);
+        $sql = 'INSERT INTO `stroke` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)';
+        $sql .= ' VALUES(:room_id, :width, :red, :green, :blue, :alpha)';
+        $id = execute($dbh, $sql, [':room_id' => $args['id'], ':width' => $stroke['width'], ':red' => $stroke['red'], ':green' => $stroke['green'], ':blue' => $stroke['blue'], ':alpha' => $stroke['alpha']]);
 
         $stroke['id'] = (int)$id;
 
