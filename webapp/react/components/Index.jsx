@@ -87,7 +87,7 @@ class Index extends React.Component {
             <GridTile
               key={room.id}
               title={room.name}
-              subtitle={`${room.watcherCount}人が参加`}
+              subtitle={`${room.stroke_count}画`}
               actionIcon={
                 <Link to={`/rooms/${room.id}`}>
                   <IconButton>

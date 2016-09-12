@@ -99,6 +99,13 @@ $app->get('/api/rooms', function ($request, $response, $args) {
     $sql .= ' GROUP BY `room_id` ORDER BY `max_id` DESC LIMIT 100) AS `t`';
     $sql .= ' ON `room`.`id` = `t`.`room_id`';
     $rooms = selectAll($dbh, $sql);
+
+    foreach ($rooms as $i => $room) {
+        $sql = 'SELECT COUNT(*) AS stroke_count FROM `stroke` WHERE `room_id` = :room_id';
+        $result = selectOne($dbh, $sql, [':room_id' => $room['id']]);
+        $rooms[$i]['stroke_count'] = (int)$result['stroke_count'];
+    }
+
     //$this->logger->info(var_export($rooms, true));
     return $response->withJson(['rooms' => $rooms]);
 });

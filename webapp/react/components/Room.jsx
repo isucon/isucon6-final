@@ -145,7 +145,7 @@ class Room extends React.Component {
       <div className="room">
         <NotificationSystem ref="notificationSystem" />
 
-        <h2>{this.props.name}</h2>
+        <h2>{`${this.props.name} (${this.state.strokes.length}画)`}</h2>
 
         <div className="canvas" style={{ width: this.props.width + 2, margin: '0 auto' }}>
           <label>
