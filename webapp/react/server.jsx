@@ -64,9 +64,8 @@ app.get('*', (req, res) => {
   // https://github.com/reactjs/react-router/blob/master/docs/guides/ServerRendering.md
   match({ routes, location: req.url }, (err, redirectLocation, renderProps) => {
     if (err) {
-      console.error(err)
-      res.status(500);
-      console.log(err.message);
+      console.error(err);
+      res.status(500).send('Internal Server Error');
     } else if (redirectLocation) {
       res.redirect(302, redirectLocation.pathname + redirectLocation.search);
     } else if (!renderProps) {
@@ -84,8 +83,8 @@ app.get('*', (req, res) => {
         // https://github.com/ryanflorence/async-props
         loadPropsOnServer(renderProps, loadContext, (err, asyncProps, scriptTag) => {
           if (err) {
-            console.error(err)
-            res.status(500).send(err.message);
+            console.error(err);
+            res.status(500).send('Internal Server Error');
           } else {
             const appHTML = renderToString(
               <AsyncProps {...renderProps} {...asyncProps} />
@@ -99,7 +98,8 @@ app.get('*', (req, res) => {
 
       })
       .catch((err) => {
-        res.status(500).send(err.message);
+        console.error(err);
+        res.status(500).send('Internal Server Error');
       });
   });
 });
