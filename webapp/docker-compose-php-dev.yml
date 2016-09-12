@@ -27,14 +27,15 @@ services:
       dockerfile: Dockerfile-dev
     volumes:
       - ./react/build:/react/build:ro
-    environment:
-      ISUCON_ENV: development
-      NODE_ENV: development
-      API: http://api
+      - ./ssl:/ssl:ro
     links:
       - api
     environment:
+      SSL_KEY: /ssl/oreore.key
+      SSL_CERT: /ssl/oreore.crt
+      ISUCON_ENV: development
+      NODE_ENV: development
       API: http://api:80
-      PORT: 8800
+      PORT: 443
     ports:
-      - "80:8800"
+      - "443:443"

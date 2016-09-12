@@ -25,14 +25,16 @@ services:
     build:
       context: ./react
       dockerfile: Dockerfile
-    environment:
-      ISUCON_ENV: production
-      NODE_ENV: production
-      API: http://api
+    volumes:
+      - ./ssl:/ssl:ro
     links:
       - api
     environment:
+      SSL_KEY: /ssl/oreore.key
+      SSL_CERT: /ssl/oreore.crt
+      ISUCON_ENV: production
+      NODE_ENV: production
       API: http://api:80
-      PORT: 8800
+      PORT: 443
     ports:
-      - "80:8800"
+      - "443:443"
