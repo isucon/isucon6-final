@@ -2,8 +2,6 @@
 
 require __DIR__ . '/../vendor/autoload.php';
 
-//session_start();
-
 function getPDO() {
     $host = getenv('MYSQL_HOST') ?: 'localhost';
     $port = getenv('MYSQL_PORT') ?: 3306;
