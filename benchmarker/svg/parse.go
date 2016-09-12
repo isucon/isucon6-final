@@ -2,11 +2,8 @@ package svg
 
 import (
 	"encoding/xml"
-	"fmt"
 	"strconv"
 	"strings"
-
-	"github.com/k0kubun/pp"
 )
 
 type Point struct {
@@ -30,13 +27,12 @@ type Svg struct {
 	PolyLine PolyLine `xml:"polyline"`
 }
 
-func Parse(data []byte) Svg {
-	v := Svg{}
+func Parse(data []byte) (*Svg, error) {
+	v := &Svg{}
 	err := xml.Unmarshal([]byte(data), &v)
 
 	if err != nil {
-		fmt.Printf("error: %v", err)
-		return Svg{}
+		return nil, err
 	}
 
 	points := make([]Point, 0, 100)
@@ -50,7 +46,5 @@ func Parse(data []byte) Svg {
 
 	v.PolyLine.Points = points
 
-	pp.Println(v)
-
-	return v
+	return v, nil
 }
