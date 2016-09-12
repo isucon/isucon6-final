@@ -82,12 +82,10 @@ $container['logger'] = function ($c) {
 
 $app->get('/api/rooms', function ($request, $response, $args) {
     $dbh = getPDO();
-    // TODO: max_created_at も使うべきか？
     $sql = 'SELECT `room`.* FROM `room` JOIN';
-    $sql .= ' (SELECT `room_id`, MAX(`created_at`) AS `max_created_at` FROM `stroke`';
-    $sql .= ' GROUP BY `room_id` ORDER BY `max_created_at` DESC LIMIT 30) AS `t`';
+    $sql .= ' (SELECT `room_id`, MAX(`id`) AS `max_id` FROM `stroke`';
+    $sql .= ' GROUP BY `room_id` ORDER BY `max_id` DESC LIMIT 100) AS `t`';
     $sql .= ' ON `room`.`id` = `t`.`room_id`';
-    // TODO: これだと一画も描かれてない部屋が取得できない
     $rooms = selectAll($dbh, $sql);
     //$this->logger->info(var_export($rooms, true));
     return $response->withJson(['rooms' => $rooms]);
