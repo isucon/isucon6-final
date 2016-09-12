@@ -80,17 +80,6 @@ $container['logger'] = function ($c) {
 
 // Routes
 
-$app->get('/api/rooms', function ($request, $response, $args) {
-    $dbh = getPDO();
-    $sql = 'SELECT `room`.* FROM `room` JOIN';
-    $sql .= ' (SELECT `room_id`, MAX(`id`) AS `max_id` FROM `stroke`';
-    $sql .= ' GROUP BY `room_id` ORDER BY `max_id` DESC LIMIT 100) AS `t`';
-    $sql .= ' ON `room`.`id` = `t`.`room_id`';
-    $rooms = selectAll($dbh, $sql);
-    //$this->logger->info(var_export($rooms, true));
-    return $response->withJson(['rooms' => $rooms]);
-});
-
 $app->post('/api/csrf_token', function ($request, $response, $args) {
     $dbh = getPDO();
 
@@ -103,6 +92,38 @@ $app->post('/api/csrf_token', function ($request, $response, $args) {
     $token = selectOne($dbh, $sql, [':id' => $id]);
 
     return $response->withJson(['token' => $token['token']]);
+});
+
+$app->get('/api/rooms', function ($request, $response, $args) {
+    $dbh = getPDO();
+    $sql = 'SELECT `room`.* FROM `room` JOIN';
+    $sql .= ' (SELECT `room_id`, MAX(`id`) AS `max_id` FROM `stroke`';
+    $sql .= ' GROUP BY `room_id` ORDER BY `max_id` DESC LIMIT 100) AS `t`';
+    $sql .= ' ON `room`.`id` = `t`.`room_id`';
+    $rooms = selectAll($dbh, $sql);
+    //$this->logger->info(var_export($rooms, true));
+    return $response->withJson(['rooms' => $rooms]);
+});
+
+$app->post('/api/rooms', function ($request, $response, $args) {
+    try {
+        checkToken($request);
+    } catch (TokenException $e) {
+        return $response->withStatus(400)->withJson(['error' => $e->getMessage()]);
+    }
+
+    $dbh = getPDO();
+
+    $room = $request->getParsedBody();
+    // TODO: param check
+
+    $sql = 'INSERT INTO `room` (`name`, `canvas_width`, `canvas_height`)';
+    $sql .= ' VALUES (:name, :canvas_width, :canvas_height)';
+    $id = execute($dbh, $sql, [':name' => $room['name'], ':canvas_width' => $room['canvas_width'], ':canvas_height' => $room['canvas_height']]);
+
+    $room['id'] = (int)$id;
+    $room['strokes'] = [];
+    return $response->withJson(['room' => $room]);
 });
 
 $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
@@ -130,25 +151,32 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
     return $response->withJson(['room' => $room]);
 });
 
-$app->post('/api/rooms', function ($request, $response, $args) {
-    try {
-        checkToken($request);
-    } catch (TokenException $e) {
-        return $response->withStatus(400)->withJson(['error' => $e->getMessage()]);
-    }
+$app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
+
+    sleep(1);
 
     $dbh = getPDO();
 
-    $room = $request->getParsedBody();
-    // TODO: param check
+    $lastId = 0;
+    if ($request->hasHeader('Last-Event-ID')) {
+        $lastId = (int)$request->getHeaderLine('Last-Event-ID');
+    }
+    $sql = 'SELECT * FROM `stroke` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
+    $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':id' => $lastId]);
 
-    $sql = 'INSERT INTO `room` (`name`, `canvas_width`, `canvas_height`)';
-    $sql .= ' VALUES (:name, :canvas_width, :canvas_height)';
-    $id = execute($dbh, $sql, [':name' => $room['name'], ':canvas_width' => $room['canvas_width'], ':canvas_height' => $room['canvas_height']]);
+    $body = "retry:500\n\n";
+    foreach ($strokes as &$stroke) {
+        $sql = 'SELECT * FROM `point` WHERE `stroke_id` = :id ORDER BY `id` ASC';
+        $stroke['points'] = selectAll($dbh, $sql, [':id' => $stroke['id']]);
 
-    $room['id'] = (int)$id;
-    $room['strokes'] = [];
-    return $response->withJson(['room' => $room]);
+        $body .= 'id:' . $stroke['id'] . "\n\n";
+        $body .= 'data:' . json_encode($stroke) . "\n\n";
+    }
+
+    return $response
+        //->withHeader('Transfer-Encoding', 'chunked') // TODO: これを付けるとなぜかApacheがbodyを出力しない
+        ->withHeader('Content-type', 'text/event-stream')
+        ->write($body);
 });
 
 $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
@@ -194,34 +222,6 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
     //$this->logger->info(var_export($stroke, true));
     return $response->withJson(['stroke' => $stroke]);
-});
-
-$app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
-
-    sleep(1);
-
-    $dbh = getPDO();
-
-    $lastId = 0;
-    if ($request->hasHeader('Last-Event-ID')) {
-        $lastId = (int)$request->getHeaderLine('Last-Event-ID');
-    }
-    $sql = 'SELECT * FROM `stroke` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
-    $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':id' => $lastId]);
-
-    $body = "retry:500\n\n";
-    foreach ($strokes as &$stroke) {
-        $sql = 'SELECT * FROM `point` WHERE `stroke_id` = :id ORDER BY `id` ASC';
-        $stroke['points'] = selectAll($dbh, $sql, [':id' => $stroke['id']]);
-
-        $body .= 'id:' . $stroke['id'] . "\n\n";
-        $body .= 'data:' . json_encode($stroke) . "\n\n";
-    }
-
-    return $response
-        //->withHeader('Transfer-Encoding', 'chunked') // TODO: これを付けるとなぜかApacheがbodyを出力しない
-        ->withHeader('Content-type', 'text/event-stream')
-        ->write($body);
 });
 
 // Run app
