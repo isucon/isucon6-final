@@ -5,13 +5,12 @@ export default function fetchJson(...args) {
     .then((response) => {
       const contentType = response.headers.get('content-type');
       if (!contentType || contentType.indexOf('application/json') === -1) {
-        throw new Error(response.text());
+        return response.text().catch((text) => {
+          console.error(text);
+          throw new Error('Unexpected response from server');
+        });
       }
       return response.json();
-    })
-    .catch((err) => {
-      console.error(err.message);
-      throw new Error('Unexpected response from server');
     })
     .then((json) => {
       if (json.error) {

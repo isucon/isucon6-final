@@ -5,7 +5,9 @@ import NotificationSystem from 'react-notification-system';
 import { GridList, GridTile } from 'material-ui/GridList';
 import IconButton from 'material-ui/IconButton';
 import ModeEdit from 'material-ui/svg-icons/editor/mode-edit';
-// import StarBorder from 'material-ui/svg-icons/toggle/star-border';
+import RaisedButton from 'material-ui/RaisedButton';
+import TextField from 'material-ui/TextField';
+import Subheader from 'material-ui/Subheader';
 
 class Index extends React.Component {
   static loadProps({ params, loadContext }, cb) {
@@ -24,16 +26,20 @@ class Index extends React.Component {
   }
 
   handleCreateNewRoom(ev) {
-    ev.preventDefault();
-
     const room = {
-      name: this.refs.newRoomName.value,
+      name: this.refs.newRoomName.input.value,
       canvas_width: 1028,
       canvas_height: 768,
     };
 
-    if (room.name === '') {
-      return; // TODO: エラーメッセージ
+    if (!room.name) {
+      this.refs.notificationSystem.addNotification({
+        title: 'エラーが発生しました',
+        message: '空の部屋名で作成することはできません',
+        level: 'error',
+        position: 'bc',
+      });
+      return;
     }
 
     fetchJson('/api/rooms', {
@@ -59,31 +65,36 @@ class Index extends React.Component {
       <div className="index">
         <NotificationSystem ref="notificationSystem" />
         <div>
-          <form onSubmit={(ev) => this.handleCreateNewRoom(ev)}>
-            <label>
-              新規部屋名:
-              <input type="text" placeholder="例: ひたすら椅子を描く部屋" ref="newRoomName" />
-            </label>
-            <input type="hidden" name="token" value="" />
-            <button type="submit">作成する</button>
-          </form>
+          <TextField
+            hintText="例: ひたすら椅子を描く部屋"
+            floatingLabelText="新規部屋作成"
+            ref="newRoomName"
+            id="newRoomName"
+          />
+          <RaisedButton
+            label="作成する"
+            primary={true}
+            style={{ margin: 12 }}
+            onTouchTap={(ev) => this.handleCreateNewRoom(ev)}
+          />
         </div>
         <GridList
           cellHeight={222}
           cols={4}
         >
+          <Subheader>新着描き込み</Subheader>
           {this.props.rooms.map((room) => (
             <GridTile
               key={room.id}
               title={room.name}
               subtitle={`${room.watcherCount}人が参加`}
               actionIcon={
-                  <Link to={`/rooms/${room.id}`}>
-                    <IconButton>
-                      <ModeEdit color="white" />
-                    </IconButton>
-                  </Link>
-                }
+                <Link to={`/rooms/${room.id}`}>
+                  <IconButton>
+                    <ModeEdit color="white" />
+                  </IconButton>
+                </Link>
+              }
             >
               <img
                 style={{ maxWidth: '100%' }}
