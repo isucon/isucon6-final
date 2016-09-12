@@ -113,7 +113,7 @@ $app->post('/api/rooms', function ($request, $response, $args) {
     $dbh = getPDO();
 
     $room = $request->getParsedBody();
-    if (empty($room['name']) || empty($room['canvas_width']) || empty($room['canvas_height']))) {
+    if (empty($room['name']) || empty($room['canvas_width']) || empty($room['canvas_height'])) {
         return $response->withStatus(400)->withJson(['error' => 'Request parameter is incorrect']);
     }
 
