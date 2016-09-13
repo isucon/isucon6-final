@@ -176,7 +176,7 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         $strokes[$i]['points'] = selectAll($dbh, $sql, [':id' => $stroke['id']]);
 
         $body .= 'id:' . $stroke['id'] . "\n\n";
-        $body .= 'data:' . json_encode($stroke) . "\n\n";
+        $body .= 'data:' . json_encode($strokes[$i]) . "\n\n";
     }
 
     return $response
