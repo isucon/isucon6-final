@@ -3,6 +3,7 @@ import ColorPicker from 'rc-color-picker';
 import Canvas from './Canvas';
 import fetchJson from '../util/fetch-json';
 import NotificationSystem from 'react-notification-system';
+import Slider from 'material-ui/Slider';
 
 class Room extends React.Component {
   static loadProps({ params, loadContext }, cb) {
@@ -115,9 +116,9 @@ class Room extends React.Component {
       });
   }
 
-  handleChangeStrokeWidth(ev) {
+  handleChangeStrokeWidth(ev, value) {
     this.setState({
-      strokeWidth: parseInt(ev.target.value, 10),
+      strokeWidth: parseInt(value, 10),
     });
   }
 
@@ -158,17 +159,18 @@ class Room extends React.Component {
             >
               線の太さ ({this.state.strokeWidth})
             </span>
-            <input
-              type="range"
-              min="1"
-              max="50"
-              value={this.state.strokeWidth}
+            <Slider
+              min={1}
+              max={50}
+              defaultValue={this.state.strokeWidth}
+              step={1}
               style={{
+                display: 'inline-block',
                 width: 400,
                 height: this.props.controlHeight,
-                verticalAlign: 'middle',
+                verticalAlign: 'sub',
               }}
-              onChange={(ev) => this.handleChangeStrokeWidth(ev)}
+              onChange={(ev, value) => this.handleChangeStrokeWidth(ev, value)}
             />
           </label>
           <span
