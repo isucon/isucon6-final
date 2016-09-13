@@ -159,7 +159,10 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
 
 $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
-    sleep(1);
+    header('Content-Type: text/event-stream');
+    echo "retry:500\n\n";
+    ob_flush();
+    flush();
 
     $dbh = getPDO();
 
@@ -167,22 +170,32 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     if ($request->hasHeader('Last-Event-ID')) {
         $lastId = (int)$request->getHeaderLine('Last-Event-ID');
     }
-    $sql = 'SELECT * FROM `stroke` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
-    $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':id' => $lastId]);
 
-    $body = "retry:500\n\n";
-    foreach ($strokes as $i => $stroke) {
-        $stroke_id = $stroke['id'];
-        $sql = 'SELECT * FROM `point` WHERE `stroke_id` = :stroke_id ORDER BY `id` ASC';
-        $strokes[$i]['points'] = selectAll($dbh, $sql, [':stroke_id' => $stroke_id]);
+    $loop = 3;
+    while ($loop > 0) {
+        $loop--;
+        $this->logger->info($loop);
 
-        $body .= 'id:' . $stroke_id . "\n\n";
-        $body .= 'data:' . json_encode($strokes[$i]) . "\n\n";
+        sleep(1);
+
+        $sql = 'SELECT * FROM `stroke` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
+        $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':id' => $lastId]);
+
+        foreach ($strokes as $i => $stroke) {
+            $stroke_id = $stroke['id']
+            $sql = 'SELECT * FROM `point` WHERE `stroke_id` = :stroke_id ORDER BY `id` ASC';
+            $strokes[$i]['points'] = selectAll($dbh, $sql, [':stroke_id' => $stroke_id]);
+
+            echo 'id:' . $stroke_id . "\n\n";
+            echo 'data:' . json_encode($strokes[$i]) . "\n\n";
+            ob_flush();
+            flush();
+
+            $lastId = $stroke_id;
+        }
     }
 
-    return $response
-        ->withHeader('Content-type', 'text/event-stream')
-        ->write($body);
+    return $response;
 });
 
 $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
