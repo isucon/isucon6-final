@@ -172,10 +172,11 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
     $body = "retry:500\n\n";
     foreach ($strokes as $i => $stroke) {
-        $sql = 'SELECT * FROM `point` WHERE `stroke_id` = :id ORDER BY `id` ASC';
-        $strokes[$i]['points'] = selectAll($dbh, $sql, [':id' => $stroke['id']]);
+        $stroke_id = $stroke['id'];
+        $sql = 'SELECT * FROM `point` WHERE `stroke_id` = :stroke_id ORDER BY `id` ASC';
+        $strokes[$i]['points'] = selectAll($dbh, $sql, [':stroke_id' => $stroke_id]);
 
-        $body .= 'id:' . $stroke['id'] . "\n\n";
+        $body .= 'id:' . $stroke_id . "\n\n";
         $body .= 'data:' . json_encode($strokes[$i]) . "\n\n";
     }
 
