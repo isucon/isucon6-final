@@ -180,7 +180,6 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     }
 
     return $response
-        //->withHeader('Transfer-Encoding', 'chunked') // TODO: これを付けるとなぜかApacheがbodyを出力しない
         ->withHeader('Content-type', 'text/event-stream')
         ->write($body);
 });
