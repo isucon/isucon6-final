@@ -200,11 +200,16 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     if ($room === null) {
         return $response->withStatus(404)->withJson(['error' => 'この部屋は存在しません。']);
     }
-    // TODO: bad request if strokes have reached a certain limit (1000?)
 
     $stroke = $request->getParsedBody();
     if (empty($stroke['width']) || empty($stroke['points'])) {
         return $response->withStatus(400)->withJson(['error' => 'リクエストが正しくありません。']);
+    }
+
+    $sql = 'SELECT COUNT(*) AS stroke_count FROM `stroke` WHERE `room_id` = :room_id';
+    $result = selectOne($dbh, $sql, [':room_id' => $room['id']]);
+    if ($result['stroke_count'] > 1000) {
+        return $response->withStatus(400)->withJson(['error' => '1000画を超えました。これ以上描くことはできません。']);
     }
 
     $dbh->beginTransaction();
