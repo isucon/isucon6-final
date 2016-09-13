@@ -7,7 +7,7 @@ export default function fetchJson(...args) {
       if (!contentType || contentType.indexOf('application/json') === -1) {
         return response.text().catch((text) => {
           console.error(text);
-          throw new Error('Unexpected response from server');
+          throw new Error('サーバーエラー');
         });
       }
       return response.json();

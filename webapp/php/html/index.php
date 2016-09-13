@@ -38,17 +38,17 @@ class TokenException extends Exception {}
 
 function checkToken($request) {
     if (!$request->hasHeader('x-csrf-token')) {
-        throw new TokenException('Token not set. Please reload your browser window.');
+        throw new TokenException();
     }
 
     $dbh = getPDO();
     $sql = 'SELECT * FROM `csrf_token` WHERE `token` = :token';
     $token = selectOne($dbh, $sql, [':token' => $request->getHeaderLine('x-csrf-token')]);
     if (is_null($token)) {
-        throw new TokenException('Invalid token. Please reload your browser window.');
+        throw new TokenException();
     }
     if (time() - strtotime($token['created_at']) > 60 * 60 * 24 * 7) {
-        throw new TokenException('Expired token. Please reload your browser window.');
+        throw new TokenException();
     }
 }
 
@@ -114,14 +114,14 @@ $app->post('/api/rooms', function ($request, $response, $args) {
     try {
         checkToken($request);
     } catch (TokenException $e) {
-        return $response->withStatus(400)->withJson(['error' => $e->getMessage()]);
+        return $response->withStatus(400)->withJson(['error' => 'トークンエラー。ページを再読み込みしてください。']);
     }
 
     $dbh = getPDO();
 
     $room = $request->getParsedBody();
     if (empty($room['name']) || empty($room['canvas_width']) || empty($room['canvas_height'])) {
-        return $response->withStatus(400)->withJson(['error' => 'Request parameter is incorrect']);
+        return $response->withStatus(400)->withJson(['error' => 'リクエストが正しくありません。']);
     }
 
     $sql = 'INSERT INTO `room` (`name`, `canvas_width`, `canvas_height`)';
@@ -140,7 +140,7 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
     $room = selectOne($dbh, $sql, [':id' => $args['id']]);
 
     if ($room === null) {
-        return $response->withStatus(404)->withJson(['error' => 'Room not found']);
+        return $response->withStatus(404)->withJson(['error' => 'この部屋は存在しません。']);
     }
 
     $sql = 'SELECT * FROM `stroke` WHERE `room_id` = :id ORDER BY `id` ASC';
@@ -189,7 +189,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     try {
         checkToken($request);
     } catch (TokenException $e) {
-        return $response->withStatus(400)->withJson(['error' => $e->getMessage()]);
+        return $response->withStatus(400)->withJson(['error' => 'トークンエラー。ページを再読み込みしてください。']);
     }
 
     $dbh = getPDO();
@@ -198,13 +198,13 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     $room = selectOne($dbh, $sql, [':id' => $args['id']]);
 
     if ($room === null) {
-        return $response->withStatus(404)->withJson(['error' => 'Room not found']);
+        return $response->withStatus(404)->withJson(['error' => 'この部屋は存在しません。']);
     }
     // TODO: bad request if strokes have reached a certain limit (1000?)
 
     $stroke = $request->getParsedBody();
     if (empty($stroke['width']) || empty($stroke['points'])) {
-        return $response->withStatus(400)->withJson(['error' => 'Request parameter is incorrect']);
+        return $response->withStatus(400)->withJson(['error' => 'リクエストが正しくありません。']);
     }
 
     $dbh->beginTransaction();
@@ -224,7 +224,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     } catch (Exception $e) {
         $dbh->rollback();
         $this->logger->error($e->getMessage());
-        return $response->withStatus(500)->withJson(['error' => 'Something went wrong...']);
+        return $response->withStatus(500)->withJson(['error' => 'エラーが発生しました。']);
     }
 
     //$this->logger->info(var_export($stroke, true));
