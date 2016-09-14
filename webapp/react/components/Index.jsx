@@ -1,13 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router';
 import fetchJson from '../util/fetch-json';
-import NotificationSystem from 'react-notification-system';
 import { GridList, GridTile } from 'material-ui/GridList';
 import IconButton from 'material-ui/IconButton';
 import ModeEdit from 'material-ui/svg-icons/editor/mode-edit';
 import RaisedButton from 'material-ui/RaisedButton';
 import TextField from 'material-ui/TextField';
 import Subheader from 'material-ui/Subheader';
+import Snackbar from 'material-ui/Snackbar';
 
 class Index extends React.Component {
   static loadProps({ params, loadContext }, cb) {
@@ -25,6 +25,14 @@ class Index extends React.Component {
       });
   }
 
+  constructor(props) {
+    super(props);
+    this.state = {
+      showError: false,
+      errorMessage: '',
+    }
+  }
+
   handleCreateNewRoom() {
     const room = {
       name: this.refs.newRoomName.input.value,
@@ -33,11 +41,9 @@ class Index extends React.Component {
     };
 
     if (!room.name) {
-      this.refs.notificationSystem.addNotification({
-        title: 'エラーが発生しました',
-        message: '空の部屋名で作成することはできません',
-        level: 'error',
-        position: 'bc',
+      this.setState({
+        showError: true,
+        errorMessage: '空の部屋名で作成することはできません',
       });
       return;
     }
@@ -51,11 +57,9 @@ class Index extends React.Component {
         this.context.router.push({ pathname: `/rooms/${res.room.id}`, query: '', state: '' });
       })
       .catch((err) => {
-        this.refs.notificationSystem.addNotification({
-          title: 'エラーが発生しました',
-          message: err.message,
-          level: 'error',
-          position: 'bc',
+        this.setState({
+          showError: true,
+          errorMessage: err.message,
         });
       });
   }
@@ -63,7 +67,11 @@ class Index extends React.Component {
   render() {
     return (
       <div className="index">
-        <NotificationSystem ref="notificationSystem" />
+        <Snackbar
+          open={this.state.showError}
+          message={this.state.errorMessage}
+        />
+
         <div>
           <TextField
             hintText="例: ひたすら椅子を描く部屋"

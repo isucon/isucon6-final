@@ -2,8 +2,8 @@ import React from 'react';
 import ColorPicker from 'rc-color-picker';
 import Canvas from './Canvas';
 import fetchJson from '../util/fetch-json';
-import NotificationSystem from 'react-notification-system';
 import Slider from 'material-ui/Slider';
+import Snackbar from 'material-ui/Snackbar';
 
 class Room extends React.Component {
   static loadProps({ params, loadContext }, cb) {
@@ -35,6 +35,8 @@ class Room extends React.Component {
       green: 128,
       blue: 128,
       alpha: 0.7,
+      showError: false,
+      errorMessage: '',
     };
   }
 
@@ -107,11 +109,9 @@ class Room extends React.Component {
         });
       })
       .catch((err) => {
-        this.refs.notificationSystem.addNotification({
-          title: 'エラーが発生しました',
-          message: err.message,
-          level: 'error',
-          position: 'bc',
+        this.setState({
+          showError: true,
+          errorMessage: err.message,
         });
       });
   }
@@ -144,7 +144,10 @@ class Room extends React.Component {
 
     return (
       <div className="room">
-        <NotificationSystem ref="notificationSystem" />
+        <Snackbar
+          open={this.state.showError}
+          message={this.state.errorMessage}
+        />
 
         <h2>{`${this.props.name} (${this.state.strokes.length}画)`}</h2>
 
