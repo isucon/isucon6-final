@@ -2,6 +2,7 @@ package checker
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -39,7 +40,9 @@ func NewSession() *Session {
 	}
 
 	jar, _ := cookiejar.New(&cookiejar.Options{})
-	w.Transport = &http.Transport{}
+	w.Transport = &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
 	w.Client = &http.Client{
 		Transport: w.Transport,
 		Jar:       jar,
@@ -56,16 +59,19 @@ func SetTargetHost(host string) (string, error) {
 		return "", err
 	}
 
-	targetHost = ""
-
-	// 完璧にチェックするのは難しい
 	if parsedURL.Scheme == "http" {
-		targetHost += parsedURL.Host
-	} else if parsedURL.Scheme != "" && parsedURL.Scheme != "https" {
-		targetHost += parsedURL.Scheme + ":" + parsedURL.Opaque
-	} else {
-		return "", fmt.Errorf("不正なホスト名です")
+		return "", fmt.Errorf("https only!")
 	}
+
+	if parsedURL.Scheme != "https" {
+		parsedURL.Scheme = "https"
+	}
+
+	if parsedURL.Host == "" {
+		return "", fmt.Errorf("miss url!")
+	}
+
+	targetHost = parsedURL.Host
 
 	return targetHost, nil
 }
@@ -78,7 +84,7 @@ func (s *Session) NewRequest(method, uri string, body io.Reader) (*http.Request,
 	}
 
 	if parsedURL.Scheme == "" {
-		parsedURL.Scheme = "http"
+		parsedURL.Scheme = "https"
 	}
 
 	if parsedURL.Host == "" {

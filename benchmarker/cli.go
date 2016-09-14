@@ -20,7 +20,7 @@ const (
 
 	FailThreshold     = 5
 	InitializeTimeout = time.Duration(10) * time.Second
-	BenchmarkTimeout  = 60 * time.Second
+	BenchmarkTimeout  = 10 * time.Second
 	WaitAfterTimeout  = 10
 
 	PostsPerPage = 20
@@ -94,7 +94,7 @@ func (cli *CLI) Run(args []string) int {
 
 	// 初期データ用意
 
-	initReq := <-initialize
+	initReq := true
 
 	if !initReq {
 		fmt.Println(outputResultJson(false, []string{"初期化リクエストに失敗しました"}))
