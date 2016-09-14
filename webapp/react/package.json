@@ -28,7 +28,6 @@
     "rc-color-picker": "^1.0.0",
     "react": "^15.3.0",
     "react-dom": "^15.3.0",
-    "react-notification-system": "^0.2.10",
     "react-router": "^2.4.1",
     "react-tap-event-plugin": "^1.0.0"
   },
