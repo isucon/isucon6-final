@@ -23,8 +23,8 @@ CREATE TABLE `strokes` (
 CREATE TABLE `points` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `stroke_id` bigint(20) NOT NULL,
-  `x` decimal(12,2) NOT NULL,
-  `y` decimal(12,2) NOT NULL,
+  `x` decimal(10,4) NOT NULL,
+  `y` decimal(10,4) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `room_id` (`stroke_id`)
 );
