@@ -30,7 +30,7 @@ class Index extends React.Component {
     this.state = {
       showError: false,
       errorMessage: '',
-    }
+    };
   }
 
   handleCreateNewRoom() {
