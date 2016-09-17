@@ -246,8 +246,8 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
     $sql = 'SELECT COUNT(*) AS stroke_count FROM `strokes` WHERE `room_id` = :room_id';
     $result = selectOne($dbh, $sql, [':room_id' => $room_id]);
-    if ($result['stroke_count'] > 1000) {
-        return $response->withStatus(400)->withJson(['error' => '1000画を超えました。これ以上描くことはできません。']);
+    if ($result['stroke_count'] > 10000) {
+        return $response->withStatus(400)->withJson(['error' => '10000画を超えました。これ以上描くことはできません。']);
     }
 
     $dbh->beginTransaction();
