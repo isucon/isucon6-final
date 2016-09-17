@@ -52,6 +52,7 @@ function typeCastStrokeData($data) {
         'alpha' => (float)$data['alpha'],
         'points' => isset($data['points']) ? array_map('typeCastPointData', $data['points']) : [],
         'created_at' => isset($data['created_at']) ? date_create($data['created_at'])->format(DateTime::ISO8601) : '',
+        'undo' => //(bool)$data['is_undo'],
     ];
 }
 
@@ -81,6 +82,7 @@ function checkToken($request) {
     if (is_null($token)) {
         throw new TokenException();
     }
+    return $token;
 }
 
 // Instantiate the app
@@ -199,21 +201,44 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
     $dbh = getPDO();
 
-    $lastId = 0;
+    $last_event_id = 0;
     if ($request->hasHeader('Last-Event-ID')) {
-        $lastId = (int)$request->getHeaderLine('Last-Event-ID');
+        $last_event_id = $request->getHeaderLine('Last-Event-ID');
     }
-    $sql = 'SELECT * FROM `strokes` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
-    $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':id' => $lastId]);
+
+    list($last_stroke_id, $last_undo_id) = explode('-', $last_event_id);
 
     $body = "retry:500\n\n";
-    foreach ($strokes as $i => $stroke) {
-        $stroke_id = $stroke['id'];
-        $sql = 'SELECT * FROM `points` WHERE `stroke_id` = :stroke_id ORDER BY `id` ASC';
-        $strokes[$i]['points'] = selectAll($dbh, $sql, [':stroke_id' => $stroke_id]);
 
-        $body .= 'id:' . $stroke_id . "\n\n";
-        $body .= 'data:' . json_encode(typeCastStrokeData($strokes[$i])) . "\n\n";
+    $sql = 'SELECT * FROM `strokes` WHERE `room_id` = :room_id AND `id` > :last_stroke_id ORDER BY `id` ASC';
+    $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':last_stroke_id' => $last_stroke_id]);
+
+    foreach ($strokes as $stroke) {
+        $last_stroke_id = $stroke['id'];
+        $sql = 'SELECT * FROM `points` WHERE `stroke_id` = :stroke_id ORDER BY `id` ASC';
+        $stroke['points'] = selectAll($dbh, $sql, [':stroke_id' => $last_stroke_id]);
+
+        $sql = 'SELECT * FROM `undos` WHERE `id` = :undo_id';
+        $stroke['undo'] = selectOne($dbh, $sql, [':undo_id' => $undo_id]);
+
+        $body .= 'id:' . $last_stroke_id . '-' . $last_undo_id . "\n\n";
+        $body .= 'data:' . json_encode(typeCastStrokeData($stroke)) . "\n\n";
+    }
+
+    $sql = 'SELECT `strokes`.*, `undos`.`id` AS `undo_id`';
+    $sql .= ' FROM `strokes` JOIN `undos` ON `strokes`.`id` = `undos`.`stroke_id`';
+    $sql .= ' WHERE `strokes`.`room_id` = :room_id';
+    $sql .= ' AND `undos`.`id` > :last_undo_id';
+    $sql .= ' ORDER BY `undos`.`id` ASC';
+    $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':last_undo_id' => $last_undo_id]);
+
+    foreach ($strokes as $stroke) {
+        $sql = 'SELECT * FROM `undos` WHERE `id` = :undo_id';
+        $stroke['undo'] = selectOne($dbh, $sql, [':undo_id' => $undo_id]);
+
+        $last_undo_id = $stroke['undo_id'];
+        $body .= 'id:' . $last_stroke_id . '-' . $last_undo_id . "\n\n";
+        $body .= 'data:' . json_encode(typeCastStrokeData($stroke)) . "\n\n";
     }
 
     return $response
@@ -223,7 +248,7 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
 $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     try {
-        checkToken($request);
+        $token = checkToken($request);
     } catch (TokenException $e) {
         return $response->withStatus(400)->withJson(['error' => 'トークンエラー。ページを再読み込みしてください。']);
     }
@@ -272,6 +297,12 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
             ]);
         }
 
+        $sql = 'INSERT INTO `stroke_tokens` (`stroke_id`, `token_id`) VALUES (:stroke_id, :token_id)';
+        execute($dbh, $sql, [
+            ':stroke_id' => $id,
+            ':token_id' => $token['id'],
+        ]);
+
         $dbh->commit();
     } catch (Exception $e) {
         $dbh->rollback();
@@ -284,6 +315,48 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
     $sql = 'SELECT * FROM `points` WHERE `stroke_id` = :id ORDER BY `id` ASC';
     $stroke['points'] = selectAll($dbh, $sql, [':id' => $id]);
+
+    //$this->logger->info(var_export($stroke, true));
+    return $response->withJson(['stroke' => typeCastStrokeData($stroke)]);
+});
+
+$app->post('/api/undo/strokes/[{id}]', function ($request, $response, $args) {
+    try {
+        $token = checkToken($request);
+    } catch (TokenException $e) {
+        return $response->withStatus(400)->withJson(['error' => 'トークンエラー。ページを再読み込みしてください。']);
+    }
+
+    $stroke_id = $args['stroke_id'];
+
+    $dbh = getPDO();
+
+    $sql = 'SELECT *, `stroke_tokens`.`id` AS `stroke_token_id`';
+    $sql .= ' FROM `strokes` JOIN `stroke_tokens` ON `strokes`.`id` = `stroke_tokens`.`stroke_id`';
+    $sql .= ' WHERE `strokes`.`id` = :stroke_id';
+    $stroke = selectOne($dbh, $sql, [':stroke_id' => $stroke_id]);
+
+    if (is_null($stroke)) {
+        return $response->withStatus(404)->withJson(['error' => 'アンドゥしようとしている線は存在しません']);
+    }
+    if ($stroke['stroke_token_id'] != $token['id']) {
+        return $response->withStatus(400)->withJson(['error' => '他の人の描いた線はアンドゥできません']);
+    }
+    if (strtotime($stroke['created_at']) <= strtotime('5 minutes ago')) {
+        return $response->withstatus(400)->withjson(['error' => '5分以上前の線はアンドゥできません']);
+    }
+
+    try {
+        $sql = 'INSERT INTO `undos` (`stroke_id`) VALUES (:stroke_id)';
+        $undo_id = execute($dbh, $sql, [':stroke_id' => $stroke_id]);
+    } catch (PDOException $e) {
+        if ($e->errorInfo[1] == 1062) {
+            return $response->withstatus(400)->withjson(['error' => '既にアンドゥされています']);
+        }
+    }
+
+    $sql = 'SELECT * FROM `undos` WHERE `id` = :undo_id';
+    $stroke['undo'] = selectOne($dbh, $sql, [':undo_id' => $undo_id]);
 
     //$this->logger->info(var_export($stroke, true));
     return $response->withJson(['stroke' => typeCastStrokeData($stroke)]);

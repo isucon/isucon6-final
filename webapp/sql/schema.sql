@@ -36,3 +36,17 @@ CREATE TABLE `tokens` (
   PRIMARY KEY (`id`),
   UNIQUE KEY (`token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `stroke_tokens` (
+  `stroke_id` bigint(20) NOT NULL,
+  `token_id` bigint(20) NOT NULL,
+  PRIMARY KEY (`stroke_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `undos` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `stroke_id` bigint(20) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `stroke_id` (`stroke_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
