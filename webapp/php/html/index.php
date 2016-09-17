@@ -265,7 +265,11 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
         $sql = 'INSERT INTO `points` (`stroke_id`, `x`, `y`) VALUES (:stroke_id, :x, :y)';
         foreach ($postedStroke['points'] as $point) {
-            execute($dbh, $sql, ['stroke_id' => $id, 'x' => $point['x'], 'y' => $point['y']]);
+            execute($dbh, $sql, [
+                ':stroke_id' => $id,
+                ':x' => $point['x'],
+                ':y' => $point['y']
+            ]);
         }
 
         $dbh->commit();
