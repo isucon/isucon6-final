@@ -230,8 +230,10 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
     $dbh = getPDO();
 
+    $room_id = $args['id'];
+
     $sql = 'SELECT * FROM `rooms` WHERE `id` = :id';
-    $room = selectOne($dbh, $sql, [':id' => $args['id']]);
+    $room = selectOne($dbh, $sql, [':id' => $room_id]);
 
     if ($room === null) {
         return $response->withStatus(404)->withJson(['error' => 'この部屋は存在しません。']);
@@ -243,7 +245,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     }
 
     $sql = 'SELECT COUNT(*) AS stroke_count FROM `strokes` WHERE `room_id` = :room_id';
-    $result = selectOne($dbh, $sql, [':room_id' => $room['id']]);
+    $result = selectOne($dbh, $sql, [':room_id' => $room_id]);
     if ($result['stroke_count'] > 1000) {
         return $response->withStatus(400)->withJson(['error' => '1000画を超えました。これ以上描くことはできません。']);
     }
