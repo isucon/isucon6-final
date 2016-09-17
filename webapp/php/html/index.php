@@ -11,14 +11,13 @@ function getPDO() {
     $dbh = new PDO("mysql:host={$host};port={$port};dbname={$dbname}", $user, $pass);
     $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $dbh->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
-    $dbh->setAttribute(PDO::ATTR_EMULATE_PREPARES, false); // キャストしなくてよくなる
     return $dbh;
 }
 
 function execute($dbh, $sql, array $params = []) {
     $stmt = $dbh->prepare($sql);
     $stmt->execute($params);
-    return $dbh->lastInsertId();
+    return (int)$dbh->lastInsertId();
 }
 
 function selectOne($dbh, $sql, array $params = []) {
@@ -31,6 +30,41 @@ function selectAll($dbh, $sql, array $params = []) {
     $stmt = $dbh->prepare($sql);
     $stmt->execute($params);
     return $stmt->fetchAll();
+}
+
+function typeCastPointData($data) {
+    return [
+        'id' => (int)$data['id'],
+        'stroke_id' => (int)$data['stroke_id'],
+        'x' => (float)$data['x'],
+        'y' => (float)$data['y'],
+    ];
+}
+
+function typeCastStrokeData($data) {
+    return [
+        'id' => (int)$data['id'],
+        'room_id' => (int)$data['room_id'],
+        'width' => (int)$data['width'],
+        'red' => (int)$data['red'],
+        'green' => (int)$data['green'],
+        'blue' => (int)$data['blue'],
+        'alpha' => (float)$data['alpha'],
+        'points' => isset($data['points']) ? array_map('typeCastPointData', $data['points']) : [],
+        'created_at' => isset($data['created_at']) ? date_create($data['created_at'])->format(DateTime::ISO8601) : '',
+    ];
+}
+
+function typeCastRoomData($data) {
+    return [
+        'id' => (int)$data['id'],
+        'name' => $data['name'],
+        'canvas_width' => (int)$data['canvas_width'],
+        'canvas_height' => (int)$data['canvas_height'],
+        'created_at' => isset($data['created_at']) ? date_create($data['created_at'])->format(DateTime::ISO8601) : '',
+        'strokes' => isset($data['strokes']) ? array_map('typeCastStrokeData', $data['strokes']) : [],
+        'stroke_count' => (int)$data['stroke_count'],
+    ];
 }
 
 
@@ -104,7 +138,7 @@ $app->get('/api/rooms', function ($request, $response, $args) {
     }
 
     //$this->logger->info(var_export($rooms, true));
-    return $response->withJson(['rooms' => $rooms]);
+    return $response->withJson(['rooms' => array_map('typeCastRoomData', $rooms)]);
 });
 
 $app->post('/api/rooms', function ($request, $response, $args) {
@@ -116,18 +150,23 @@ $app->post('/api/rooms', function ($request, $response, $args) {
 
     $dbh = getPDO();
 
-    $room = $request->getParsedBody();
-    if (empty($room['name']) || empty($room['canvas_width']) || empty($room['canvas_height'])) {
+    $postedRoom = $request->getParsedBody();
+    if (empty($postedRoom['name']) || empty($postedRoom['canvas_width']) || empty($postedRoom['canvas_height'])) {
         return $response->withStatus(400)->withJson(['error' => 'リクエストが正しくありません。']);
     }
 
     $sql = 'INSERT INTO `rooms` (`name`, `canvas_width`, `canvas_height`)';
     $sql .= ' VALUES (:name, :canvas_width, :canvas_height)';
-    $id = execute($dbh, $sql, [':name' => $room['name'], ':canvas_width' => $room['canvas_width'], ':canvas_height' => $room['canvas_height']]);
+    $id = execute($dbh, $sql, [
+        ':name' => $postedRoom['name'],
+        ':canvas_width' => $postedRoom['canvas_width'],
+        ':canvas_height' => $postedRoom['canvas_height']
+    ]);
 
-    $room['id'] = (int)$id;
-    $room['strokes'] = [];
-    return $response->withJson(['room' => $room]);
+    $sql = 'SELECT * FROM `rooms` WHERE `id` = :id';
+    $room = selectOne($dbh, $sql, [':id' => $id]);
+
+    return $response->withJson(['room' => typeCastRoomData($room)]);
 });
 
 $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
@@ -151,7 +190,7 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
     $room['strokes'] = $strokes;
 
     //$this->logger->info(var_export($room, true));
-    return $response->withJson(['room' => $room]);
+    return $response->withJson(['room' => typeCastRoomData($room)]);
 });
 
 $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
@@ -174,7 +213,7 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         $strokes[$i]['points'] = selectAll($dbh, $sql, [':stroke_id' => $stroke_id]);
 
         $body .= 'id:' . $stroke_id . "\n\n";
-        $body .= 'data:' . json_encode($strokes[$i]) . "\n\n";
+        $body .= 'data:' . json_encode(typeCastStrokeData($strokes[$i])) . "\n\n";
     }
 
     return $response
@@ -198,8 +237,8 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         return $response->withStatus(404)->withJson(['error' => 'この部屋は存在しません。']);
     }
 
-    $stroke = $request->getParsedBody();
-    if (empty($stroke['width']) || empty($stroke['points'])) {
+    $postedStroke = $request->getParsedBody();
+    if (empty($postedStroke['width']) || empty($postedStroke['points'])) {
         return $response->withStatus(400)->withJson(['error' => 'リクエストが正しくありません。']);
     }
 
@@ -213,13 +252,18 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     try {
         $sql = 'INSERT INTO `strokes` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)';
         $sql .= ' VALUES(:room_id, :width, :red, :green, :blue, :alpha)';
-        $id = execute($dbh, $sql, [':room_id' => $args['id'], ':width' => $stroke['width'], ':red' => $stroke['red'], ':green' => $stroke['green'], ':blue' => $stroke['blue'], ':alpha' => $stroke['alpha']]);
-
-        $stroke['id'] = (int)$id;
+        $id = execute($dbh, $sql, [
+            ':room_id' => $args['id'],
+            ':width' => $postedStroke['width'],
+            ':red' => $postedStroke['red'],
+            ':green' => $postedStroke['green'],
+            ':blue' => $postedStroke['blue'],
+            ':alpha' => $postedStroke['alpha']
+        ]);
 
         $sql = 'INSERT INTO `points` (`stroke_id`, `x`, `y`) VALUES (:stroke_id, :x, :y)';
-        foreach ($stroke['points'] as $coord) {
-            execute($dbh, $sql, ['stroke_id' => $id, 'x' => $coord['x'], 'y' => $coord['y']]);
+        foreach ($postedStroke['points'] as $point) {
+            execute($dbh, $sql, ['stroke_id' => $id, 'x' => $point['x'], 'y' => $point['y']]);
         }
 
         $dbh->commit();
@@ -229,8 +273,14 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         return $response->withStatus(500)->withJson(['error' => 'エラーが発生しました。']);
     }
 
+    $sql = 'SELECT * FROM `strokes` WHERE `id` = :id';
+    $stroke = selectOne($dbh, $sql, [':id' => $id]);
+
+    $sql = 'SELECT * FROM `points` WHERE `stroke_id` = :id ORDER BY `id` ASC';
+    $stroke['points'] = selectAll($dbh, $sql, [':id' => $id]);
+
     //$this->logger->info(var_export($stroke, true));
-    return $response->withJson(['stroke' => $stroke]);
+    return $response->withJson(['stroke' => typeCastStrokeData($stroke)]);
 });
 
 // Run app
