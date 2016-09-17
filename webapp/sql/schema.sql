@@ -1,5 +1,5 @@
 CREATE TABLE `room` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `canvas_width` int(10) unsigned NOT NULL,
   `canvas_height` int(10) unsigned NOT NULL,
@@ -8,8 +8,8 @@ CREATE TABLE `room` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `stroke` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `room_id` int(10) unsigned NOT NULL,
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `room_id` bigint(20) NOT NULL,
   `width` tinyint(3) unsigned NOT NULL,
   `red` tinyint(3) unsigned NOT NULL,
   `green` tinyint(3) unsigned NOT NULL,
@@ -21,8 +21,8 @@ CREATE TABLE `stroke` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `point` (
-  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  `stroke_id` int(10) unsigned NOT NULL,
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `stroke_id` bigint(20) NOT NULL,
   `x` float NOT NULL,
   `y` float NOT NULL,
   PRIMARY KEY (`id`),
