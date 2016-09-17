@@ -1,4 +1,4 @@
-CREATE TABLE `room` (
+CREATE TABLE `rooms` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `canvas_width` int(10) unsigned NOT NULL,
@@ -7,7 +7,7 @@ CREATE TABLE `room` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `stroke` (
+CREATE TABLE `strokes` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `room_id` bigint(20) NOT NULL,
   `width` tinyint(3) unsigned NOT NULL,
@@ -20,7 +20,7 @@ CREATE TABLE `stroke` (
   KEY `room_id` (`room_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE `point` (
+CREATE TABLE `points` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `stroke_id` bigint(20) NOT NULL,
   `x` decimal(12,2) NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE `point` (
   KEY `room_id` (`stroke_id`)
 );
 
-CREATE TABLE `csrf_token` (
+CREATE TABLE `csrf_tokens` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `token` varbinary(128) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,

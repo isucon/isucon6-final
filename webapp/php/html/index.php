@@ -42,7 +42,7 @@ function checkToken($request) {
     }
 
     $dbh = getPDO();
-    $sql = 'SELECT * FROM `csrf_token` WHERE `token` = :token';
+    $sql = 'SELECT * FROM `csrf_tokens` WHERE `token` = :token';
     $token = selectOne($dbh, $sql, [':token' => $request->getHeaderLine('x-csrf-token')]);
     if (is_null($token)) {
         throw new TokenException();
@@ -81,12 +81,12 @@ $container['logger'] = function ($c) {
 $app->post('/api/csrf_token', function ($request, $response, $args) {
     $dbh = getPDO();
 
-    $sql = 'INSERT INTO `csrf_token` (`token`) VALUES';
+    $sql = 'INSERT INTO `csrf_tokens` (`token`) VALUES';
     $sql .= ' (SHA2(RAND(), 512))';
 
     $id = execute($dbh, $sql);
 
-    $sql = 'SELECT * FROM `csrf_token` WHERE id = :id';
+    $sql = 'SELECT * FROM `csrf_tokens` WHERE id = :id';
     $token = selectOne($dbh, $sql, [':id' => $id]);
 
     return $response->withJson(['token' => $token['token']]);
@@ -94,14 +94,14 @@ $app->post('/api/csrf_token', function ($request, $response, $args) {
 
 $app->get('/api/rooms', function ($request, $response, $args) {
     $dbh = getPDO();
-    $sql = 'SELECT `room`.* FROM `room` JOIN';
-    $sql .= ' (SELECT `room_id`, MAX(`id`) AS `max_id` FROM `stroke`';
+    $sql = 'SELECT `rooms`.* FROM `rooms` JOIN';
+    $sql .= ' (SELECT `room_id`, MAX(`id`) AS `max_id` FROM `strokes`';
     $sql .= ' GROUP BY `room_id` ORDER BY `max_id` DESC LIMIT 100) AS `t`';
-    $sql .= ' ON `room`.`id` = `t`.`room_id`';
+    $sql .= ' ON `rooms`.`id` = `t`.`room_id`';
     $rooms = selectAll($dbh, $sql);
 
     foreach ($rooms as $i => $room) {
-        $sql = 'SELECT COUNT(*) AS stroke_count FROM `stroke` WHERE `room_id` = :room_id';
+        $sql = 'SELECT COUNT(*) AS stroke_count FROM `strokes` WHERE `room_id` = :room_id';
         $result = selectOne($dbh, $sql, [':room_id' => $room['id']]);
         $rooms[$i]['stroke_count'] = (int)$result['stroke_count'];
     }
@@ -124,7 +124,7 @@ $app->post('/api/rooms', function ($request, $response, $args) {
         return $response->withStatus(400)->withJson(['error' => 'リクエストが正しくありません。']);
     }
 
-    $sql = 'INSERT INTO `room` (`name`, `canvas_width`, `canvas_height`)';
+    $sql = 'INSERT INTO `rooms` (`name`, `canvas_width`, `canvas_height`)';
     $sql .= ' VALUES (:name, :canvas_width, :canvas_height)';
     $id = execute($dbh, $sql, [':name' => $room['name'], ':canvas_width' => $room['canvas_width'], ':canvas_height' => $room['canvas_height']]);
 
@@ -136,18 +136,18 @@ $app->post('/api/rooms', function ($request, $response, $args) {
 $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
     $dbh = getPDO();
 
-    $sql = 'SELECT * FROM `room` WHERE `room`.`id` = :id';
+    $sql = 'SELECT * FROM `rooms` WHERE `id` = :id';
     $room = selectOne($dbh, $sql, [':id' => $args['id']]);
 
     if ($room === null) {
         return $response->withStatus(404)->withJson(['error' => 'この部屋は存在しません。']);
     }
 
-    $sql = 'SELECT * FROM `stroke` WHERE `room_id` = :id ORDER BY `id` ASC';
+    $sql = 'SELECT * FROM `strokes` WHERE `room_id` = :id ORDER BY `id` ASC';
     $strokes = selectAll($dbh, $sql, [':id' => $args['id']]);
 
     foreach ($strokes as $i => $stroke) {
-        $sql = 'SELECT * FROM `point` WHERE `stroke_id` = :id ORDER BY `id` ASC';
+        $sql = 'SELECT * FROM `points` WHERE `stroke_id` = :id ORDER BY `id` ASC';
         $strokes[$i]['points'] = selectAll($dbh, $sql, [':id' => $stroke['id']]);
     }
 
@@ -167,13 +167,13 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     if ($request->hasHeader('Last-Event-ID')) {
         $lastId = (int)$request->getHeaderLine('Last-Event-ID');
     }
-    $sql = 'SELECT * FROM `stroke` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
+    $sql = 'SELECT * FROM `strokes` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
     $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':id' => $lastId]);
 
     $body = "retry:500\n\n";
     foreach ($strokes as $i => $stroke) {
         $stroke_id = $stroke['id'];
-        $sql = 'SELECT * FROM `point` WHERE `stroke_id` = :stroke_id ORDER BY `id` ASC';
+        $sql = 'SELECT * FROM `points` WHERE `stroke_id` = :stroke_id ORDER BY `id` ASC';
         $strokes[$i]['points'] = selectAll($dbh, $sql, [':stroke_id' => $stroke_id]);
 
         $body .= 'id:' . $stroke_id . "\n\n";
@@ -194,7 +194,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
     $dbh = getPDO();
 
-    $sql = 'SELECT * FROM `room` WHERE `room`.`id` = :id';
+    $sql = 'SELECT * FROM `rooms` WHERE `id` = :id';
     $room = selectOne($dbh, $sql, [':id' => $args['id']]);
 
     if ($room === null) {
@@ -206,7 +206,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         return $response->withStatus(400)->withJson(['error' => 'リクエストが正しくありません。']);
     }
 
-    $sql = 'SELECT COUNT(*) AS stroke_count FROM `stroke` WHERE `room_id` = :room_id';
+    $sql = 'SELECT COUNT(*) AS stroke_count FROM `strokes` WHERE `room_id` = :room_id';
     $result = selectOne($dbh, $sql, [':room_id' => $room['id']]);
     if ($result['stroke_count'] > 1000) {
         return $response->withStatus(400)->withJson(['error' => '1000画を超えました。これ以上描くことはできません。']);
@@ -214,13 +214,13 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
     $dbh->beginTransaction();
     try {
-        $sql = 'INSERT INTO `stroke` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)';
+        $sql = 'INSERT INTO `strokes` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)';
         $sql .= ' VALUES(:room_id, :width, :red, :green, :blue, :alpha)';
         $id = execute($dbh, $sql, [':room_id' => $args['id'], ':width' => $stroke['width'], ':red' => $stroke['red'], ':green' => $stroke['green'], ':blue' => $stroke['blue'], ':alpha' => $stroke['alpha']]);
 
         $stroke['id'] = (int)$id;
 
-        $sql = 'INSERT INTO `point` (`stroke_id`, `x`, `y`) VALUES (:stroke_id, :x, :y)';
+        $sql = 'INSERT INTO `points` (`stroke_id`, `x`, `y`) VALUES (:stroke_id, :x, :y)';
         foreach ($stroke['points'] as $coord) {
             execute($dbh, $sql, ['stroke_id' => $id, 'x' => $coord['x'], 'y' => $coord['y']]);
         }
