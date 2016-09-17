@@ -254,8 +254,8 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     try {
         $sql = 'INSERT INTO `strokes` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)';
         $sql .= ' VALUES(:room_id, :width, :red, :green, :blue, :alpha)';
-        $id = execute($dbh, $sql, [
-            ':room_id' => $args['id'],
+        $stroke_id = execute($dbh, $sql, [
+            ':room_id' => $room_id,
             ':width' => $postedStroke['width'],
             ':red' => $postedStroke['red'],
             ':green' => $postedStroke['green'],
@@ -266,7 +266,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         $sql = 'INSERT INTO `points` (`stroke_id`, `x`, `y`) VALUES (:stroke_id, :x, :y)';
         foreach ($postedStroke['points'] as $point) {
             execute($dbh, $sql, [
-                ':stroke_id' => $id,
+                ':stroke_id' => $stroke_id,
                 ':x' => $point['x'],
                 ':y' => $point['y']
             ]);
@@ -279,11 +279,11 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         return $response->withStatus(500)->withJson(['error' => 'エラーが発生しました。']);
     }
 
-    $sql = 'SELECT * FROM `strokes` WHERE `id` = :id';
-    $stroke = selectOne($dbh, $sql, [':id' => $id]);
+    $sql = 'SELECT * FROM `strokes` WHERE `id` = :stroke_id';
+    $stroke = selectOne($dbh, $sql, [':stroke_id' => $stroke_id]);
 
-    $sql = 'SELECT * FROM `points` WHERE `stroke_id` = :id ORDER BY `id` ASC';
-    $stroke['points'] = selectAll($dbh, $sql, [':id' => $id]);
+    $sql = 'SELECT * FROM `points` WHERE `stroke_id` = :stroke_id ORDER BY `id` ASC';
+    $stroke['points'] = selectAll($dbh, $sql, [':stroke_id' => $stroke_id]);
 
     //$this->logger->info(var_export($stroke, true));
     return $response->withJson(['stroke' => typeCastStrokeData($stroke)]);
