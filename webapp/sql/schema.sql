@@ -27,7 +27,7 @@ CREATE TABLE `points` (
   `y` decimal(10,4) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `room_id` (`stroke_id`)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `tokens` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
@@ -35,4 +35,4 @@ CREATE TABLE `tokens` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY (`token`)
-);
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
