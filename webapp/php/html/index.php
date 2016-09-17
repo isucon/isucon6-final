@@ -76,7 +76,7 @@ function checkToken($request) {
     }
 
     $dbh = getPDO();
-    $sql = 'SELECT * FROM `csrf_tokens` WHERE `token` = :token AND `created_at` > CURRENT_TIMESTAMP - INTERVAL 1 DAY';
+    $sql = 'SELECT * FROM `tokens` WHERE `token` = :token AND `created_at` > CURRENT_TIMESTAMP - INTERVAL 1 DAY';
     $token = selectOne($dbh, $sql, [':token' => $request->getHeaderLine('x-csrf-token')]);
     if (is_null($token)) {
         throw new TokenException();
@@ -112,12 +112,12 @@ $container['logger'] = function ($c) {
 $app->post('/api/csrf_token', function ($request, $response, $args) {
     $dbh = getPDO();
 
-    $sql = 'INSERT INTO `csrf_tokens` (`token`) VALUES';
+    $sql = 'INSERT INTO `tokens` (`token`) VALUES';
     $sql .= ' (SHA2(RAND(), 512))';
 
     $id = execute($dbh, $sql);
 
-    $sql = 'SELECT * FROM `csrf_tokens` WHERE id = :id';
+    $sql = 'SELECT * FROM `tokens` WHERE id = :id';
     $token = selectOne($dbh, $sql, [':id' => $id]);
 
     return $response->withJson(['token' => $token['token']]);

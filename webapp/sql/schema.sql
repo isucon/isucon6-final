@@ -29,7 +29,7 @@ CREATE TABLE `points` (
   KEY `room_id` (`stroke_id`)
 );
 
-CREATE TABLE `csrf_tokens` (
+CREATE TABLE `tokens` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
   `token` varbinary(128) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
