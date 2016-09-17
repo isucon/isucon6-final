@@ -42,12 +42,9 @@ function checkToken($request) {
     }
 
     $dbh = getPDO();
-    $sql = 'SELECT * FROM `csrf_tokens` WHERE `token` = :token';
+    $sql = 'SELECT * FROM `csrf_tokens` WHERE `token` = :token AND `created_at` > CURRENT_TIMESTAMP - INTERVAL 1 DAY';
     $token = selectOne($dbh, $sql, [':token' => $request->getHeaderLine('x-csrf-token')]);
     if (is_null($token)) {
-        throw new TokenException();
-    }
-    if (time() - strtotime($token['created_at']) > 60 * 60 * 24 * 7) {
         throw new TokenException();
     }
 }
