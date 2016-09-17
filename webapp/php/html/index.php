@@ -199,20 +199,20 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
     $dbh = getPDO();
 
-    $lastId = 0;
+    $last_stroke_id = 0;
     if ($request->hasHeader('Last-Event-ID')) {
-        $lastId = (int)$request->getHeaderLine('Last-Event-ID');
+        $last_stroke_id = (int)$request->getHeaderLine('Last-Event-ID');
     }
     $sql = 'SELECT * FROM `strokes` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
-    $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':id' => $lastId]);
+    $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':id' => $last_stroke_id]);
 
     $body = "retry:500\n\n";
     foreach ($strokes as $i => $stroke) {
-        $stroke_id = $stroke['id'];
+        $last_stroke_id = $stroke['id'];
         $sql = 'SELECT * FROM `points` WHERE `stroke_id` = :stroke_id ORDER BY `id` ASC';
-        $strokes[$i]['points'] = selectAll($dbh, $sql, [':stroke_id' => $stroke_id]);
+        $strokes[$i]['points'] = selectAll($dbh, $sql, [':stroke_id' => $last_stroke_id]);
 
-        $body .= 'id:' . $stroke_id . "\n\n";
+        $body .= 'id:' . $last_stroke_id . "\n\n";
         $body .= 'data:' . json_encode(typeCastStrokeData($strokes[$i])) . "\n\n";
     }
 
