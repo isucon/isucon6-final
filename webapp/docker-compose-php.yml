@@ -13,6 +13,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./php/html:/var/www/html:ro
+    depends_on:
+      - mysql
     links:
       - mysql
     environment:
@@ -27,6 +29,8 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./ssl:/ssl:ro
+    depends_on:
+      - api
     links:
       - api
     environment:
