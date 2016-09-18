@@ -90,7 +90,7 @@ func loadAssets(s *checker.Session) {
 	a.Play(s)
 }
 
-func makeNewRoomScenario(s *checker.Session) {
+func makeNewRoomScenario(s *checker.Session, strokes []stroke) {
 	var csrfToken string
 
 	indexChecker := checkHTML(func(doc *goquery.Document) error {
@@ -158,6 +158,9 @@ func makeNewRoomScenario(s *checker.Session) {
 	if ariderr != nil {
 		return
 	}
+
+	apiStrokesRoomsID := checker.NewAction("POST", "/api/strokes/rooms/"+strconv.Itoa(roomID))
+
 }
 
 // インデックスにリクエストして「もっと見る」を最大10ページ辿る

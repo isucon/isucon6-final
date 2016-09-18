@@ -50,7 +50,7 @@ type Output struct {
 func (cli *CLI) Run(args []string) int {
 	var (
 		target   string
-		userdata string
+		seedData string
 
 		version bool
 		debug   bool
@@ -63,8 +63,8 @@ func (cli *CLI) Run(args []string) int {
 	flags.StringVar(&target, "target", "", "")
 	flags.StringVar(&target, "t", "", "(Short)")
 
-	flags.StringVar(&userdata, "userdata", "", "userdata directory")
-	flags.StringVar(&userdata, "u", "", "userdata directory")
+	flags.StringVar(&seedData, "seeddata", "", "seedData directory")
+	flags.StringVar(&seedData, "s", "", "seedData directory")
 
 	flags.BoolVar(&version, "version", false, "Print version information and quit.")
 
@@ -92,7 +92,10 @@ func (cli *CLI) Run(args []string) int {
 
 	setupInitialize(targetHost, initialize)
 
-	// 初期データ用意
+	strokes, err := prepareSeedData(seedData)
+	if err != nil {
+		fmt.Println("%v", err)
+	}
 
 	initReq := true
 

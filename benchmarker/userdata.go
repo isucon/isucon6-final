@@ -1,95 +1,54 @@
 package main
 
 import (
-	"bufio"
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"os"
-	"path/filepath"
-	"strings"
-
-	"github.com/catatsuy/isucon6-final/benchmarker/checker"
-	"github.com/catatsuy/isucon6-final/benchmarker/util"
 )
 
-func prepareUserdata(userdata string) ([]user, []user, []user, []string, []*checker.Asset, error) {
-	if userdata == "" {
-		return nil, nil, nil, nil, nil, errors.New("userdataディレクトリが指定されていません")
+type point struct {
+	X float64 `json:"x"`
+	Y float64 `json:"y"`
+}
+
+type stroke struct {
+	Red    int     `json:"red"`
+	Green  int     `json:"green"`
+	Blue   int     `json:"blue"`
+	Width  int     `json:"width"`
+	Points []point `json:"points"`
+	Alpha  float64 `json:"alpha"`
+}
+
+func prepareSeedData(seedDir string) ([]stroke, error) {
+	if seedDir == "" {
+		return nil, errors.New("seedDataディレクトリが指定されていません")
 	}
-	info, err := os.Stat(userdata)
+	info, err := os.Stat(seedDir)
 	if err != nil {
-		return nil, nil, nil, nil, nil, err
+		return nil, err
 	}
 	if !info.IsDir() {
-		return nil, nil, nil, nil, nil, errors.New("userdataがディレクトリではありません")
+		return nil, errors.New("seedDirがディレクトリではありません")
 	}
 
-	file, err := os.Open(userdata + "/names.txt")
+	file, err := os.Open(seedDir + "/main001.json")
 	if err != nil {
-		return nil, nil, nil, nil, nil, err
+		return nil, err
 	}
 	defer file.Close()
 
-	users := []user{}
-	bannedUsers := []user{}
+	strokes := []stroke{}
 
-	scanner := bufio.NewScanner(file)
-	i := 1
-	for scanner.Scan() {
-		name := scanner.Text()
-		if i%50 == 0 { // 50で割れる場合はbanされたユーザー
-			bannedUsers = append(users, user{AccountName: name, Password: name + name})
-		} else {
-			users = append(users, user{AccountName: name, Password: name + name})
-		}
-		i++
-	}
-	adminUsers := users[:9]
-
-	sentenceFile, err := os.Open(userdata + "/kaomoji.txt")
+	byte, err := ioutil.ReadAll(file)
 	if err != nil {
-		return nil, nil, nil, nil, nil, err
+		return nil, err
 	}
-	defer sentenceFile.Close()
-
-	sentences := []string{}
-
-	sScanner := bufio.NewScanner(sentenceFile)
-	for sScanner.Scan() {
-		sentence := sScanner.Text()
-		sentences = append(sentences, sentence)
-	}
-
-	imgs, err := filepath.Glob(userdata + "/img/000*") // 00001.jpg, 00002.png, 00003.gif など
+	err = json.Unmarshal(byte, &strokes)
 	if err != nil {
-		return nil, nil, nil, nil, nil, err
+		return nil, err
 	}
 
-	images := []*checker.Asset{}
-
-	for _, img := range imgs {
-		data, err := ioutil.ReadFile(img)
-		if err != nil {
-			return nil, nil, nil, nil, nil, err
-		}
-
-		imgType := ""
-		if strings.HasSuffix(img, "jpg") {
-			imgType = "image/jpeg"
-		} else if strings.HasSuffix(img, "png") {
-			imgType = "image/png"
-		} else if strings.HasSuffix(img, "gif") {
-			imgType = "image/gif"
-		} else {
-			// TODO: 警告した方が良い？
-		}
-
-		images = append(images, &checker.Asset{
-			MD5:  util.GetMD5(data),
-			Path: img,
-			Type: imgType,
-		})
-	}
-
-	return users[9:], bannedUsers, adminUsers, sentences, images, err
+	return strokes, nil
 }
