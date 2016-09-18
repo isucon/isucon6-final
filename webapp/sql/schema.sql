@@ -36,3 +36,12 @@ CREATE TABLE `tokens` (
   PRIMARY KEY (`id`),
   UNIQUE KEY (`token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `room_watchers` (
+  `room_id` bigint(20) NOT NULL,
+  `token_id` bigint(20) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY (`room_id`, `token_id`),
+  KEY (`room_id`, `updated_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
