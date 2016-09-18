@@ -41,8 +41,9 @@ class Room extends React.Component {
   }
 
   componentDidMount() {
-    this.eventSource = new EventSource(`/api/strokes/rooms/${this.props.id}`);
-    this.eventSource.onmessage = (ev) => {
+    const token = this.props.csrfToken;
+    this.eventSource = new EventSource(`/api/strokes/rooms/${this.props.id}?csrf_token=${token}`);
+    this.eventSource.addEventListener('message', (ev) => {
       if (ev.data) {
         const strokes = this.state.strokes;
         const stroke = JSON.parse(ev.data);
@@ -51,7 +52,16 @@ class Room extends React.Component {
           this.setState({ strokes: strokes.concat([stroke]).sort((a, b) => b.id - a.id) });
         }
       }
-    };
+    });
+    this.eventSource.addEventListener('error', (ev) => {
+      if (ev.data) {
+        this.setState({
+          showError: true,
+          errorMessage: ev.data,
+        });
+        this.eventSource.close();
+      }
+    });
   }
 
   componentWillUnmount() {
