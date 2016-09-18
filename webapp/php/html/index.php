@@ -70,17 +70,14 @@ function typeCastRoomData($data) {
 
 class TokenException extends Exception {}
 
-function checkToken($request) {
-    if (!$request->hasHeader('x-csrf-token')) {
-        throw new TokenException();
-    }
-
+function checkToken($x_csrf_token) {
     $dbh = getPDO();
     $sql = 'SELECT * FROM `tokens` WHERE `token` = :token AND `created_at` > CURRENT_TIMESTAMP - INTERVAL 1 DAY';
-    $token = selectOne($dbh, $sql, [':token' => $request->getHeaderLine('x-csrf-token')]);
+    $token = selectOne($dbh, $sql, [':token' => $x_csrf_token]);
     if (is_null($token)) {
         throw new TokenException();
     }
+    return $token;
 }
 
 // Instantiate the app
@@ -143,7 +140,7 @@ $app->get('/api/rooms', function ($request, $response, $args) {
 
 $app->post('/api/rooms', function ($request, $response, $args) {
     try {
-        checkToken($request);
+        checkToken($request->getHeaderLine('x-csrf-token'));
     } catch (TokenException $e) {
         return $response->withStatus(400)->withJson(['error' => 'トークンエラー。ページを再読み込みしてください。']);
     }
@@ -223,7 +220,7 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
 $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     try {
-        checkToken($request);
+        checkToken($request->getHeaderLine('x-csrf-token'));
     } catch (TokenException $e) {
         return $response->withStatus(400)->withJson(['error' => 'トークンエラー。ページを再読み込みしてください。']);
     }
