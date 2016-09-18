@@ -17,6 +17,7 @@ class Room extends React.Component {
         strokes: res.room.strokes,
         width: res.room.canvas_width,
         height: res.room.canvas_height,
+        watcherCount: res.room.watcher_count,
         csrfToken: (loadContext || window).csrfToken,
       });
     })
@@ -35,6 +36,7 @@ class Room extends React.Component {
       green: 128,
       blue: 128,
       alpha: 0.7,
+      watcherCount: props.watcherCount,
       showError: false,
       errorMessage: '',
     };
@@ -160,6 +162,7 @@ class Room extends React.Component {
         />
 
         <h2>{`${this.props.name} (${this.state.strokes.length}画)`}</h2>
+        <p>{`${this.state.watcherCount}人が参加中`}</p>
 
         <div className="canvas" style={{ width: this.props.width + 2, margin: '0 auto' }}>
           <label>

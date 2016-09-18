@@ -64,6 +64,7 @@ function typeCastRoomData($data) {
         'created_at' => isset($data['created_at']) ? date_create($data['created_at'])->format(DateTime::ISO8601) : '',
         'strokes' => isset($data['strokes']) ? array_map('typeCastStrokeData', $data['strokes']) : [],
         'stroke_count' => (int)$data['stroke_count'],
+        'watcher_count' => (int)$data['watcher_count'],
     ];
 }
 
@@ -129,7 +130,7 @@ $app->get('/api/rooms', function ($request, $response, $args) {
     $rooms = selectAll($dbh, $sql);
 
     foreach ($rooms as $i => $room) {
-        $sql = 'SELECT COUNT(*) AS stroke_count FROM `strokes` WHERE `room_id` = :room_id';
+        $sql = 'SELECT COUNT(*) AS `stroke_count` FROM `strokes` WHERE `room_id` = :room_id';
         $result = selectOne($dbh, $sql, [':room_id' => $room['id']]);
         $rooms[$i]['stroke_count'] = (int)$result['stroke_count'];
     }
@@ -186,7 +187,12 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
 
     $room['strokes'] = $strokes;
 
-    //$this->logger->info(var_export($room, true));
+    $sql = 'SELECT COUNT(*) AS `watcher_count` FROM `room_watchers`';
+    $sql .= ' WHERE `room_id` = :room_id AND `updated_at` > CURRENT_TIMESTAMP - INTERVAL 15 SECOND';
+    $result = selectOne($dbh, $sql, [':room_id' => $room['id']]);
+    $room['watcher_count'] = $result['watcher_count'];
+
+    //$this->logger->info(var_export($room['watcher_count'], true));
     return $response->withJson(['room' => typeCastRoomData($room)]);
 });
 
@@ -201,7 +207,7 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
             ->withStatus(200)->write($body);
     }
 
-    $this->logger->info(var_export($token, true));
+    //$this->logger->info(var_export($token, true));
 
     $dbh = getPDO();
 
@@ -271,7 +277,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         return $response->withStatus(400)->withJson(['error' => 'リクエストが正しくありません。']);
     }
 
-    $sql = 'SELECT COUNT(*) AS stroke_count FROM `strokes` WHERE `room_id` = :room_id';
+    $sql = 'SELECT COUNT(*) AS `stroke_count` FROM `strokes` WHERE `room_id` = :room_id';
     $result = selectOne($dbh, $sql, [':room_id' => $room_id]);
     if ($result['stroke_count'] > 10000) {
         return $response->withStatus(400)->withJson(['error' => '10000画を超えました。これ以上描くことはできません。']);
