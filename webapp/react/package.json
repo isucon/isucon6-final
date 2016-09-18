@@ -1,23 +1,13 @@
 {
-  "name": "react-ssr-test",
+  "name": "isucon6-final",
   "version": "1.0.0",
-  "description": "React.js Server-Side Rendering Sample",
+  "description": "Frontend for isucon6 final",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "mkdir -p build/public && cp package.json build && npm install --production --prefix build && rm build/package.json && babel -d build *.jsx components/*.jsx util/*.jsx && webpack && cp -r public/* build/public/"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/catatsuy/react-ssr-test.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/catatsuy/react-ssr-test/issues"
-  },
   "private": true,
-  "homepage": "https://github.com/catatsuy/react-ssr-test#readme",
   "dependencies": {
     "async-props": "^0.3.2",
     "escape-html": "^1.0.3",
