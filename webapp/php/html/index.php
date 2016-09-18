@@ -289,5 +289,22 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     return $response->withJson(['stroke' => typeCastStrokeData($stroke)]);
 });
 
+$app->get('/api/initialize', function ($request, $response, $args) {
+    $dbh = getPDO();
+
+    $sqls = [
+        'DELETE FROM `points` WHERE `id` > 1443000',
+        'DELETE FROM `strokes` WHERE `id` > 41000',
+        'DELETE FROM `rooms` WHERE `id` > 1000',
+        'DELETE FROM `tokens` WHERE `id` > 0',
+    ];
+
+    foreach ($sqls as $sql) {
+        execute($dbh, $sql);
+    }
+
+    return $response->write('ok');
+});
+
 // Run app
 $app->run();
