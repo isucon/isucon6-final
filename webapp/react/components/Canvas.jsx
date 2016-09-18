@@ -60,6 +60,7 @@ class Canvas extends React.Component {
           .map((stroke) => (
             <polyline
               key={stroke.id}
+              id={stroke.id}
               stroke={`rgba(${stroke.red},${stroke.green},${stroke.blue},${stroke.alpha})`}
               strokeWidth={stroke.width}
               strokeLinecap="round"
