@@ -191,17 +191,43 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
 });
 
 $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
+    try {
+        $token = checkToken($request->getQueryParam('csrf_token'));
+    } catch (TokenException $e) {
+        $body = "event:error\n";
+        $body .= "data:トークンエラー。ページを再読み込みしてください。\n\n";
+        return $response
+            ->withHeader('Content-type', 'text/event-stream')
+            ->withStatus(200)->write($body);
+    }
 
-    sleep(1);
+    $this->logger->info(var_export($token, true));
 
     $dbh = getPDO();
+
+    $sql = 'SELECT * FROM `rooms` WHERE `id` = :id';
+    $room = selectOne($dbh, $sql, [':id' => $args['id']]);
+
+    if ($room === null) {
+        $body = "event:error\n";
+        $body .= "data:この部屋は存在しません\n\n";
+        return $response
+            ->withHeader('Content-type', 'text/event-stream')
+            ->withStatus(200)->write($body);
+    }
+
+    $sql = 'INSERT INTO `room_watchers` (`room_id`, `token_id`) VALUES (:room_id, :token_id)';
+    $sql .= ' ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP';
+    execute($dbh, $sql, [':room_id' => $room['id'], ':token_id' => $token['id']]);
+
+    sleep(1);
 
     $last_stroke_id = 0;
     if ($request->hasHeader('Last-Event-ID')) {
         $last_stroke_id = (int)$request->getHeaderLine('Last-Event-ID');
     }
     $sql = 'SELECT * FROM `strokes` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
-    $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':id' => $last_stroke_id]);
+    $strokes = selectAll($dbh, $sql, [':room_id' => $room_id, ':id' => $last_stroke_id]);
 
     $body = "retry:500\n\n";
     foreach ($strokes as $i => $stroke) {
@@ -212,6 +238,10 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         $body .= 'id:' . $last_stroke_id . "\n\n";
         $body .= 'data:' . json_encode(typeCastStrokeData($strokes[$i])) . "\n\n";
     }
+
+    $sql = 'INSERT INTO `room_watchers` (`room_id`, `token_id`) VALUES (:room_id, :token_id)';
+    $sql .= ' ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP';
+    execute($dbh, $sql, [':room_id' => $room['id'], ':token_id' => $token['id']]);
 
     return $response
         ->withHeader('Content-type', 'text/event-stream')
