@@ -209,7 +209,7 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     try {
         $token = checkToken($request->getQueryParam('csrf_token'));
     } catch (TokenException $e) {
-        $body = "event:error\n";
+        $body = "event:bad_request\n";
         $body .= "data:トークンエラー。ページを再読み込みしてください。\n\n";
         return $response
             ->withHeader('Content-type', 'text/event-stream')
@@ -224,7 +224,7 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     $room = selectOne($dbh, $sql, [':id' => $args['id']]);
 
     if ($room === null) {
-        $body = "event:error\n";
+        $body = "event:bad_request\n";
         $body .= "data:この部屋は存在しません\n\n";
         return $response
             ->withHeader('Content-type', 'text/event-stream')

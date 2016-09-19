@@ -53,7 +53,7 @@ class Room extends React.Component {
         this.setState({ strokes: strokes.concat([stroke]).sort((a, b) => b.id - a.id) });
       }
     });
-    this.eventSource.addEventListener('error', (ev) => {
+    this.eventSource.addEventListener('bad_request', (ev) => {
       this.setState({
         showError: true,
         errorMessage: ev.data,
