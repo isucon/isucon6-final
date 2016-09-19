@@ -46,30 +46,24 @@ class Room extends React.Component {
     const token = this.props.csrfToken;
     this.eventSource = new EventSource(`/api/strokes/rooms/${this.props.id}?csrf_token=${token}`);
     this.eventSource.addEventListener('stroke', (ev) => {
-      if (ev.data) {
-        const strokes = this.state.strokes;
-        const stroke = JSON.parse(ev.data);
-        const isNew = !strokes.some((s) => s.id === stroke.id);
-        if (isNew) {
-          this.setState({ strokes: strokes.concat([stroke]).sort((a, b) => b.id - a.id) });
-        }
+      const strokes = this.state.strokes;
+      const stroke = JSON.parse(ev.data);
+      const isNew = !strokes.some((s) => s.id === stroke.id);
+      if (isNew) {
+        this.setState({ strokes: strokes.concat([stroke]).sort((a, b) => b.id - a.id) });
       }
     });
     this.eventSource.addEventListener('error', (ev) => {
-      if (ev.data) {
-        this.setState({
-          showError: true,
-          errorMessage: ev.data,
-        });
-        this.eventSource.close();
-      }
+      this.setState({
+        showError: true,
+        errorMessage: ev.data,
+      });
+      this.eventSource.close();
     });
     this.eventSource.addEventListener('watcher_count', (ev) => {
-      if (ev.data) {
-        this.setState({
-          watcherCount: parseInt(ev.data),
-        });
-      }
+      this.setState({
+        watcherCount: parseInt(ev.data),
+      });
     });
   }
 
