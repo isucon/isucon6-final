@@ -81,6 +81,12 @@ function checkToken($x_csrf_token) {
     return $token;
 }
 
+function getStrokeCount($dbh, $room_id) {
+    $sql = 'SELECT COUNT(*) AS `stroke_count` FROM `strokes` WHERE `room_id` = :room_id';
+    $result = selectOne($dbh, $sql, [':room_id' => $room_id]);
+    return $result['stroke_count'];
+}
+
 function getWatcherCount($dbh, $room_id) {
     $sql = 'SELECT COUNT(*) AS `watcher_count` FROM `room_watchers`';
     $sql .= ' WHERE `room_id` = :room_id AND `updated_at` > CURRENT_TIMESTAMP - INTERVAL 3 SECOND';
@@ -143,9 +149,7 @@ $app->get('/api/rooms', function ($request, $response, $args) {
     $rooms = selectAll($dbh, $sql);
 
     foreach ($rooms as $i => $room) {
-        $sql = 'SELECT COUNT(*) AS `stroke_count` FROM `strokes` WHERE `room_id` = :room_id';
-        $result = selectOne($dbh, $sql, [':room_id' => $room['id']]);
-        $rooms[$i]['stroke_count'] = (int)$result['stroke_count'];
+        $rooms[$i]['stroke_count'] = getStrokeCount($dbh, $room['id']);
     }
 
     //$this->logger->info(var_export($rooms, true));
@@ -154,7 +158,7 @@ $app->get('/api/rooms', function ($request, $response, $args) {
 
 $app->post('/api/rooms', function ($request, $response, $args) {
     try {
-        checkToken($request->getHeaderLine('x-csrf-token'));
+        $token = checkToken($request->getHeaderLine('x-csrf-token'));
     } catch (TokenException $e) {
         return $response->withStatus(400)->withJson(['error' => 'トークンエラー。ページを再読み込みしてください。']);
     }
@@ -166,13 +170,28 @@ $app->post('/api/rooms', function ($request, $response, $args) {
         return $response->withStatus(400)->withJson(['error' => 'リクエストが正しくありません。']);
     }
 
-    $sql = 'INSERT INTO `rooms` (`name`, `canvas_width`, `canvas_height`)';
-    $sql .= ' VALUES (:name, :canvas_width, :canvas_height)';
-    $id = execute($dbh, $sql, [
-        ':name' => $postedRoom['name'],
-        ':canvas_width' => $postedRoom['canvas_width'],
-        ':canvas_height' => $postedRoom['canvas_height']
-    ]);
+    $dbh->beginTransaction();
+    try {
+        $sql = 'INSERT INTO `rooms` (`name`, `canvas_width`, `canvas_height`)';
+        $sql .= ' VALUES (:name, :canvas_width, :canvas_height)';
+        $id = execute($dbh, $sql, [
+            ':name' => $postedRoom['name'],
+            ':canvas_width' => $postedRoom['canvas_width'],
+            ':canvas_height' => $postedRoom['canvas_height']
+        ]);
+
+        $sql = 'INSERT INTO `room_owners` (`room_id`, `token_id`) VALUES (:room_id, :token_id)';
+        execute($dbh, $sql, [
+            ':room_id' => $id,
+            ':token_id' => $token['id'],
+        ]);
+
+        $dbh->commit();
+    } catch (Exception $e) {
+        $dbh->rollback();
+        $this->logger->error($e->getMessage());
+        return $response->withStatus(500)->withJson(['error' => 'エラーが発生しました。']);
+    }
 
     $sql = 'SELECT * FROM `rooms` WHERE `id` = :id';
     $room = selectOne($dbh, $sql, [':id' => $id]);
@@ -273,17 +292,15 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
 $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     try {
-        checkToken($request->getHeaderLine('x-csrf-token'));
+        $token = checkToken($request->getHeaderLine('x-csrf-token'));
     } catch (TokenException $e) {
         return $response->withStatus(400)->withJson(['error' => 'トークンエラー。ページを再読み込みしてください。']);
     }
 
     $dbh = getPDO();
 
-    $room_id = $args['id'];
-
     $sql = 'SELECT * FROM `rooms` WHERE `id` = :id';
-    $room = selectOne($dbh, $sql, [':id' => $room_id]);
+    $room = selectOne($dbh, $sql, [':id' => $args['id']]);
 
     if ($room === null) {
         return $response->withStatus(404)->withJson(['error' => 'この部屋は存在しません。']);
@@ -294,10 +311,16 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         return $response->withStatus(400)->withJson(['error' => 'リクエストが正しくありません。']);
     }
 
-    $sql = 'SELECT COUNT(*) AS `stroke_count` FROM `strokes` WHERE `room_id` = :room_id';
-    $result = selectOne($dbh, $sql, [':room_id' => $room_id]);
-    if ($result['stroke_count'] > 10000) {
-        return $response->withStatus(400)->withJson(['error' => '10000画を超えました。これ以上描くことはできません。']);
+    $stroke_count = getStrokeCount($dbh, $room['id']);
+    if ($stroke_count > 1000) {
+        return $response->withStatus(400)->withJson(['error' => '1000画を超えました。これ以上描くことはできません。']);
+    }
+    if ($stroke_count == 0) {
+        $sql = 'SELECT * FROM `room_owners` WHERE `room_id` = :room_id AND `token_id` = :token_id';
+        $result = selectOne($dbh, $sql, [':room_id' => $room['id'], ':token_id' => $token['id']]);
+        if (is_null($result)) {
+            return $response->withStatus(400)->withJson(['error' => '他人の作成した部屋に1画目を描くことはできません']);
+        }
     }
 
     $dbh->beginTransaction();
@@ -305,7 +328,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         $sql = 'INSERT INTO `strokes` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)';
         $sql .= ' VALUES(:room_id, :width, :red, :green, :blue, :alpha)';
         $stroke_id = execute($dbh, $sql, [
-            ':room_id' => $room_id,
+            ':room_id' => $room['id'],
             ':width' => $postedStroke['width'],
             ':red' => $postedStroke['red'],
             ':green' => $postedStroke['green'],

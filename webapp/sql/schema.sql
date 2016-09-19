@@ -45,3 +45,9 @@ CREATE TABLE `room_watchers` (
   UNIQUE KEY (`room_id`, `token_id`),
   KEY (`room_id`, `updated_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `room_owners` (
+  `room_id` bigint(20) NOT NULL,
+  `token_id` bigint(20) NOT NULL,
+  UNIQUE KEY (`room_id`, `token_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
