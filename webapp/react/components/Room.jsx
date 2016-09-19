@@ -45,7 +45,7 @@ class Room extends React.Component {
   componentDidMount() {
     const token = this.props.csrfToken;
     this.eventSource = new EventSource(`/api/strokes/rooms/${this.props.id}?csrf_token=${token}`);
-    this.eventSource.addEventListener('message', (ev) => {
+    this.eventSource.addEventListener('stroke', (ev) => {
       if (ev.data) {
         const strokes = this.state.strokes;
         const stroke = JSON.parse(ev.data);
@@ -62,6 +62,13 @@ class Room extends React.Component {
           errorMessage: ev.data,
         });
         this.eventSource.close();
+      }
+    });
+    this.eventSource.addEventListener('watcher_count', (ev) => {
+      if (ev.data) {
+        this.setState({
+          watcherCount: parseInt(ev.data),
+        });
       }
     });
   }

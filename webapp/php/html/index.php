@@ -229,6 +229,12 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     $sql .= ' ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP';
     execute($dbh, $sql, [':room_id' => $room['id'], ':token_id' => $token['id']]);
 
+    $body = "retry:500\n\n";
+
+    $watcher_count = getWatcherCount($dbh, $room['id']);
+    $body .= "event:watcher_count\n";
+    $body .= "data:" . $watcher_count . "\n\n";
+
     sleep(1);
 
     $last_stroke_id = 0;
@@ -238,19 +244,27 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     $sql = 'SELECT * FROM `strokes` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
     $strokes = selectAll($dbh, $sql, [':room_id' => $room_id, ':id' => $last_stroke_id]);
 
-    $body = "retry:500\n\n";
     foreach ($strokes as $i => $stroke) {
         $last_stroke_id = $stroke['id'];
         $sql = 'SELECT * FROM `points` WHERE `stroke_id` = :stroke_id ORDER BY `id` ASC';
         $strokes[$i]['points'] = selectAll($dbh, $sql, [':stroke_id' => $last_stroke_id]);
 
         $body .= 'id:' . $last_stroke_id . "\n\n";
+        $body .= "event:stroke\n";
         $body .= 'data:' . json_encode(typeCastStrokeData($strokes[$i])) . "\n\n";
     }
 
     $sql = 'INSERT INTO `room_watchers` (`room_id`, `token_id`) VALUES (:room_id, :token_id)';
     $sql .= ' ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP';
     execute($dbh, $sql, [':room_id' => $room['id'], ':token_id' => $token['id']]);
+
+    $new_watcher_count = getWatcherCount($dbh, $room['id']);
+    if ($new_watcher_count !== $watcher_count) {
+        $body .= "event:watcher_count\n";
+        $body .= "data:" . $watcher_count . "\n\n";
+
+        $watcher_count = $new_watcher_count;
+    }
 
     return $response
         ->withHeader('Content-type', 'text/event-stream')
