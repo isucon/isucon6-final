@@ -32,6 +32,12 @@ function selectAll($dbh, $sql, array $params = []) {
     return $stmt->fetchAll();
 }
 
+function printAndFlush($content) {
+    print($content);
+    ob_flush();
+    flush();
+}
+
 function typeCastPointData($data) {
     return [
         'id' => (int)$data['id'],
@@ -233,16 +239,18 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
 });
 
 $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
+    header('Content-Type: text/event-stream');
+
     $dbh = getPDO();
 
     try {
         $token = checkToken($dbh, $request->getQueryParam('csrf_token'));
     } catch (TokenException $e) {
-        $body = "event:bad_request\n";
-        $body .= "data:トークンエラー。ページを再読み込みしてください。\n\n";
-        return $response
-            ->withHeader('Content-type', 'text/event-stream')
-            ->withStatus(200)->write($body);
+        printAndFlush(
+            "event:bad_request\n" .
+            "data:トークンエラー。ページを再読み込みしてください。\n\n"
+        );
+        return;
     }
 
     //$this->logger->info(var_export($token, true));
@@ -250,19 +258,21 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     $room = getRoom($dbh, $args['id']);
 
     if ($room === null) {
-        $body = "event:bad_request\n";
-        $body .= "data:この部屋は存在しません\n\n";
-        return $response
-            ->withHeader('Content-type', 'text/event-stream')
-            ->withStatus(200)->write($body);
+        printAndFlush(
+            "event:bad_request\n" .
+            "data:この部屋は存在しません\n\n"
+        );
+        return;
     }
-
-    $body = "retry:500\n\n";
 
     updateRoomWatcher($dbh, $room['id'], $token['id']);
     $watcher_count = getWatcherCount($dbh, $room['id']);
-    $body .= "event:watcher_count\n";
-    $body .= "data:" . $watcher_count . "\n\n";
+
+    printAndFlush(
+        "retry:500\n\n" .
+        "event:watcher_count\n" .
+        'data:' . $watcher_count . "\n\n"
+    );
 
     sleep(1);
 
@@ -274,11 +284,11 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
     foreach ($strokes as $stroke) {
         $stroke['points'] = getStrokePoints($dbh, $stroke['id']);
-
-        $body .= 'id:' . $stroke['id'] . "\n\n";
-        $body .= "event:stroke\n";
-        $body .= 'data:' . json_encode(typeCastStrokeData($stroke)) . "\n\n";
-
+        printAndFlush(
+            'id:' . $stroke['id'] . "\n\n" .
+            "event:stroke\n" .
+            'data:' . json_encode(typeCastStrokeData($stroke)) . "\n\n"
+        );
         $last_stroke_id = $stroke['id'];
     }
 
@@ -287,13 +297,12 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     if ($new_watcher_count !== $watcher_count) {
         $body .= "event:watcher_count\n";
         $body .= "data:" . $watcher_count . "\n\n";
-
+        printAndFlush(
+            "event:watcher_count\n" .
+            'data:' . $watcher_count . "\n\n"
+        );
         $watcher_count = $new_watcher_count;
     }
-
-    return $response
-        ->withHeader('Content-type', 'text/event-stream')
-        ->write($body);
 });
 
 $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
