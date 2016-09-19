@@ -88,6 +88,12 @@ function getWatcherCount($dbh, $room_id) {
     return $result['watcher_count'];
 }
 
+function updateRoomWatcher($dbh, $room_id, $token_id) {
+    $sql = 'INSERT INTO `room_watchers` (`room_id`, `token_id`) VALUES (:room_id, :token_id)';
+    $sql .= ' ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP';
+    execute($dbh, $sql, [':room_id' => $room_id, ':token_id' => $token_id]);
+}
+
 // Instantiate the app
 $settings = [
     'displayErrorDetails' => getenv('ISUCON_ENV') !== 'production',
@@ -225,12 +231,9 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
             ->withStatus(200)->write($body);
     }
 
-    $sql = 'INSERT INTO `room_watchers` (`room_id`, `token_id`) VALUES (:room_id, :token_id)';
-    $sql .= ' ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP';
-    execute($dbh, $sql, [':room_id' => $room['id'], ':token_id' => $token['id']]);
-
     $body = "retry:500\n\n";
 
+    updateRoomWatcher($dbh, $room['id'], $token['id']);
     $watcher_count = getWatcherCount($dbh, $room['id']);
     $body .= "event:watcher_count\n";
     $body .= "data:" . $watcher_count . "\n\n";
@@ -254,10 +257,7 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         $body .= 'data:' . json_encode(typeCastStrokeData($strokes[$i])) . "\n\n";
     }
 
-    $sql = 'INSERT INTO `room_watchers` (`room_id`, `token_id`) VALUES (:room_id, :token_id)';
-    $sql .= ' ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP';
-    execute($dbh, $sql, [':room_id' => $room['id'], ':token_id' => $token['id']]);
-
+    updateRoomWatcher($dbh, $room['id'], $token['id']);
     $new_watcher_count = getWatcherCount($dbh, $room['id']);
     if ($new_watcher_count !== $watcher_count) {
         $body .= "event:watcher_count\n";
