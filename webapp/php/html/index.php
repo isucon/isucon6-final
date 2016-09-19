@@ -87,6 +87,12 @@ function getStrokePoints($dbh, $stroke_id) {
     return selectAll($dbh, $sql, [':stroke_id' => $stroke_id]);
 }
 
+function getStrokes($dbh, $room_id, $greater_than_id) {
+    $sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`';
+    $sql .= ' WHERE `room_id` = :room_id AND `id` > :greater_than_id ORDER BY `id` ASC';
+    return selectAll($dbh, $sql, [':room_id' => $room_id, ':greater_than_id' => $greater_than_id]);
+}
+
 function getRoom($dbh, $room_id) {
     $sql = 'SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at` FROM `rooms` WHERE `id` = :room_id';
     return selectOne($dbh, $sql, [':room_id' => $room_id]);
@@ -153,14 +159,16 @@ $app->post('/api/csrf_token', function ($request, $response, $args) {
 
 $app->get('/api/rooms', function ($request, $response, $args) {
     $dbh = getPDO();
-    $sql = 'SELECT `rooms`.* FROM `rooms` JOIN';
-    $sql .= ' (SELECT `room_id`, MAX(`id`) AS `max_id` FROM `strokes`';
-    $sql .= ' GROUP BY `room_id` ORDER BY `max_id` DESC LIMIT 100) AS `t`';
-    $sql .= ' ON `rooms`.`id` = `t`.`room_id`';
-    $rooms = selectAll($dbh, $sql);
 
-    foreach ($rooms as $i => $room) {
-        $rooms[$i]['stroke_count'] = getStrokeCount($dbh, $room['id']);
+    $sql = 'SELECT `room_id`, MAX(`id`) AS `max_id` FROM `strokes`';
+    $sql .= ' GROUP BY `room_id` ORDER BY `max_id` DESC LIMIT 100';
+    $results = selectAll($dbh, $sql);
+
+    $rooms = [];
+    foreach ($results as $result) {
+        $room = getRoom($dbh, $result['room_id']);
+        $room['stroke_count'] = getStrokeCount($dbh, $room['id']);
+        $rooms[] = $room;
     }
 
     //$this->logger->info(var_export($rooms, true));
@@ -218,8 +226,7 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
         return $response->withStatus(404)->withJson(['error' => 'この部屋は存在しません。']);
     }
 
-    $sql = 'SELECT * FROM `strokes` WHERE `room_id` = :id ORDER BY `id` ASC';
-    $strokes = selectAll($dbh, $sql, [':id' => $args['id']]);
+    $strokes = getStrokes($dbh, $room['id'], 0);
 
     foreach ($strokes as $i => $stroke) {
         $strokes[$i]['points'] = getStrokePoints($dbh, $stroke['id']);
@@ -270,8 +277,7 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     if ($request->hasHeader('Last-Event-ID')) {
         $last_stroke_id = (int)$request->getHeaderLine('Last-Event-ID');
     }
-    $sql = 'SELECT * FROM `strokes` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
-    $strokes = selectAll($dbh, $sql, [':room_id' => $room_id, ':id' => $last_stroke_id]);
+    $strokes = getStrokes($dbh, $room_id, $last_stroke_id);
 
     foreach ($strokes as $stroke) {
         $stroke['points'] = getStrokePoints($dbh, $stroke['id']);
