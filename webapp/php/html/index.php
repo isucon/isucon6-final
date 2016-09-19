@@ -274,10 +274,10 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         'data:' . $watcher_count . "\n\n"
     );
 
-    $loop = 3;
+    $loop = 6;
     while ($loop > 0) {
         $loop--;
-        sleep(1);
+        usleep(500 * 1000); // 500ms
 
         $last_stroke_id = 0;
         if ($request->hasHeader('Last-Event-ID')) {
