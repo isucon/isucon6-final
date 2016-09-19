@@ -98,12 +98,6 @@ function getRoom($dbh, $room_id) {
     return selectOne($dbh, $sql, [':room_id' => $room_id]);
 }
 
-function getStrokeCount($dbh, $room_id) {
-    $sql = 'SELECT COUNT(*) AS `stroke_count` FROM `strokes` WHERE `room_id` = :room_id';
-    $result = selectOne($dbh, $sql, [':room_id' => $room_id]);
-    return $result['stroke_count'];
-}
-
 function getWatcherCount($dbh, $room_id) {
     $sql = 'SELECT COUNT(*) AS `watcher_count` FROM `room_watchers`';
     $sql .= ' WHERE `room_id` = :room_id AND `updated_at` > CURRENT_TIMESTAMP - INTERVAL 3 SECOND';
@@ -167,7 +161,7 @@ $app->get('/api/rooms', function ($request, $response, $args) {
     $rooms = [];
     foreach ($results as $result) {
         $room = getRoom($dbh, $result['room_id']);
-        $room['stroke_count'] = getStrokeCount($dbh, $room['id']);
+        $room['stroke_count'] = count(getStrokes($dbh, $room['id'], 0));
         $rooms[] = $room;
     }
 
@@ -323,7 +317,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         return $response->withStatus(400)->withJson(['error' => 'リクエストが正しくありません。']);
     }
 
-    $stroke_count = getStrokeCount($dbh, $room['id']);
+    $stroke_count = count(getStrokes($dbh, $room['id'], 0));
     if ($stroke_count > 1000) {
         return $response->withStatus(400)->withJson(['error' => '1000画を超えました。これ以上描くことはできません。']);
     }
