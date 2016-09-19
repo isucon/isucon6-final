@@ -81,6 +81,13 @@ function checkToken($x_csrf_token) {
     return $token;
 }
 
+function getWatcherCount($dbh, $room_id) {
+    $sql = 'SELECT COUNT(*) AS `watcher_count` FROM `room_watchers`';
+    $sql .= ' WHERE `room_id` = :room_id AND `updated_at` > CURRENT_TIMESTAMP - INTERVAL 15 SECOND';
+    $result = selectOne($dbh, $sql, [':room_id' => $room_id]);
+    return $result['watcher_count'];
+}
+
 // Instantiate the app
 $settings = [
     'displayErrorDetails' => getenv('ISUCON_ENV') !== 'production',
@@ -186,11 +193,7 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
     }
 
     $room['strokes'] = $strokes;
-
-    $sql = 'SELECT COUNT(*) AS `watcher_count` FROM `room_watchers`';
-    $sql .= ' WHERE `room_id` = :room_id AND `updated_at` > CURRENT_TIMESTAMP - INTERVAL 15 SECOND';
-    $result = selectOne($dbh, $sql, [':room_id' => $room['id']]);
-    $room['watcher_count'] = $result['watcher_count'];
+    $room['watcher_count'] = getWatcherCount($dbh, $room['id']);
 
     //$this->logger->info(var_export($room['watcher_count'], true));
     return $response->withJson(['room' => typeCastRoomData($room)]);
