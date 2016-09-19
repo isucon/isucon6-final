@@ -170,7 +170,6 @@ $app->get('/api/rooms', function ($request, $response, $args) {
         $rooms[] = $room;
     }
 
-    //$this->logger->info(var_export($rooms, true));
     return $response->withJson(['rooms' => array_map('typeCastRoomData', $rooms)]);
 });
 
@@ -234,7 +233,6 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
     $room['strokes'] = $strokes;
     $room['watcher_count'] = getWatcherCount($dbh, $room['id']);
 
-    //$this->logger->info(var_export($room['watcher_count'], true));
     return $response->withJson(['room' => typeCastRoomData($room)]);
 });
 
@@ -253,7 +251,6 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         return;
     }
 
-    //$this->logger->info(var_export($token, true));
 
     $room = getRoom($dbh, $args['id']);
 
@@ -378,7 +375,6 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
     $stroke['points'] = getStrokePoints($dbh, $stroke_id);
 
-    //$this->logger->info(var_export($stroke, true));
     return $response->withJson(['stroke' => typeCastStrokeData($stroke)]);
 });
 
