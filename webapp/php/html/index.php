@@ -71,10 +71,11 @@ function typeCastRoomData($data) {
 
 class TokenException extends Exception {}
 
-function checkToken($x_csrf_token) {
+function checkToken($csrf_token) {
     $dbh = getPDO();
-    $sql = 'SELECT * FROM `tokens` WHERE `token` = :token AND `created_at` > CURRENT_TIMESTAMP - INTERVAL 1 DAY';
-    $token = selectOne($dbh, $sql, [':token' => $x_csrf_token]);
+    $sql = 'SELECT `id`, `csrf_token`, `created_at` FROM `tokens`';
+    $sql .= ' WHERE `csrf_token` = :csrf_token AND `created_at` > CURRENT_TIMESTAMP - INTERVAL 1 DAY';
+    $token = selectOne($dbh, $sql, [':csrf_token' => $csrf_token]);
     if (is_null($token)) {
         throw new TokenException();
     }
@@ -139,15 +140,15 @@ $container['logger'] = function ($c) {
 $app->post('/api/csrf_token', function ($request, $response, $args) {
     $dbh = getPDO();
 
-    $sql = 'INSERT INTO `tokens` (`token`) VALUES';
-    $sql .= ' (SHA2(RAND(), 512))';
+    $sql = 'INSERT INTO `tokens` (`csrf_token`) VALUES';
+    $sql .= ' (SHA2(RAND(), 256))';
 
     $id = execute($dbh, $sql);
 
-    $sql = 'SELECT * FROM `tokens` WHERE id = :id';
+    $sql = 'SELECT `id`, `csrf_token`, `created_at` FROM `tokens` WHERE id = :id';
     $token = selectOne($dbh, $sql, [':id' => $id]);
 
-    return $response->withJson(['token' => $token['token']]);
+    return $response->withJson(['token' => $token['csrf_token']]);
 });
 
 $app->get('/api/rooms', function ($request, $response, $args) {

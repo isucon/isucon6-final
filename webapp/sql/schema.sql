@@ -31,10 +31,10 @@ CREATE TABLE `points` (
 
 CREATE TABLE `tokens` (
   `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `token` varbinary(128) NOT NULL,
+  `csrf_token` varbinary(64) NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY (`token`)
+  UNIQUE KEY (`csrf_token`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `room_watchers` (
