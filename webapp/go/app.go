@@ -11,13 +11,14 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	"goji.io"
 	"goji.io/pat"
 	"golang.org/x/net/context"
 )
 
 var (
-	db *sql.DB
+	db *sqlx.DB
 )
 
 type token struct {
@@ -27,22 +28,22 @@ type token struct {
 }
 
 type point struct {
-	ID       int64   `json:"id"`
-	StrokeID int64   `json:"stroke_id"`
-	X        float64 `json:"x"`
-	Y        float64 `json:"y"`
+	ID       int64   `json:"id" db:"id"`
+	StrokeID int64   `json:"stroke_id" db:"stroke_id"`
+	X        float64 `json:"x" db:"x"`
+	Y        float64 `json:"y" db:"y"`
 }
 
 type stroke struct {
-	ID        int64     `json:"id"`
-	RoomID    int64     `json:"room_id"`
-	Width     int       `json:"width"`
-	Red       int       `json:"red"`
-	Green     int       `json:"green"`
-	Blue      int       `json:"blue"`
-	Alpha     float64   `json:"alpha"`
-	CreatedAt time.Time `json:"created_at"`
-	Points    []point   `json:"points"`
+	ID        int64     `json:"id" db:"id"`
+	RoomID    int64     `json:"room_id" db:"room_id"`
+	Width     int       `json:"width" db:"width"`
+	Red       int       `json:"red" db:"red"`
+	Green     int       `json:"green" db:"green"`
+	Blue      int       `json:"blue" db:"blue"`
+	Alpha     float64   `json:"alpha" db:"alpha"`
+	CreatedAt time.Time `json:"created_at" db:"created_at"`
+	Points    []point   `json:"points" db:"points"`
 }
 
 type room struct {
@@ -75,37 +76,25 @@ func checkToken(csrfToken string) bool {
 	return true
 }
 
-func getStrokePoints(strokeID int) []point {
+func getStrokePoints(strokeID int) ([]point, error) {
 	query := "SELECT `id`, `stroke_id`, `x`, `y` FROM `points` WHERE `stroke_id` = ? ORDER BY `id` ASC"
-	rows, err := db.Query(query, strokeID)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
 	ps := []point{}
-	for rows.Next() {
-		p := point{}
-		rows.Scan(&p.ID, &p.StrokeID, &p.X, &p.Y)
-		ps = append(ps, p)
+	err := db.Select(&ps, query, strokeID)
+	if err != nil {
+		return nil, err
 	}
-	return ps
+	return ps, nil
 }
 
-func getStrokes(roomID int, greaterThanID int) {
+func getStrokes(roomID int, greaterThanID int) ([]stroke, error) {
 	query := "SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`"
 	query += " WHERE `room_id` = ? AND `id` > ? ORDER BY `id` ASC"
-	rows, err := db.Query(query, roomID, greaterThanID)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer rows.Close()
 	strokes := []stroke{}
-	for rows.Next() {
-		s := stroke{}
-		rows.Scan(&s.ID, &s.RoomID, &s.Width, &s.Red, &s.Green, &s.Blue, &s.Alpha, &s.CreatedAt)
-		strokes = append(strokes, s)
+	err := db.Select(&strokes, query, roomID, greaterThanID)
+	if err != nil {
+		return nil, err
 	}
-	return strokes
+	return strokes, nil
 }
 
 func getRoom(roomID int) {
@@ -341,7 +330,7 @@ func main() {
 		dbname,
 	)
 
-	db, err = sql.Open("mysql", dsn)
+	db, err = sqlx.Open("mysql", dsn)
 	if err != nil {
 		log.Fatalf("Failed to connect to DB: %s.", err.Error())
 	}
