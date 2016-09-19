@@ -47,6 +47,8 @@ function typeCastPointData($data) {
     ];
 }
 
+const ISO8601MICROSENDS = "Y-m-d\TH:i:s.uO";
+
 function typeCastStrokeData($data) {
     return [
         'id' => (int)$data['id'],
@@ -57,7 +59,7 @@ function typeCastStrokeData($data) {
         'blue' => (int)$data['blue'],
         'alpha' => (float)$data['alpha'],
         'points' => isset($data['points']) ? array_map('typeCastPointData', $data['points']) : [],
-        'created_at' => isset($data['created_at']) ? date_create($data['created_at'])->format(DateTime::ISO8601) : '',
+        'created_at' => isset($data['created_at']) ? date_create($data['created_at'])->format(ISO8601MICROSENDS) : '',
     ];
 }
 
@@ -67,7 +69,7 @@ function typeCastRoomData($data) {
         'name' => $data['name'],
         'canvas_width' => (int)$data['canvas_width'],
         'canvas_height' => (int)$data['canvas_height'],
-        'created_at' => isset($data['created_at']) ? date_create($data['created_at'])->format(DateTime::ISO8601) : '',
+        'created_at' => isset($data['created_at']) ? date_create($data['created_at'])->format(ISO8601MICROSENDS) : '',
         'strokes' => isset($data['strokes']) ? array_map('typeCastStrokeData', $data['strokes']) : [],
         'stroke_count' => (int)$data['stroke_count'],
         'watcher_count' => (int)$data['watcher_count'],
@@ -79,7 +81,7 @@ class TokenException extends Exception {}
 
 function checkToken($dbh, $csrf_token) {
     $sql = 'SELECT `id`, `csrf_token`, `created_at` FROM `tokens`';
-    $sql .= ' WHERE `csrf_token` = :csrf_token AND `created_at` > CURRENT_TIMESTAMP - INTERVAL 1 DAY';
+    $sql .= ' WHERE `csrf_token` = :csrf_token AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY';
     $token = selectOne($dbh, $sql, [':csrf_token' => $csrf_token]);
     if (is_null($token)) {
         throw new TokenException();
@@ -105,14 +107,14 @@ function getRoom($dbh, $room_id) {
 
 function getWatcherCount($dbh, $room_id) {
     $sql = 'SELECT COUNT(*) AS `watcher_count` FROM `room_watchers`';
-    $sql .= ' WHERE `room_id` = :room_id AND `updated_at` > CURRENT_TIMESTAMP - INTERVAL 3 SECOND';
+    $sql .= ' WHERE `room_id` = :room_id AND `updated_at` > CURRENT_TIMESTAMP(6) - INTERVAL 3 SECOND';
     $result = selectOne($dbh, $sql, [':room_id' => $room_id]);
     return $result['watcher_count'];
 }
 
 function updateRoomWatcher($dbh, $room_id, $token_id) {
     $sql = 'INSERT INTO `room_watchers` (`room_id`, `token_id`) VALUES (:room_id, :token_id)';
-    $sql .= ' ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP';
+    $sql .= ' ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP(6)';
     execute($dbh, $sql, [':room_id' => $room_id, ':token_id' => $token_id]);
 }
 
