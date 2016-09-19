@@ -274,16 +274,18 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         'data:' . $watcher_count . "\n\n"
     );
 
+    $last_stroke_id = 0;
+    if ($request->hasHeader('Last-Event-ID')) {
+        $last_stroke_id = (int)$request->getHeaderLine('Last-Event-ID');
+    }
+
     $loop = 6;
     while ($loop > 0) {
         $loop--;
         usleep(500 * 1000); // 500ms
 
-        $last_stroke_id = 0;
-        if ($request->hasHeader('Last-Event-ID')) {
-            $last_stroke_id = (int)$request->getHeaderLine('Last-Event-ID');
-        }
-        $strokes = getStrokes($dbh, $room_id, $last_stroke_id);
+        $strokes = getStrokes($dbh, $room['id'], $last_stroke_id);
+        $this->logger->info(var_export($strokes, true));
 
         foreach ($strokes as $stroke) {
             $stroke['points'] = getStrokePoints($dbh, $stroke['id']);
