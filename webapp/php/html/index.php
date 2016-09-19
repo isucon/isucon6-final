@@ -83,7 +83,7 @@ function checkToken($x_csrf_token) {
 
 function getWatcherCount($dbh, $room_id) {
     $sql = 'SELECT COUNT(*) AS `watcher_count` FROM `room_watchers`';
-    $sql .= ' WHERE `room_id` = :room_id AND `updated_at` > CURRENT_TIMESTAMP - INTERVAL 15 SECOND';
+    $sql .= ' WHERE `room_id` = :room_id AND `updated_at` > CURRENT_TIMESTAMP - INTERVAL 3 SECOND';
     $result = selectOne($dbh, $sql, [':room_id' => $room_id]);
     return $result['watcher_count'];
 }
