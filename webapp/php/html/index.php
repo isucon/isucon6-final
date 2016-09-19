@@ -274,34 +274,38 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         'data:' . $watcher_count . "\n\n"
     );
 
-    sleep(1);
+    $loop = 3;
+    while ($loop > 0) {
+        $loop--;
+        sleep(1);
 
-    $last_stroke_id = 0;
-    if ($request->hasHeader('Last-Event-ID')) {
-        $last_stroke_id = (int)$request->getHeaderLine('Last-Event-ID');
-    }
-    $strokes = getStrokes($dbh, $room_id, $last_stroke_id);
+        $last_stroke_id = 0;
+        if ($request->hasHeader('Last-Event-ID')) {
+            $last_stroke_id = (int)$request->getHeaderLine('Last-Event-ID');
+        }
+        $strokes = getStrokes($dbh, $room_id, $last_stroke_id);
 
-    foreach ($strokes as $stroke) {
-        $stroke['points'] = getStrokePoints($dbh, $stroke['id']);
-        printAndFlush(
-            'id:' . $stroke['id'] . "\n\n" .
-            "event:stroke\n" .
-            'data:' . json_encode(typeCastStrokeData($stroke)) . "\n\n"
-        );
-        $last_stroke_id = $stroke['id'];
-    }
+        foreach ($strokes as $stroke) {
+            $stroke['points'] = getStrokePoints($dbh, $stroke['id']);
+            printAndFlush(
+                'id:' . $stroke['id'] . "\n\n" .
+                "event:stroke\n" .
+                'data:' . json_encode(typeCastStrokeData($stroke)) . "\n\n"
+            );
+            $last_stroke_id = $stroke['id'];
+        }
 
-    updateRoomWatcher($dbh, $room['id'], $token['id']);
-    $new_watcher_count = getWatcherCount($dbh, $room['id']);
-    if ($new_watcher_count !== $watcher_count) {
-        $body .= "event:watcher_count\n";
-        $body .= "data:" . $watcher_count . "\n\n";
-        printAndFlush(
-            "event:watcher_count\n" .
-            'data:' . $watcher_count . "\n\n"
-        );
-        $watcher_count = $new_watcher_count;
+        updateRoomWatcher($dbh, $room['id'], $token['id']);
+        $new_watcher_count = getWatcherCount($dbh, $room['id']);
+        if ($new_watcher_count !== $watcher_count) {
+            $body .= "event:watcher_count\n";
+            $body .= "data:" . $watcher_count . "\n\n";
+            printAndFlush(
+                "event:watcher_count\n" .
+                'data:' . $watcher_count . "\n\n"
+            );
+            $watcher_count = $new_watcher_count;
+        }
     }
 });
 
