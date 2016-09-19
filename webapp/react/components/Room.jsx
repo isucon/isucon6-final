@@ -17,6 +17,7 @@ class Room extends React.Component {
         strokes: res.room.strokes,
         width: res.room.canvas_width,
         height: res.room.canvas_height,
+        watcherCount: res.room.watcher_count,
         csrfToken: (loadContext || window).csrfToken,
       });
     })
@@ -35,23 +36,35 @@ class Room extends React.Component {
       green: 128,
       blue: 128,
       alpha: 0.7,
+      watcherCount: props.watcherCount,
       showError: false,
       errorMessage: '',
     };
   }
 
   componentDidMount() {
-    this.eventSource = new EventSource(`/api/strokes/rooms/${this.props.id}`);
-    this.eventSource.onmessage = (ev) => {
-      if (ev.data) {
-        const strokes = this.state.strokes;
-        const stroke = JSON.parse(ev.data);
-        const isNew = !strokes.some((s) => s.id === stroke.id);
-        if (isNew) {
-          this.setState({ strokes: strokes.concat([stroke]).sort((a, b) => b.id - a.id) });
-        }
+    const token = this.props.csrfToken;
+    this.eventSource = new EventSource(`/api/strokes/rooms/${this.props.id}?csrf_token=${token}`);
+    this.eventSource.addEventListener('stroke', (ev) => {
+      const strokes = this.state.strokes;
+      const stroke = JSON.parse(ev.data);
+      const isNew = !strokes.some((s) => s.id === stroke.id);
+      if (isNew) {
+        this.setState({ strokes: strokes.concat([stroke]).sort((a, b) => b.id - a.id) });
       }
-    };
+    });
+    this.eventSource.addEventListener('bad_request', (ev) => {
+      this.setState({
+        showError: true,
+        errorMessage: ev.data,
+      });
+      this.eventSource.close();
+    });
+    this.eventSource.addEventListener('watcher_count', (ev) => {
+      this.setState({
+        watcherCount: parseInt(ev.data),
+      });
+    });
   }
 
   componentWillUnmount() {
@@ -150,6 +163,7 @@ class Room extends React.Component {
         />
 
         <h2>{`${this.props.name} (${this.state.strokes.length}画)`}</h2>
+        <p>{`${this.state.watcherCount}人が参加中`}</p>
 
         <div className="canvas" style={{ width: this.props.width + 2, margin: '0 auto' }}>
           <label>

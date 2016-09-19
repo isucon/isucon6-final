@@ -64,23 +64,34 @@ function typeCastRoomData($data) {
         'created_at' => isset($data['created_at']) ? date_create($data['created_at'])->format(DateTime::ISO8601) : '',
         'strokes' => isset($data['strokes']) ? array_map('typeCastStrokeData', $data['strokes']) : [],
         'stroke_count' => (int)$data['stroke_count'],
+        'watcher_count' => (int)$data['watcher_count'],
     ];
 }
 
 
 class TokenException extends Exception {}
 
-function checkToken($request) {
-    if (!$request->hasHeader('x-csrf-token')) {
-        throw new TokenException();
-    }
-
+function checkToken($x_csrf_token) {
     $dbh = getPDO();
     $sql = 'SELECT * FROM `tokens` WHERE `token` = :token AND `created_at` > CURRENT_TIMESTAMP - INTERVAL 1 DAY';
-    $token = selectOne($dbh, $sql, [':token' => $request->getHeaderLine('x-csrf-token')]);
+    $token = selectOne($dbh, $sql, [':token' => $x_csrf_token]);
     if (is_null($token)) {
         throw new TokenException();
     }
+    return $token;
+}
+
+function getWatcherCount($dbh, $room_id) {
+    $sql = 'SELECT COUNT(*) AS `watcher_count` FROM `room_watchers`';
+    $sql .= ' WHERE `room_id` = :room_id AND `updated_at` > CURRENT_TIMESTAMP - INTERVAL 3 SECOND';
+    $result = selectOne($dbh, $sql, [':room_id' => $room_id]);
+    return $result['watcher_count'];
+}
+
+function updateRoomWatcher($dbh, $room_id, $token_id) {
+    $sql = 'INSERT INTO `room_watchers` (`room_id`, `token_id`) VALUES (:room_id, :token_id)';
+    $sql .= ' ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP';
+    execute($dbh, $sql, [':room_id' => $room_id, ':token_id' => $token_id]);
 }
 
 // Instantiate the app
@@ -132,7 +143,7 @@ $app->get('/api/rooms', function ($request, $response, $args) {
     $rooms = selectAll($dbh, $sql);
 
     foreach ($rooms as $i => $room) {
-        $sql = 'SELECT COUNT(*) AS stroke_count FROM `strokes` WHERE `room_id` = :room_id';
+        $sql = 'SELECT COUNT(*) AS `stroke_count` FROM `strokes` WHERE `room_id` = :room_id';
         $result = selectOne($dbh, $sql, [':room_id' => $room['id']]);
         $rooms[$i]['stroke_count'] = (int)$result['stroke_count'];
     }
@@ -143,7 +154,7 @@ $app->get('/api/rooms', function ($request, $response, $args) {
 
 $app->post('/api/rooms', function ($request, $response, $args) {
     try {
-        checkToken($request);
+        checkToken($request->getHeaderLine('x-csrf-token'));
     } catch (TokenException $e) {
         return $response->withStatus(400)->withJson(['error' => 'トークンエラー。ページを再読み込みしてください。']);
     }
@@ -188,32 +199,71 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
     }
 
     $room['strokes'] = $strokes;
+    $room['watcher_count'] = getWatcherCount($dbh, $room['id']);
 
-    //$this->logger->info(var_export($room, true));
+    //$this->logger->info(var_export($room['watcher_count'], true));
     return $response->withJson(['room' => typeCastRoomData($room)]);
 });
 
 $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
+    try {
+        $token = checkToken($request->getQueryParam('csrf_token'));
+    } catch (TokenException $e) {
+        $body = "event:bad_request\n";
+        $body .= "data:トークンエラー。ページを再読み込みしてください。\n\n";
+        return $response
+            ->withHeader('Content-type', 'text/event-stream')
+            ->withStatus(200)->write($body);
+    }
 
-    sleep(1);
+    //$this->logger->info(var_export($token, true));
 
     $dbh = getPDO();
+
+    $sql = 'SELECT * FROM `rooms` WHERE `id` = :id';
+    $room = selectOne($dbh, $sql, [':id' => $args['id']]);
+
+    if ($room === null) {
+        $body = "event:bad_request\n";
+        $body .= "data:この部屋は存在しません\n\n";
+        return $response
+            ->withHeader('Content-type', 'text/event-stream')
+            ->withStatus(200)->write($body);
+    }
+
+    $body = "retry:500\n\n";
+
+    updateRoomWatcher($dbh, $room['id'], $token['id']);
+    $watcher_count = getWatcherCount($dbh, $room['id']);
+    $body .= "event:watcher_count\n";
+    $body .= "data:" . $watcher_count . "\n\n";
+
+    sleep(1);
 
     $last_stroke_id = 0;
     if ($request->hasHeader('Last-Event-ID')) {
         $last_stroke_id = (int)$request->getHeaderLine('Last-Event-ID');
     }
     $sql = 'SELECT * FROM `strokes` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
-    $strokes = selectAll($dbh, $sql, [':room_id' => $args['id'], ':id' => $last_stroke_id]);
+    $strokes = selectAll($dbh, $sql, [':room_id' => $room_id, ':id' => $last_stroke_id]);
 
-    $body = "retry:500\n\n";
     foreach ($strokes as $i => $stroke) {
         $last_stroke_id = $stroke['id'];
         $sql = 'SELECT * FROM `points` WHERE `stroke_id` = :stroke_id ORDER BY `id` ASC';
         $strokes[$i]['points'] = selectAll($dbh, $sql, [':stroke_id' => $last_stroke_id]);
 
         $body .= 'id:' . $last_stroke_id . "\n\n";
+        $body .= "event:stroke\n";
         $body .= 'data:' . json_encode(typeCastStrokeData($strokes[$i])) . "\n\n";
+    }
+
+    updateRoomWatcher($dbh, $room['id'], $token['id']);
+    $new_watcher_count = getWatcherCount($dbh, $room['id']);
+    if ($new_watcher_count !== $watcher_count) {
+        $body .= "event:watcher_count\n";
+        $body .= "data:" . $watcher_count . "\n\n";
+
+        $watcher_count = $new_watcher_count;
     }
 
     return $response
@@ -223,7 +273,7 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
 $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     try {
-        checkToken($request);
+        checkToken($request->getHeaderLine('x-csrf-token'));
     } catch (TokenException $e) {
         return $response->withStatus(400)->withJson(['error' => 'トークンエラー。ページを再読み込みしてください。']);
     }
@@ -244,7 +294,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         return $response->withStatus(400)->withJson(['error' => 'リクエストが正しくありません。']);
     }
 
-    $sql = 'SELECT COUNT(*) AS stroke_count FROM `strokes` WHERE `room_id` = :room_id';
+    $sql = 'SELECT COUNT(*) AS `stroke_count` FROM `strokes` WHERE `room_id` = :room_id';
     $result = selectOne($dbh, $sql, [':room_id' => $room_id]);
     if ($result['stroke_count'] > 10000) {
         return $response->withStatus(400)->withJson(['error' => '10000画を超えました。これ以上描くことはできません。']);
