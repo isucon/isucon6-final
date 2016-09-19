@@ -358,7 +358,8 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         return $response->withStatus(500)->withJson(['error' => 'エラーが発生しました。']);
     }
 
-    $sql = 'SELECT * FROM `strokes` WHERE `id` = :stroke_id';
+    $sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`';
+    $sql .= ' WHERE `id` = :stroke_id'
     $stroke = selectOne($dbh, $sql, [':stroke_id' => $stroke_id]);
 
     $stroke['points'] = getStrokePoints($dbh, $stroke_id);
