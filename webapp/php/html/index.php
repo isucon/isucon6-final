@@ -322,9 +322,9 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         return $response->withStatus(400)->withJson(['error' => '1000画を超えました。これ以上描くことはできません。']);
     }
     if ($stroke_count == 0) {
-        $sql = 'SELECT * FROM `room_owners` WHERE `room_id` = :room_id AND `token_id` = :token_id';
+        $sql = 'SELECT COUNT(*) AS cnt FROM `room_owners` WHERE `room_id` = :room_id AND `token_id` = :token_id';
         $result = selectOne($dbh, $sql, [':room_id' => $room['id'], ':token_id' => $token['id']]);
-        if (is_null($result)) {
+        if ($result['cnt'] == 0) {
             return $response->withStatus(400)->withJson(['error' => '他人の作成した部屋に1画目を描くことはできません']);
         }
     }
