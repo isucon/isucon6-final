@@ -22,7 +22,7 @@ var (
 
 type token struct {
 	ID        int64
-	Token     string
+	CSRFToken string
 	CreatedAt time.Time
 }
 
@@ -55,15 +55,15 @@ type room struct {
 	StrokeCount  int       `json:"stroke_count"`
 }
 
-func checkToken(r *http.Request) bool {
-	csrfToken := r.Header.Get("x-csrf-token")
+func checkToken(csrfToken string) bool {
 	if csrfToken == "" {
 		return false
 	}
 
-	query := "SELECT * FROM `tokens` WHERE `token` = ? AND `created_at` > CURRENT_TIMESTAMP - INTERVAL 1 DAY"
+	query := "SELECT `id`, `csrf_token`, `created_at` FROM `tokens`"
+	query += " WHERE `csrf_token` = :csrf_token AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY"
 	t := token{}
-	err := db.QueryRow(query, csrfToken).Scan(&t.ID, &t.Token, &t.CreatedAt)
+	err := db.QueryRow(query, csrfToken).Scan(&t.ID, &t.CSRFToken, &t.CreatedAt)
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -73,6 +73,48 @@ func checkToken(r *http.Request) bool {
 	}
 
 	return true
+}
+
+func getStrokePoints(strokeID int) []point {
+	query := "SELECT `id`, `stroke_id`, `x`, `y` FROM `points` WHERE `stroke_id` = ? ORDER BY `id` ASC"
+	rows, err := db.Query(query, strokeID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	ps := []point{}
+	for rows.Next() {
+		p := point{}
+		rows.Scan(&p.ID, &p.StrokeID, &p.X, &p.Y)
+		ps = append(ps, p)
+	}
+	return ps
+}
+
+func getStrokes(roomID int, greaterThanID int) {
+	query := "SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`"
+	query += " WHERE `room_id` = ? AND `id` > ? ORDER BY `id` ASC"
+	rows, err := db.Query(query, roomID, greaterThanID)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+	strokes := []stroke{}
+	for rows.Next() {
+		s := stroke{}
+		rows.Scan(&s.ID, &s.RoomID, &s.Width, &s.Red, &s.Green, &s.Blue, &s.Alpha, &s.CreatedAt)
+		strokes = append(strokes, s)
+	}
+	return strokes
+}
+
+func getRoom(roomID int) {
+	query := "SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at` FROM `rooms` WHERE `id` = ?"
+	r := room{}
+	err := db.QueryRow(query, roomID).Scan(&r.ID, &r.Name, &r.CanvasWidth, &r.CanvasHeight, &r.CreatedAt)
+	if err != nil {
+
+	}
 }
 
 func outputErrorMsg(w http.ResponseWriter, msg string) {
@@ -89,8 +131,8 @@ func outputErrorMsg(w http.ResponseWriter, msg string) {
 }
 
 func postApiCsrfToken(w http.ResponseWriter, r *http.Request) {
-	sql := "INSERT INTO `tokens` (`token`) VALUES"
-	sql += " (SHA2(RAND(), 512))"
+	sql := "INSERT INTO `tokens` (`csrf_token`) VALUES"
+	sql += " (SHA2(RAND(), 256))"
 
 	result, derr := db.Exec(sql)
 	if derr != nil {
@@ -103,8 +145,8 @@ func postApiCsrfToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	t := token{}
-	sql = "SELECT * FROM `tokens` WHERE id = ?"
-	err := db.QueryRow(sql, id).Scan(&t.ID, &t.Token, &t.CreatedAt)
+	sql = "SELECT `id`, `csrf_token`, `created_at` FROM `tokens` WHERE id = ?"
+	err := db.QueryRow(sql, id).Scan(&t.ID, &t.CSRFToken, &t.CreatedAt)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -112,7 +154,7 @@ func postApiCsrfToken(w http.ResponseWriter, r *http.Request) {
 
 	b, jerr := json.Marshal(struct {
 		Token string `json:"token"`
-	}{Token: t.Token})
+	}{Token: t.CSRFToken})
 
 	if jerr != nil {
 		log.Fatal(jerr)
@@ -123,10 +165,8 @@ func postApiCsrfToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func getApiRooms(w http.ResponseWriter, r *http.Request) {
-	sql := "SELECT `rooms`.* FROM `rooms` JOIN"
-	sql += " (SELECT `room_id`, MAX(`id`) AS `max_id` FROM `strokes`"
-	sql += " GROUP BY `room_id` ORDER BY `max_id` DESC LIMIT 100) AS `t`"
-	sql += " ON `rooms`.`id` = `t`.`room_id`"
+	sql := "SELECT `room_id`, MAX(`id`) AS `max_id` FROM `strokes`"
+	sql += " GROUP BY `room_id` ORDER BY `max_id` DESC LIMIT 100"
 
 	rows, derr := db.Query(sql)
 	if derr != nil {
@@ -170,7 +210,7 @@ func getApiRooms(w http.ResponseWriter, r *http.Request) {
 func postApiRooms(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 
-	if !checkToken(r) {
+	if !checkToken(r.Header.Get("x-csrf-token")) {
 		outputErrorMsg(w, "トークンエラー。ページを再読み込みしてください。")
 		return
 	}
