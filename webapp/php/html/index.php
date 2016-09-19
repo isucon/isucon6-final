@@ -81,6 +81,11 @@ function checkToken($x_csrf_token) {
     return $token;
 }
 
+function getRoom($dbh, $room_id) {
+    $sql = 'SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at` FROM `rooms` WHERE `id` = :room_id';
+    return selectOne($dbh, $sql, [':room_id' => $room_id]);
+}
+
 function getStrokeCount($dbh, $room_id) {
     $sql = 'SELECT COUNT(*) AS `stroke_count` FROM `strokes` WHERE `room_id` = :room_id';
     $result = selectOne($dbh, $sql, [':room_id' => $room_id]);
@@ -174,7 +179,7 @@ $app->post('/api/rooms', function ($request, $response, $args) {
     try {
         $sql = 'INSERT INTO `rooms` (`name`, `canvas_width`, `canvas_height`)';
         $sql .= ' VALUES (:name, :canvas_width, :canvas_height)';
-        $id = execute($dbh, $sql, [
+        $room_id = execute($dbh, $sql, [
             ':name' => $postedRoom['name'],
             ':canvas_width' => $postedRoom['canvas_width'],
             ':canvas_height' => $postedRoom['canvas_height']
@@ -182,7 +187,7 @@ $app->post('/api/rooms', function ($request, $response, $args) {
 
         $sql = 'INSERT INTO `room_owners` (`room_id`, `token_id`) VALUES (:room_id, :token_id)';
         execute($dbh, $sql, [
-            ':room_id' => $id,
+            ':room_id' => $room_id,
             ':token_id' => $token['id'],
         ]);
 
@@ -193,8 +198,7 @@ $app->post('/api/rooms', function ($request, $response, $args) {
         return $response->withStatus(500)->withJson(['error' => 'エラーが発生しました。']);
     }
 
-    $sql = 'SELECT * FROM `rooms` WHERE `id` = :id';
-    $room = selectOne($dbh, $sql, [':id' => $id]);
+    $room = getRoom($dbh, $room_id);
 
     return $response->withJson(['room' => typeCastRoomData($room)]);
 });
@@ -202,8 +206,7 @@ $app->post('/api/rooms', function ($request, $response, $args) {
 $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
     $dbh = getPDO();
 
-    $sql = 'SELECT * FROM `rooms` WHERE `id` = :id';
-    $room = selectOne($dbh, $sql, [':id' => $args['id']]);
+    $room = getRoom($dbh, $args['id']);
 
     if ($room === null) {
         return $response->withStatus(404)->withJson(['error' => 'この部屋は存在しません。']);
@@ -239,8 +242,7 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
     $dbh = getPDO();
 
-    $sql = 'SELECT * FROM `rooms` WHERE `id` = :id';
-    $room = selectOne($dbh, $sql, [':id' => $args['id']]);
+    $room = getRoom($dbh, $args['id']);
 
     if ($room === null) {
         $body = "event:bad_request\n";
@@ -299,8 +301,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 
     $dbh = getPDO();
 
-    $sql = 'SELECT * FROM `rooms` WHERE `id` = :id';
-    $room = selectOne($dbh, $sql, [':id' => $args['id']]);
+    $room = getRoom($dbh, $args['id']);
 
     if ($room === null) {
         return $response->withStatus(404)->withJson(['error' => 'この部屋は存在しません。']);
