@@ -81,6 +81,11 @@ function checkToken($x_csrf_token) {
     return $token;
 }
 
+function getStrokePoints($dbh, $stroke_id) {
+    $sql = 'SELECT `id`, `stroke_id`, `x`, `y` FROM `points` WHERE `stroke_id` = :stroke_id ORDER BY `id` ASC';
+    return selectAll($dbh, $sql, [':stroke_id' => $stroke_id]);
+}
+
 function getRoom($dbh, $room_id) {
     $sql = 'SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at` FROM `rooms` WHERE `id` = :room_id';
     return selectOne($dbh, $sql, [':room_id' => $room_id]);
@@ -216,8 +221,7 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
     $strokes = selectAll($dbh, $sql, [':id' => $args['id']]);
 
     foreach ($strokes as $i => $stroke) {
-        $sql = 'SELECT * FROM `points` WHERE `stroke_id` = :id ORDER BY `id` ASC';
-        $strokes[$i]['points'] = selectAll($dbh, $sql, [':id' => $stroke['id']]);
+        $strokes[$i]['points'] = getStrokePoints($dbh, $stroke['id']);
     }
 
     $room['strokes'] = $strokes;
@@ -268,14 +272,14 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     $sql = 'SELECT * FROM `strokes` WHERE `room_id` = :room_id AND `id` > :id ORDER BY `id` ASC';
     $strokes = selectAll($dbh, $sql, [':room_id' => $room_id, ':id' => $last_stroke_id]);
 
-    foreach ($strokes as $i => $stroke) {
-        $last_stroke_id = $stroke['id'];
-        $sql = 'SELECT * FROM `points` WHERE `stroke_id` = :stroke_id ORDER BY `id` ASC';
-        $strokes[$i]['points'] = selectAll($dbh, $sql, [':stroke_id' => $last_stroke_id]);
+    foreach ($strokes as $stroke) {
+        $stroke['points'] = getStrokePoints($dbh, $stroke['id']);
 
-        $body .= 'id:' . $last_stroke_id . "\n\n";
+        $body .= 'id:' . $stroke['id'] . "\n\n";
         $body .= "event:stroke\n";
-        $body .= 'data:' . json_encode(typeCastStrokeData($strokes[$i])) . "\n\n";
+        $body .= 'data:' . json_encode(typeCastStrokeData($stroke)) . "\n\n";
+
+        $last_stroke_id = $stroke['id'];
     }
 
     updateRoomWatcher($dbh, $room['id'], $token['id']);
@@ -356,8 +360,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     $sql = 'SELECT * FROM `strokes` WHERE `id` = :stroke_id';
     $stroke = selectOne($dbh, $sql, [':stroke_id' => $stroke_id]);
 
-    $sql = 'SELECT * FROM `points` WHERE `stroke_id` = :stroke_id ORDER BY `id` ASC';
-    $stroke['points'] = selectAll($dbh, $sql, [':stroke_id' => $stroke_id]);
+    $stroke['points'] = getStrokePoints($dbh, $stroke_id);
 
     //$this->logger->info(var_export($stroke, true));
     return $response->withJson(['stroke' => typeCastStrokeData($stroke)]);
