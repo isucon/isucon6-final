@@ -71,8 +71,7 @@ function typeCastRoomData($data) {
 
 class TokenException extends Exception {}
 
-function checkToken($csrf_token) {
-    $dbh = getPDO();
+function checkToken($dbh, $csrf_token) {
     $sql = 'SELECT `id`, `csrf_token`, `created_at` FROM `tokens`';
     $sql .= ' WHERE `csrf_token` = :csrf_token AND `created_at` > CURRENT_TIMESTAMP - INTERVAL 1 DAY';
     $token = selectOne($dbh, $sql, [':csrf_token' => $csrf_token]);
@@ -170,13 +169,13 @@ $app->get('/api/rooms', function ($request, $response, $args) {
 });
 
 $app->post('/api/rooms', function ($request, $response, $args) {
+    $dbh = getPDO();
+
     try {
-        $token = checkToken($request->getHeaderLine('x-csrf-token'));
+        $token = checkToken($dbh, $request->getHeaderLine('x-csrf-token'));
     } catch (TokenException $e) {
         return $response->withStatus(400)->withJson(['error' => 'トークンエラー。ページを再読み込みしてください。']);
     }
-
-    $dbh = getPDO();
 
     $postedRoom = $request->getParsedBody();
     if (empty($postedRoom['name']) || empty($postedRoom['canvas_width']) || empty($postedRoom['canvas_height'])) {
@@ -234,8 +233,10 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
 });
 
 $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
+    $dbh = getPDO();
+
     try {
-        $token = checkToken($request->getQueryParam('csrf_token'));
+        $token = checkToken($dbh, $request->getQueryParam('csrf_token'));
     } catch (TokenException $e) {
         $body = "event:bad_request\n";
         $body .= "data:トークンエラー。ページを再読み込みしてください。\n\n";
@@ -245,8 +246,6 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     }
 
     //$this->logger->info(var_export($token, true));
-
-    $dbh = getPDO();
 
     $room = getRoom($dbh, $args['id']);
 
@@ -298,13 +297,13 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
 });
 
 $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
+    $dbh = getPDO();
+
     try {
-        $token = checkToken($request->getHeaderLine('x-csrf-token'));
+        $token = checkToken($dbh, $request->getHeaderLine('x-csrf-token'));
     } catch (TokenException $e) {
         return $response->withStatus(400)->withJson(['error' => 'トークンエラー。ページを再読み込みしてください。']);
     }
-
-    $dbh = getPDO();
 
     $room = getRoom($dbh, $args['id']);
 
@@ -359,7 +358,7 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     }
 
     $sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`';
-    $sql .= ' WHERE `id` = :stroke_id'
+    $sql .= ' WHERE `id` = :stroke_id';
     $stroke = selectOne($dbh, $sql, [':stroke_id' => $stroke_id]);
 
     $stroke['points'] = getStrokePoints($dbh, $stroke_id);
