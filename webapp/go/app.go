@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	db *sqlx.DB
+	dbx *sqlx.DB
 )
 
 type token struct {
@@ -66,7 +66,7 @@ func checkToken(csrfToken string) (*token, bool) {
 	query += " WHERE `csrf_token` = ? AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY"
 
 	t := &token{}
-	err := db.Get(t, query, csrfToken)
+	err := dbx.Get(t, query, csrfToken)
 
 	if err != nil && err != sql.ErrNoRows {
 		log.Fatal(err)
@@ -82,7 +82,7 @@ func checkToken(csrfToken string) (*token, bool) {
 func getStrokePoints(strokeID int64) ([]point, error) {
 	query := "SELECT `id`, `stroke_id`, `x`, `y` FROM `points` WHERE `stroke_id` = ? ORDER BY `id` ASC"
 	ps := []point{}
-	err := db.Select(&ps, query, strokeID)
+	err := dbx.Select(&ps, query, strokeID)
 	if err != nil {
 		return nil, err
 	}
@@ -93,7 +93,7 @@ func getStrokes(roomID int64, greaterThanID int64) ([]stroke, error) {
 	query := "SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`"
 	query += " WHERE `room_id` = ? AND `id` > ? ORDER BY `id` ASC"
 	strokes := []stroke{}
-	err := db.Select(&strokes, query, roomID, greaterThanID)
+	err := dbx.Select(&strokes, query, roomID, greaterThanID)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func getStrokes(roomID int64, greaterThanID int64) ([]stroke, error) {
 func getRoom(roomID int64) room {
 	query := "SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at` FROM `rooms` WHERE `id` = ?"
 	r := room{}
-	err := db.Get(&r, query, roomID)
+	err := dbx.Get(&r, query, roomID)
 	if err != nil && err != sql.ErrNoRows {
 		log.Fatal(err)
 	}
@@ -115,7 +115,7 @@ func getWatcherCount(roomID int64) int {
 	query += " WHERE `room_id` = ? AND `updated_at` > CURRENT_TIMESTAMP(6) - INTERVAL 3 SECOND"
 
 	var watcherCount int
-	err := db.QueryRow(query, roomID).Scan(&watcherCount)
+	err := dbx.QueryRow(query, roomID).Scan(&watcherCount)
 	if err != nil && err != sql.ErrNoRows {
 		log.Fatal(err)
 	}
@@ -144,7 +144,7 @@ func postApiCsrfToken(w http.ResponseWriter, r *http.Request) {
 	sql := "INSERT INTO `tokens` (`csrf_token`) VALUES"
 	sql += " (SHA2(RAND(), 256))"
 
-	result, derr := db.Exec(sql)
+	result, derr := dbx.Exec(sql)
 	if derr != nil {
 		log.Fatal(derr.Error())
 	}
@@ -156,7 +156,7 @@ func postApiCsrfToken(w http.ResponseWriter, r *http.Request) {
 
 	t := token{}
 	sql = "SELECT `id`, `csrf_token`, `created_at` FROM `tokens` WHERE id = ?"
-	err := db.Get(&t, sql, id)
+	err := dbx.Get(&t, sql, id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -185,7 +185,7 @@ func getApiRooms(w http.ResponseWriter, r *http.Request) {
 
 	results := []result{}
 
-	derr := db.Select(&results, query)
+	derr := dbx.Select(&results, query)
 	if derr != nil {
 		log.Fatal(derr)
 	}
@@ -227,7 +227,7 @@ func postApiRooms(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tx := db.MustBegin()
+	tx := dbx.MustBegin()
 	query := "INSERT INTO `rooms` (`name`, `canvas_width`, `canvas_height`)"
 	query += " VALUES (?, ?, ?)"
 
@@ -329,11 +329,11 @@ func main() {
 		dbname,
 	)
 
-	db, err = sqlx.Open("mysql", dsn)
+	dbx, err = sqlx.Open("mysql", dsn)
 	if err != nil {
 		log.Fatalf("Failed to connect to DB: %s.", err.Error())
 	}
-	defer db.Close()
+	defer dbx.Close()
 
 	mux := goji.NewMux()
 	mux.HandleFunc(pat.Post("/api/csrf_token"), postApiCsrfToken)
