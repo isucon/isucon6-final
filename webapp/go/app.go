@@ -22,9 +22,9 @@ var (
 )
 
 type token struct {
-	ID        int64
-	CSRFToken string
-	CreatedAt time.Time
+	ID        int64     `db:"id"`
+	CSRFToken string    `db:"csrf_token"`
+	CreatedAt time.Time `db:"created_at"`
 }
 
 type point struct {
@@ -47,36 +47,39 @@ type stroke struct {
 }
 
 type room struct {
-	ID           int64     `json:"id"`
-	Name         string    `json:"name"`
-	CanvasWidth  int       `json:"canvas_width"`
-	CanvasHeight int       `json:"canvas_height"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID           int64     `json:"id" db:"id"`
+	Name         string    `json:"name" db:"name"`
+	CanvasWidth  int       `json:"canvas_width" db:"canvas_width"`
+	CanvasHeight int       `json:"canvas_height" db:"canvas_height"`
+	CreatedAt    time.Time `json:"created_at" db:"created_at"`
 	Strokes      []stroke  `json:"strokes"`
 	StrokeCount  int       `json:"stroke_count"`
+	WatcherCount int       `json:"watcher_count"`
 }
 
-func checkToken(csrfToken string) bool {
+func checkToken(csrfToken string) (*token, bool) {
 	if csrfToken == "" {
-		return false
+		return nil, false
 	}
 
 	query := "SELECT `id`, `csrf_token`, `created_at` FROM `tokens`"
-	query += " WHERE `csrf_token` = :csrf_token AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY"
-	t := token{}
-	err := db.QueryRow(query, csrfToken).Scan(&t.ID, &t.CSRFToken, &t.CreatedAt)
+	query += " WHERE `csrf_token` = ? AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY"
 
-	switch {
-	case err == sql.ErrNoRows:
-		return false
-	case err != nil:
+	t := &token{}
+	err := db.Get(t, query, csrfToken)
+
+	if err != nil && err != sql.ErrNoRows {
 		log.Fatal(err)
 	}
 
-	return true
+	if err == sql.ErrNoRows {
+		return nil, false
+	}
+
+	return t, true
 }
 
-func getStrokePoints(strokeID int) ([]point, error) {
+func getStrokePoints(strokeID int64) ([]point, error) {
 	query := "SELECT `id`, `stroke_id`, `x`, `y` FROM `points` WHERE `stroke_id` = ? ORDER BY `id` ASC"
 	ps := []point{}
 	err := db.Select(&ps, query, strokeID)
@@ -86,7 +89,7 @@ func getStrokePoints(strokeID int) ([]point, error) {
 	return ps, nil
 }
 
-func getStrokes(roomID int, greaterThanID int) ([]stroke, error) {
+func getStrokes(roomID int64, greaterThanID int64) ([]stroke, error) {
 	query := "SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`"
 	query += " WHERE `room_id` = ? AND `id` > ? ORDER BY `id` ASC"
 	strokes := []stroke{}
@@ -97,16 +100,34 @@ func getStrokes(roomID int, greaterThanID int) ([]stroke, error) {
 	return strokes, nil
 }
 
-func getRoom(roomID int) {
+func getRoom(roomID int64) room {
 	query := "SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at` FROM `rooms` WHERE `id` = ?"
 	r := room{}
-	err := db.QueryRow(query, roomID).Scan(&r.ID, &r.Name, &r.CanvasWidth, &r.CanvasHeight, &r.CreatedAt)
-	if err != nil {
-
+	err := db.Get(&r, query, roomID)
+	if err != nil && err != sql.ErrNoRows {
+		log.Fatal(err)
 	}
+	return r
 }
 
-func outputErrorMsg(w http.ResponseWriter, msg string) {
+func getWatcherCount(roomID int64) int {
+	query := "SELECT COUNT(*) AS `watcher_count` FROM `room_watchers`"
+	query += " WHERE `room_id` = ? AND `updated_at` > CURRENT_TIMESTAMP(6) - INTERVAL 3 SECOND"
+
+	var watcherCount int
+	err := db.QueryRow(query, roomID).Scan(&watcherCount)
+	if err != nil && err != sql.ErrNoRows {
+		log.Fatal(err)
+	}
+	if err == sql.ErrNoRows {
+		return 0
+	}
+	return watcherCount
+}
+
+func outputErrorMsg(w http.ResponseWriter, status int, msg string) {
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
+
 	b, jerr := json.Marshal(struct {
 		Error string `json:"error"`
 	}{Error: msg})
@@ -115,7 +136,7 @@ func outputErrorMsg(w http.ResponseWriter, msg string) {
 		log.Fatal(jerr)
 	}
 
-	w.WriteHeader(http.StatusBadRequest)
+	w.WriteHeader(status)
 	w.Write(b)
 }
 
@@ -135,7 +156,7 @@ func postApiCsrfToken(w http.ResponseWriter, r *http.Request) {
 
 	t := token{}
 	sql = "SELECT `id`, `csrf_token`, `created_at` FROM `tokens` WHERE id = ?"
-	err := db.QueryRow(sql, id).Scan(&t.ID, &t.CSRFToken, &t.CreatedAt)
+	err := db.Get(&t, sql, id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -154,34 +175,31 @@ func postApiCsrfToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func getApiRooms(w http.ResponseWriter, r *http.Request) {
-	sql := "SELECT `room_id`, MAX(`id`) AS `max_id` FROM `strokes`"
-	sql += " GROUP BY `room_id` ORDER BY `max_id` DESC LIMIT 100"
+	query := "SELECT `room_id`, MAX(`id`) AS `max_id` FROM `strokes`"
+	query += " GROUP BY `room_id` ORDER BY `max_id` DESC LIMIT 100"
 
-	rows, derr := db.Query(sql)
+	type result struct {
+		RoomID int64 `db:"room_id"`
+		MaxID  int64 `db:"max_id"`
+	}
+
+	results := []result{}
+
+	derr := db.Select(&results, query)
 	if derr != nil {
 		log.Fatal(derr)
 	}
-	defer rows.Close()
 
 	rooms := []room{}
 
-	for rows.Next() {
-		r := room{}
-		rerr := rows.Scan(&r.ID, &r.Name, &r.CanvasWidth, &r.CanvasHeight, &r.CreatedAt)
-		if rerr != nil {
-			log.Fatal(rerr)
+	for _, r := range results {
+		rm := getRoom(r.RoomID)
+		s, serr := getStrokes(rm.ID, 0)
+		if serr != nil {
+			log.Fatal(serr)
 		}
-		rooms = append(rooms, r)
-	}
-
-	for i, r := range rooms {
-		sql = "SELECT COUNT(*) AS stroke_count FROM `strokes` WHERE `room_id` = ?"
-		var count int
-		err := db.QueryRow(sql, r.ID).Scan(&count)
-		if err != nil {
-			log.Fatal(err)
-		}
-		rooms[i].StrokeCount = count
+		rm.StrokeCount = len(s)
+		rooms = append(rooms, rm)
 	}
 
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
@@ -197,97 +215,77 @@ func getApiRooms(w http.ResponseWriter, r *http.Request) {
 }
 
 func postApiRooms(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json;charset=utf-8")
+	t, ok := checkToken(r.Header.Get("x-csrf-token"))
 
-	if !checkToken(r.Header.Get("x-csrf-token")) {
-		outputErrorMsg(w, "トークンエラー。ページを再読み込みしてください。")
+	if !ok {
+		outputErrorMsg(w, http.StatusBadRequest, "トークンエラー。ページを再読み込みしてください。")
 		return
 	}
 
 	if r.FormValue("name") == "" || r.FormValue("canvas_width") == "" || r.FormValue("canvas_height") == "" {
-		outputErrorMsg(w, "トークンエラー。ページを再読み込みしてください。")
+		outputErrorMsg(w, http.StatusBadRequest, "リクエストが正しくありません。")
 		return
 	}
 
+	tx := db.MustBegin()
 	query := "INSERT INTO `rooms` (`name`, `canvas_width`, `canvas_height`)"
 	query += " VALUES (?, ?, ?)"
-	result, derr := db.Exec(query, r.FormValue("name") == "", r.FormValue("canvas_width"), r.FormValue("canvas_height"))
-	if derr != nil {
-		log.Fatal(derr)
-	}
-	id, lerr := result.LastInsertId()
+
+	result := tx.MustExec(query, r.FormValue("name"), r.FormValue("canvas_width"), r.FormValue("canvas_height"))
+	roomID, lerr := result.LastInsertId()
 	if lerr != nil {
 		log.Fatal(lerr)
 	}
 
-	rm := room{}
-	query = "SELECT * FROM `rooms` WHERE `id` = ?"
-	err := db.QueryRow(query, id).Scan(&rm.ID, &rm.Name, &rm.CanvasWidth, &rm.CanvasHeight, &rm.CreatedAt)
-	if err != nil {
-		log.Fatal(err)
+	query = "INSERT INTO `room_owners` (`room_id`, `token_id`) VALUES (?, ?)"
+	tx.MustExec(query, roomID, t.ID)
+
+	cerr := tx.Commit()
+	if cerr != nil {
+		tx.Rollback()
+		outputErrorMsg(w, http.StatusInternalServerError, "エラーが発生しました。")
+		return
 	}
 
-	b, jerr := json.Marshal(rm)
+	rm := getRoom(roomID)
+
+	b, jerr := json.Marshal(struct {
+		Room room `json:"room"`
+	}{Room: rm})
+
 	if jerr != nil {
 		log.Fatal(jerr)
 	}
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write(b)
 }
 
 func getApiRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json;charset=utf-8")
-
 	idStr := pat.Param(ctx, "id")
 	id, aerr := strconv.Atoi(idStr)
 	if aerr != nil {
-		outputErrorMsg(w, "この部屋は存在しません。")
+		outputErrorMsg(w, http.StatusNotFound, "この部屋は存在しません。")
 		return
 	}
 
-	rm := room{}
-	query := "SELECT * FROM `rooms` WHERE `id` = ?"
-	derr := db.QueryRow(query, id).Scan(&rm.ID, &rm.Name, &rm.CanvasWidth, &rm.CanvasHeight, &rm.CreatedAt)
-	if derr == sql.ErrNoRows {
-		outputErrorMsg(w, "この部屋は存在しません。")
+	rm := getRoom(int64(id))
+
+	// TODO
+	if rm.ID == 0 {
+		outputErrorMsg(w, http.StatusNotFound, "この部屋は存在しません。")
 		return
-	} else if derr != nil {
-		log.Fatal(derr)
 	}
 
-	query = "SELECT * FROM `strokes` WHERE `room_id` = ? ORDER BY `id` ASC"
-	rows, qerr := db.Query(query, id)
-	if qerr != nil {
-		log.Fatal(qerr)
-	}
-	defer rows.Close()
-	strokes := []stroke{}
-	for rows.Next() {
-		s := stroke{}
-		rerr := rows.Scan(&s.ID, &s.RoomID, &s.Width, &s.Red, &s.Green, &s.Blue, &s.Alpha, &s.CreatedAt)
-		if rerr != nil {
-			log.Fatal(rerr)
-		}
-		strokes = append(strokes, s)
-	}
+	strokes, _ := getStrokes(rm.ID, 0)
 
 	for i, s := range strokes {
-		query := "SELECT * FROM `points` WHERE `stroke_id` = ? ORDER BY `id` ASC"
-		rows, pderr := db.Query(query, s.ID)
-		if pderr != nil {
-			log.Fatal(pderr)
-		}
-		defer rows.Close()
-		ps := []point{}
-		for rows.Next() {
-			p := point{}
-			rows.Scan(&p.ID, &p.StrokeID, &p.X, &p.Y)
-			ps = append(ps, p)
-		}
-		strokes[i].Points = ps
+		p, _ := getStrokePoints(s.ID)
+		strokes[i].Points = p
 	}
 
 	rm.Strokes = strokes
+	rm.WatcherCount = getWatcherCount(rm.ID)
 
 	b, jerr := json.Marshal(struct {
 		Room room `json:"room"`
@@ -297,6 +295,7 @@ func getApiRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 		log.Fatal(jerr)
 	}
 
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write(b)
 }
