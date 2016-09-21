@@ -188,15 +188,15 @@
             }
           },
           {
-            "name": "[concat(variables('commonName'), '-http')]",
+            "name": "[concat(variables('commonName'), '-https')]",
             "properties": {
               "protocol": "Tcp",
               "sourcePortRange": "*",
-              "destinationPortRange": "80",
+              "destinationPortRange": "443",
               "sourceAddressPrefix": "*",
               "destinationAddressPrefix": "*",
               "access": "Allow",
-              "priority": 110,
+              "priority": 200,
               "direction": "Inbound"
             }
           }
