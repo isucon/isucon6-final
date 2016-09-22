@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -243,7 +244,15 @@ func postApiRooms(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if r.FormValue("name") == "" || r.FormValue("canvas_width") == "" || r.FormValue("canvas_height") == "" {
+	body, _ := ioutil.ReadAll(r.Body)
+	var postedRoom room
+	jerr := json.Unmarshal(body, &postedRoom)
+	if jerr != nil {
+		log.Fatal(jerr)
+		return
+	}
+
+	if postedRoom.Name == "" || postedRoom.CanvasWidth == 0 || postedRoom.CanvasHeight == 0 {
 		outputErrorMsg(w, http.StatusBadRequest, "リクエストが正しくありません。")
 		return
 	}
@@ -252,7 +261,7 @@ func postApiRooms(w http.ResponseWriter, r *http.Request) {
 	query := "INSERT INTO `rooms` (`name`, `canvas_width`, `canvas_height`)"
 	query += " VALUES (?, ?, ?)"
 
-	result := tx.MustExec(query, r.FormValue("name"), r.FormValue("canvas_width"), r.FormValue("canvas_height"))
+	result := tx.MustExec(query, postedRoom.Name, postedRoom.CanvasWidth, postedRoom.CanvasHeight)
 	roomID, lerr := result.LastInsertId()
 	if lerr != nil {
 		log.Fatal(lerr)
@@ -378,6 +387,111 @@ func getApiStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Re
 	}
 }
 
+func postApiStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	t, ok := checkToken(r.Header.Get("x-csrf-token"))
+
+	if !ok {
+		outputErrorMsg(w, http.StatusBadRequest, "トークンエラー。ページを再読み込みしてください。")
+		return
+	}
+
+	idStr := pat.Param(ctx, "id")
+	id, aerr := strconv.Atoi(idStr)
+	if aerr != nil {
+		log.Fatal(aerr)
+		return
+	}
+
+	rm := getRoom(int64(id))
+	// TODO
+	if rm.ID == 0 {
+		outputErrorMsg(w, http.StatusNotFound, "この部屋は存在しません。")
+		return
+	}
+
+	body, _ := ioutil.ReadAll(r.Body)
+	var postedStroke stroke
+	jerr := json.Unmarshal(body, &postedStroke)
+	if jerr != nil {
+		log.Fatal(jerr)
+		return
+	}
+
+	if postedStroke.Width == 0 || len(postedStroke.Points) == 0 {
+		outputErrorMsg(w, http.StatusBadRequest, "リクエストが正しくありません。")
+		return
+	}
+
+	strokes, _ := getStrokes(rm.ID, 0)
+	strokeCount := len(strokes)
+	if strokeCount > 1000 {
+		outputErrorMsg(w, http.StatusBadRequest, "1000画を超えました。これ以上描くことはできません。")
+		return
+	}
+	if strokeCount == 0 {
+		query := "SELECT COUNT(*) AS cnt FROM `room_owners` WHERE `room_id` = ? AND `token_id` = ?"
+		cnt := 0
+		err := dbx.QueryRow(query, rm.ID, t.ID).Scan(&cnt)
+		if err != nil && err != sql.ErrNoRows {
+			log.Fatal(err)
+		}
+		if cnt == 0 {
+			outputErrorMsg(w, http.StatusBadRequest, "他人の作成した部屋に1画目を描くことはできません")
+			return
+		}
+	}
+
+	tx := dbx.MustBegin()
+	query := "INSERT INTO `strokes` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)"
+	query += " VALUES(?, ?, ?, ?, ?, ?)"
+
+	result := tx.MustExec(query,
+		rm.ID,
+		postedStroke.Width,
+		postedStroke.Red,
+		postedStroke.Green,
+		postedStroke.Blue,
+		postedStroke.Alpha,
+	)
+	strokeID, lerr := result.LastInsertId()
+	if lerr != nil {
+		log.Fatal(lerr)
+	}
+
+	query = "INSERT INTO `points` (`stroke_id`, `x`, `y`) VALUES (?, ?, ?)"
+	for _, p := range postedStroke.Points {
+		tx.MustExec(query, strokeID, p.X, p.Y)
+	}
+
+	cerr := tx.Commit()
+	if cerr != nil {
+		tx.Rollback()
+		outputErrorMsg(w, http.StatusInternalServerError, "エラーが発生しました。")
+		return
+	}
+
+	query = "SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`"
+	query += " WHERE `id` = ?"
+	var s stroke
+	serr := dbx.Get(&s, query, strokeID)
+	if serr != nil && serr != sql.ErrNoRows {
+		log.Fatal(serr)
+	}
+
+	s.Points, _ = getStrokePoints(strokeID)
+
+	b, jerr := json.Marshal(struct {
+		Stroke stroke `json:"stroke"`
+	}{Stroke: s})
+
+	if jerr != nil {
+		log.Fatal(jerr)
+	}
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(b)
+}
+
 func getApiInitialize(w http.ResponseWriter, r *http.Request) {
 	queries := []string{
 		"DELETE FROM `points` WHERE `id` > 1443000",
@@ -435,6 +549,7 @@ func main() {
 	mux.HandleFunc(pat.Post("/api/rooms"), postApiRooms)
 	mux.HandleFuncC(pat.Get("/api/rooms/:id"), getApiRoomsID)
 	mux.HandleFuncC(pat.Get("/api/strokes/rooms/:id"), getApiStrokesRoomsID)
+	mux.HandleFuncC(pat.Post("/api/strokes/rooms/:id"), postApiStrokesRoomsID)
 	mux.HandleFunc(pat.Get("/api/initialize"), getApiInitialize)
 
 	http.ListenAndServe("localhost:8000", mux)
