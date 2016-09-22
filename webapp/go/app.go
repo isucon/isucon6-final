@@ -22,20 +22,20 @@ var (
 	dbx *sqlx.DB
 )
 
-type token struct {
+type Token struct {
 	ID        int64     `db:"id"`
 	CSRFToken string    `db:"csrf_token"`
 	CreatedAt time.Time `db:"created_at"`
 }
 
-type point struct {
+type Point struct {
 	ID       int64   `json:"id" db:"id"`
 	StrokeID int64   `json:"stroke_id" db:"stroke_id"`
 	X        float64 `json:"x" db:"x"`
 	Y        float64 `json:"y" db:"y"`
 }
 
-type stroke struct {
+type Stroke struct {
 	ID        int64     `json:"id" db:"id"`
 	RoomID    int64     `json:"room_id" db:"room_id"`
 	Width     int       `json:"width" db:"width"`
@@ -44,16 +44,16 @@ type stroke struct {
 	Blue      int       `json:"blue" db:"blue"`
 	Alpha     float64   `json:"alpha" db:"alpha"`
 	CreatedAt time.Time `json:"created_at" db:"created_at"`
-	Points    []point   `json:"points" db:"points"`
+	Points    []Point   `json:"points" db:"points"`
 }
 
-type room struct {
+type Room struct {
 	ID           int64     `json:"id" db:"id"`
 	Name         string    `json:"name" db:"name"`
 	CanvasWidth  int       `json:"canvas_width" db:"canvas_width"`
 	CanvasHeight int       `json:"canvas_height" db:"canvas_height"`
 	CreatedAt    time.Time `json:"created_at" db:"created_at"`
-	Strokes      []stroke  `json:"strokes"`
+	Strokes      []Stroke  `json:"strokes"`
 	StrokeCount  int       `json:"stroke_count"`
 	WatcherCount int       `json:"watcher_count"`
 }
@@ -69,7 +69,7 @@ func printAndFlush(w http.ResponseWriter, content string) {
 	f.Flush()
 }
 
-func checkToken(csrfToken string) (*token, bool) {
+func checkToken(csrfToken string) (*Token, bool) {
 	if csrfToken == "" {
 		return nil, false
 	}
@@ -77,7 +77,7 @@ func checkToken(csrfToken string) (*token, bool) {
 	query := "SELECT `id`, `csrf_token`, `created_at` FROM `tokens`"
 	query += " WHERE `csrf_token` = ? AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY"
 
-	t := &token{}
+	t := &Token{}
 	err := dbx.Get(t, query, csrfToken)
 
 	if err != nil && err != sql.ErrNoRows {
@@ -91,9 +91,9 @@ func checkToken(csrfToken string) (*token, bool) {
 	return t, true
 }
 
-func getStrokePoints(strokeID int64) ([]point, error) {
+func getStrokePoints(strokeID int64) ([]Point, error) {
 	query := "SELECT `id`, `stroke_id`, `x`, `y` FROM `points` WHERE `stroke_id` = ? ORDER BY `id` ASC"
-	ps := []point{}
+	ps := []Point{}
 	err := dbx.Select(&ps, query, strokeID)
 	if err != nil {
 		return nil, err
@@ -101,10 +101,10 @@ func getStrokePoints(strokeID int64) ([]point, error) {
 	return ps, nil
 }
 
-func getStrokes(roomID int64, greaterThanID int64) ([]stroke, error) {
+func getStrokes(roomID int64, greaterThanID int64) ([]Stroke, error) {
 	query := "SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`"
 	query += " WHERE `room_id` = ? AND `id` > ? ORDER BY `id` ASC"
-	strokes := []stroke{}
+	strokes := []Stroke{}
 	err := dbx.Select(&strokes, query, roomID, greaterThanID)
 	if err != nil {
 		return nil, err
@@ -112,9 +112,9 @@ func getStrokes(roomID int64, greaterThanID int64) ([]stroke, error) {
 	return strokes, nil
 }
 
-func getRoom(roomID int64) room {
+func getRoom(roomID int64) Room {
 	query := "SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at` FROM `rooms` WHERE `id` = ?"
-	r := room{}
+	r := Room{}
 	err := dbx.Get(&r, query, roomID)
 	if err != nil && err != sql.ErrNoRows {
 		log.Fatal(err)
@@ -176,7 +176,7 @@ func postApiCsrfToken(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(lerr)
 	}
 
-	t := token{}
+	t := Token{}
 	sql = "SELECT `id`, `csrf_token`, `created_at` FROM `tokens` WHERE id = ?"
 	err := dbx.Get(&t, sql, id)
 	if err != nil {
@@ -212,7 +212,7 @@ func getApiRooms(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(derr)
 	}
 
-	rooms := []room{}
+	rooms := []Room{}
 
 	for _, r := range results {
 		rm := getRoom(r.RoomID)
@@ -245,7 +245,7 @@ func postApiRooms(w http.ResponseWriter, r *http.Request) {
 	}
 
 	body, _ := ioutil.ReadAll(r.Body)
-	var postedRoom room
+	var postedRoom Room
 	jerr := json.Unmarshal(body, &postedRoom)
 	if jerr != nil {
 		log.Fatal(jerr)
@@ -280,7 +280,7 @@ func postApiRooms(w http.ResponseWriter, r *http.Request) {
 	rm := getRoom(roomID)
 
 	b, jerr := json.Marshal(struct {
-		Room room `json:"room"`
+		Room Room `json:"room"`
 	}{Room: rm})
 
 	if jerr != nil {
@@ -318,7 +318,7 @@ func getApiRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 	rm.WatcherCount = getWatcherCount(rm.ID)
 
 	b, jerr := json.Marshal(struct {
-		Room room `json:"room"`
+		Room Room `json:"room"`
 	}{Room: rm})
 
 	if jerr != nil {
@@ -410,7 +410,7 @@ func postApiStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.R
 	}
 
 	body, _ := ioutil.ReadAll(r.Body)
-	var postedStroke stroke
+	var postedStroke Stroke
 	jerr := json.Unmarshal(body, &postedStroke)
 	if jerr != nil {
 		log.Fatal(jerr)
@@ -472,7 +472,7 @@ func postApiStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	query = "SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`"
 	query += " WHERE `id` = ?"
-	var s stroke
+	var s Stroke
 	serr := dbx.Get(&s, query, strokeID)
 	if serr != nil && serr != sql.ErrNoRows {
 		log.Fatal(serr)
@@ -481,7 +481,7 @@ func postApiStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.R
 	s.Points, _ = getStrokePoints(strokeID)
 
 	b, jerr := json.Marshal(struct {
-		Stroke stroke `json:"stroke"`
+		Stroke Stroke `json:"stroke"`
 	}{Stroke: s})
 
 	if jerr != nil {
