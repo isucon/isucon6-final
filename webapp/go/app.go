@@ -57,6 +57,17 @@ type room struct {
 	WatcherCount int       `json:"watcher_count"`
 }
 
+func printAndFlush(w http.ResponseWriter, content string) {
+	fmt.Fprint(w, content)
+
+	f, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
+		return
+	}
+	f.Flush()
+}
+
 func checkToken(csrfToken string) (*token, bool) {
 	if csrfToken == "" {
 		return nil, false
@@ -123,6 +134,16 @@ func getWatcherCount(roomID int64) int {
 		return 0
 	}
 	return watcherCount
+}
+
+func updateRoomWatcher(roomID int64, tokenID int64) {
+	query := "INSERT INTO `room_watchers` (`room_id`, `token_id`) VALUES (?, ?)"
+	query += " ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP(6)"
+
+	_, err := dbx.Exec(query, roomID, tokenID)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func outputErrorMsg(w http.ResponseWriter, status int, msg string) {
@@ -300,6 +321,63 @@ func getApiRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 	w.Write(b)
 }
 
+func getApiStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+
+	idStr := pat.Param(ctx, "id")
+	id, aerr := strconv.Atoi(idStr)
+	if aerr != nil {
+		return
+	}
+
+	t, ok := checkToken(r.URL.Query().Get("csrf_token"))
+
+	if !ok {
+		printAndFlush(w, "event:bad_request\n"+"data:トークンエラー。ページを再読み込みしてください。\n\n")
+		return
+	}
+
+	rm := getRoom(int64(id))
+	// TODO
+	if rm.ID == 0 {
+		printAndFlush(w, "event:bad_request\n"+"data:この部屋は存在しません\n\n")
+		return
+	}
+
+	updateRoomWatcher(rm.ID, t.ID)
+	watcherCount := getWatcherCount(rm.ID)
+
+	printAndFlush(w, "retry:500\n\n"+"event:watcher_count\n"+"data:"+strconv.Itoa(watcherCount)+"\n\n")
+
+	var lastStrokeID int64
+	lastEventIDStr := r.Header.Get("Last-Event-ID")
+	if lastEventIDStr != "" {
+		lastEventID, _ := strconv.Atoi(lastEventIDStr)
+		lastStrokeID = int64(lastEventID)
+	}
+
+	loop := 6
+	for loop > 0 {
+		loop--
+		time.Sleep(500 * 1000 * time.Microsecond)
+
+		strokes, _ := getStrokes(rm.ID, int64(lastStrokeID))
+
+		for _, s := range strokes {
+			s.Points, _ = getStrokePoints(s.ID)
+			d, _ := json.Marshal(s)
+			printAndFlush(w, "id:"+strconv.FormatInt(s.ID, 10)+"\n\n"+"event:stroke\n"+"data:"+string(d)+"\n\n")
+			lastStrokeID = s.ID
+		}
+	}
+
+	updateRoomWatcher(rm.ID, t.ID)
+	newWatcherCount := getWatcherCount(rm.ID)
+	if newWatcherCount != watcherCount {
+		printAndFlush(w, "event:watcher_count\n"+"data:"+strconv.Itoa(watcherCount)+"\n\n")
+	}
+}
+
 func main() {
 	host := os.Getenv("MYSQL_HOST")
 	if host == "" {
@@ -340,6 +418,7 @@ func main() {
 	mux.HandleFunc(pat.Get("/api/rooms"), getApiRooms)
 	mux.HandleFunc(pat.Post("/api/rooms"), postApiRooms)
 	mux.HandleFuncC(pat.Get("/api/rooms/:id"), getApiRoomsID)
+	mux.HandleFuncC(pat.Get("/api/strokes/rooms/:id"), getApiStrokesRoomsID)
 
 	http.ListenAndServe("localhost:8000", mux)
 }
