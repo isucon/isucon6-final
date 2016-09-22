@@ -169,10 +169,10 @@ func outputError(w http.ResponseWriter, err error) {
 }
 
 func postApiCsrfToken(w http.ResponseWriter, r *http.Request) {
-	sql := "INSERT INTO `tokens` (`csrf_token`) VALUES"
-	sql += " (SHA2(RAND(), 256))"
+	query := "INSERT INTO `tokens` (`csrf_token`) VALUES"
+	query += " (SHA2(RAND(), 256))"
 
-	result, derr := dbx.Exec(sql)
+	result, derr := dbx.Exec(query)
 	if derr != nil {
 		outputError(w, derr)
 		return
@@ -185,8 +185,8 @@ func postApiCsrfToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	t := Token{}
-	sql = "SELECT `id`, `csrf_token`, `created_at` FROM `tokens` WHERE id = ?"
-	err := dbx.Get(&t, sql, id)
+	query = "SELECT `id`, `csrf_token`, `created_at` FROM `tokens` WHERE id = ?"
+	err := dbx.Get(&t, query, id)
 	if err != nil {
 		outputError(w, err)
 		return
