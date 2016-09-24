@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -52,26 +53,14 @@ func NewSession() *Session {
 	return w
 }
 
-func SetTargetHost(host string) (string, error) {
-	parsedURL, err := url.Parse(host)
+func SetTargetHost(ip string) (string, error) {
+	ipRegex := regexp.MustCompile(`\A[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\z`)
 
-	if err != nil {
-		return "", err
+	if !ipRegex.MatchString(ip) {
+		return "", fmt.Errorf("is not ip address")
 	}
 
-	if parsedURL.Scheme == "http" {
-		return "", fmt.Errorf("https only!")
-	}
-
-	if parsedURL.Scheme != "https" {
-		parsedURL.Scheme = "https"
-	}
-
-	if parsedURL.Host == "" {
-		return "", fmt.Errorf("miss url!")
-	}
-
-	targetHost = parsedURL.Host
+	targetHost = ip
 
 	return targetHost, nil
 }

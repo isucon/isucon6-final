@@ -159,7 +159,7 @@ func makeNewRoomScenario(s *checker.Session, strokes []stroke) {
 		return
 	}
 
-	apiStrokesRoomsID := checker.NewAction("POST", "/api/strokes/rooms/"+strconv.Itoa(roomID))
+	// apiStrokesRoomsID := checker.NewAction("POST", "/api/strokes/rooms/"+strconv.Itoa(roomID))
 
 }
 

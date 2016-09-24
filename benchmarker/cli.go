@@ -84,7 +84,7 @@ func (cli *CLI) Run(args []string) int {
 
 	targetHost, terr := checker.SetTargetHost(target)
 	if terr != nil {
-		outputNeedToContactUs(terr.Error())
+		fmt.Println(outputNeedToContactUs(terr.Error()))
 		return ExitCodeError
 	}
 
@@ -121,7 +121,7 @@ L:
 		select {
 		case <-makeNewRoomScenarioCh:
 			go func() {
-				makeNewRoomScenario(checker.NewSession())
+				makeNewRoomScenario(checker.NewSession(), strokes)
 				makeNewRoomScenarioCh <- struct{}{}
 			}()
 		case <-timeoutCh:
@@ -159,8 +159,8 @@ func outputResultJson(pass bool, messages []string) string {
 }
 
 // 主催者に連絡して欲しいエラー
-func outputNeedToContactUs(message string) {
-	outputResultJson(false, []string{"！！！主催者に連絡してください！！！", message})
+func outputNeedToContactUs(message string) string {
+	return outputResultJson(false, []string{"！！！主催者に連絡してください！！！", message})
 }
 
 func makeChan(len int) chan struct{} {
