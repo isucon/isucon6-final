@@ -116,7 +116,7 @@
           {
             "name": "[variables('vms')[0].name]",
             "properties": {
-              "privateIPAllocationMethod": "Dynamic",
+              "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[variables('vms')[0].ipAddress]",
               "publicIPAddress": {
                 "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('commonName'))]"
@@ -149,7 +149,7 @@
           {
             "name": "[variables('vms')[1].name]",
             "properties": {
-              "privateIPAllocationMethod": "Dynamic",
+              "privateIPAllocationMethod": "Static",
               "privateIPAddress": "[variables('vms')[1].ipAddress]",
               "subnet": {
                 "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('commonName')), '/subnets/', variables('commonName'))]"
