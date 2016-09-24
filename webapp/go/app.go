@@ -245,7 +245,9 @@ func getAPIRooms(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 
-	b, _ := json.Marshal(rooms)
+	b, _ := json.Marshal(struct {
+		Rooms []*Room `json:"rooms"`
+	}{Rooms: rooms})
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(b)
@@ -651,5 +653,5 @@ func main() {
 	mux.HandleFuncC(pat.Post("/api/strokes/rooms/:id"), postAPIStrokesRoomsID)
 	mux.HandleFunc(pat.Get("/api/initialize"), getAPIInitialize)
 
-	log.Fatal(http.ListenAndServe("localhost:8000", mux))
+	log.Fatal(http.ListenAndServe("0.0.0.0:80", mux))
 }
