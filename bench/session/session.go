@@ -34,6 +34,7 @@ func New(baseURL string) *Session {
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
+		MaxIdleConnsPerHost: 6,
 	}
 
 	jar, _ := cookiejar.New(nil)
