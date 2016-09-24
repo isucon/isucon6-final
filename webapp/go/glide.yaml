@@ -1,6 +1,0 @@
-package: .
-import:
-- package: github.com/zenazn/goji
-  subpackages:
-  - web
-- package: github.com/gorilla/sessions
