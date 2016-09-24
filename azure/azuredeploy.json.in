@@ -1,0 +1,270 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sshPublicKey": {
+      "defaultValue": null,
+      "type": "String",
+      "metadata": {
+        "description": "ssh public key for isucon user"
+      }
+    },
+    "prefix": {
+      "defaultValue": "i6f",
+      "type": "String",
+      "metadata": {
+        "description": "prefix name for resources"
+      }
+    }
+  },
+  "variables": {
+    "adminUsername": "isucon",
+    "commonName": "[parameters('prefix')]",
+    "imageReference": {
+      "publisher": "Canonical",
+      "offer": "UbuntuServer",
+      "sku": "16.04.0-LTS",
+      "version": "latest"
+    },
+    "location": "[resourceGroup().location]",
+    "networkAddressPrefix": "10.6.0.0/16",
+    "subnetAddressPrefix": "10.6.1.0/24",
+    "storageAccountsName": "[concat(uniqueString(resourceGroup().id), 'storage')]",
+    "vmDiskType": "Standard",
+    "vmSize": "Standard_DS2_v2",
+    "vms": [
+      {
+        "name": "[concat(parameters('prefix'), '-isu01')]",
+        "hostname": "isu01",
+        "ipAddress": "10.6.1.4",
+        "customData": "@isu01CustomData@"
+      },
+      {
+        "name": "[concat(parameters('prefix'), '-isu02')]",
+        "hostname": "isu02",
+        "ipAddress": "10.6.1.5",
+        "customData": "@isu02CustomData@"
+      }
+    ]
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[variables('vms')[copyIndex()].name]",
+      "apiVersion": "2015-06-15",
+      "copy": {
+        "name": "virtualMachines",
+        "count": "[length(variables('vms'))]"
+      },
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('vmSize')]"
+        },
+        "storageProfile": {
+          "imageReference": "[variables('imageReference')]",
+          "osDisk": {
+            "name": "[variables('vms')[copyIndex()].name]",
+            "createOption": "FromImage",
+            "vhd": {
+              "uri": "[concat('https', '://', variables('storageAccountsName'), '.blob.core.windows.net', '/vhds/', variables('vms')[copyIndex()].name, '.vhd')]"
+            },
+            "caching": "ReadWrite"
+          },
+          "dataDisks": []
+        },
+        "osProfile": {
+          "computerName": "[variables('vms')[copyIndex()].hostname]",
+          "adminUsername": "[variables('adminUsername')]",
+          "customData": "[variables('vms')[copyIndex()].customData]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', variables('adminUsername'), '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('sshPublicKey')]"
+                }
+              ]
+            }
+          },
+          "secrets": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('vms')[copyIndex()].name)]"
+            }
+          ]
+        }
+      },
+      "resources": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountsName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('vms')[copyIndex()].name)]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('vms')[0].name]",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[variables('vms')[0].name]",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "privateIPAddress": "[variables('vms')[0].ipAddress]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('commonName'))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('commonName')), '/subnets/', variables('commonName'))]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false
+      },
+      "resources": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('commonName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('commonName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[variables('vms')[1].name]",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[variables('vms')[1].name]",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "privateIPAddress": "[variables('vms')[1].ipAddress]",
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('commonName')), '/subnets/', variables('commonName'))]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false
+      },
+      "resources": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('commonName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('commonName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "securityRules": [
+          {
+            "name": "[concat(variables('commonName'), '-ssh')]",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "[concat(variables('commonName'), '-https')]",
+            "properties": {
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 200,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[variables('commonName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('commonName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[variables('networkAddressPrefix')]"
+          ]
+        },
+        "dhcpOptions": {
+          "dnsServers": []
+        },
+        "subnets": [
+          {
+            "name": "[variables('commonName')]",
+            "properties": {
+              "addressPrefix": "[variables('subnetAddressPrefix')]",
+              "networkSecurityGroup": {
+                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('commonName'))]"
+              }
+            }
+          }
+        ]
+      },
+      "resources": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('commonName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "[concat(variables('vmDiskType'), '_LRS')]",
+        "tier": "[variables('vmDiskType')]"
+      },
+      "kind": "Storage",
+      "name": "[variables('storageAccountsName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {},
+      "resources": [],
+      "dependsOn": []
+    }
+  ]
+}
