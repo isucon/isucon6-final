@@ -62,7 +62,7 @@ class Room extends React.Component {
     });
     this.eventSource.addEventListener('watcher_count', (ev) => {
       this.setState({
-        watcherCount: parseInt(ev.data),
+        watcherCount: parseInt(ev.data, 10),
       });
     });
   }
@@ -230,6 +230,7 @@ Room.propTypes = {
   width: React.PropTypes.number,
   height: React.PropTypes.number,
   controlHeight: React.PropTypes.number,
+  watcherCount: React.PropTypes.number,
   csrfToken: React.PropTypes.string,
 };
 
