@@ -42,6 +42,9 @@ func New(baseURL string) *Session {
 		Transport: s.Transport,
 		Jar:       jar,
 		Timeout:   DefaultTimeout,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return fmt.Errorf("redirect attempted")
+		},
 	}
 
 	s.UserAgent = "benchmarker"
