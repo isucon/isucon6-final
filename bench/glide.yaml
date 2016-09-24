@@ -1,0 +1,4 @@
+package: github.com/catatsuy/isucon6-final/bench
+import:
+- package: github.com/PuerkitoBio/goquery
+  version: v1.0.1
