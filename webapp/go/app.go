@@ -428,7 +428,7 @@ func getAPIStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Re
 	loop := 6
 	for loop > 0 {
 		loop--
-		time.Sleep(500 * 1000 * time.Microsecond)
+		time.Sleep(500 * time.Millisecond)
 
 		strokes, err := getStrokes(room.ID, int64(lastStrokeID))
 		if err != nil {
