@@ -24,7 +24,7 @@ func main() {
 
 	flag.Parse()
 
-	if !regexp.MustCompile(`\d+\.\d+\.\d+\.\d+`).MatchString(host) {
+	if !regexp.MustCompile(`\A[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}\z`).MatchString(host) {
 		log.Fatal("hostの指定が間違っています（例: 127.0.0.1）")
 	}
 	baseURL := "https://" + host
