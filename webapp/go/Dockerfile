@@ -3,16 +3,15 @@ FROM golang:alpine
 RUN apk update \
   && apk --update add git
 
-RUN go get github.com/go-sql-driver/mysql
-RUN go get github.com/jmoiron/sqlx
-RUN go get goji.io/pat
-RUN go get golang.org/x/net/context
+RUN go get github.com/Masterminds/glide && \
+  go install github.com/Masterminds/glide
 
-RUN mkdir -p /src
-WORKDIR /src
+RUN mkdir -p /go/src/github.com/catatsuy/isucon6-final/webapp/go
+WORKDIR /go/src/github.com/catatsuy/isucon6-final/webapp/go
 
-COPY . /src
+COPY ./ /go/src/github.com/catatsuy/isucon6-final/webapp/go/
+RUN glide install
 
 RUN go build -o app .
 
-ENTRYPOINT ["/src/app"]
+ENTRYPOINT ["/go/src/github.com/catatsuy/isucon6-final/webapp/go/app"]
