@@ -299,8 +299,6 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         updateRoomWatcher($dbh, $room['id'], $token['id']);
         $new_watcher_count = getWatcherCount($dbh, $room['id']);
         if ($new_watcher_count !== $watcher_count) {
-            $body .= "event:watcher_count\n";
-            $body .= "data:" . $watcher_count . "\n\n";
             printAndFlush(
                 "event:watcher_count\n" .
                 'data:' . $watcher_count . "\n\n"
