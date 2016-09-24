@@ -31,7 +31,7 @@ func extractImages(doc *goquery.Document) []string {
 		if url, ok := selection.Attr("src"); ok {
 			imageUrls = append(imageUrls, url)
 		}
-	}).Length()
+	})
 
 	return imageUrls
 }
@@ -43,7 +43,7 @@ func extractCsrfToken(doc *goquery.Document) string {
 		if t, ok := selection.Attr("data-csrf-token"); ok {
 			token = t
 		}
-	}).Length()
+	})
 
 	return token
 }
