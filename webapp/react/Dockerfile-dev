@@ -6,7 +6,8 @@ RUN apk update \
 RUN mkdir -p /react
 WORKDIR /react
 
-RUN npm install -g node-dev
+# キャッシュ効率を上げるためにまずpackage.jsonだけcopyしてnpm installする
+COPY ./package.json /react/package.json
+RUN npm install
 
-# /react/build ディレクトリは外側のディレクトリをマウントする
-ENTRYPOINT ["node-dev", "/react/build/server.js"]
+ENTRYPOINT ["npm", "run", "dev"]

@@ -32,7 +32,7 @@ services:
       context: ./react
       dockerfile: Dockerfile-dev
     volumes:
-      - ./react/build:/react/build:ro
+      - ./react/build:/react/build:rw
       - ./ssl:/ssl:ro
     depends_on:
       - api
