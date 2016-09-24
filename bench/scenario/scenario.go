@@ -49,27 +49,44 @@ func extractCsrfToken(doc *goquery.Document) string {
 }
 
 func loadImages(s *session.Session, images []string) error {
-	errs := make(chan error, len(images))
-	for _, image := range images {
-		go func(image string) {
-			err := s.Get(image, func(status int, body io.Reader) error {
-				if status != 200 {
-					return errors.New(fails.Add("GET /, ステータスが200ではありません: " + strconv.Itoa(status)))
-				}
-				score.Increment(SVGGetScore)
-				return nil
-			})
-			errs <- err
-		}(image)
-	}
 	var lastErr error
-	for i := 0; i < len(images); i++ {
-		err := <-errs
+	for _, image := range images {
+		err := s.Get(image, func(status int, body io.Reader) error {
+			if status != 200 {
+				return errors.New(fails.Add("GET /, ステータスが200ではありません: " + strconv.Itoa(status)))
+			}
+			score.Increment(SVGGetScore)
+			return nil
+		})
 		if err != nil {
 			lastErr = err
 		}
 	}
 	return lastErr
+
+	// TODO: 画像を並列リクエストするようにしてみたが、 connection reset by peer というエラーが出るので直列に戻した
+	// もしかすると s.Transport.MaxIdleConnsPerHost ずつ処理するといけるのかも
+	//errs := make(chan error, len(images))
+	//for _, image := range images {
+	//	go func(image string) {
+	//		err := s.Get(image, func(status int, body io.Reader) error {
+	//			if status != 200 {
+	//				return errors.New(fails.Add("GET /, ステータスが200ではありません: " + strconv.Itoa(status)))
+	//			}
+	//			score.Increment(SVGGetScore)
+	//			return nil
+	//		})
+	//		errs <- err
+	//	}(image)
+	//}
+	//var lastErr error
+	//for i := 0; i < len(images); i++ {
+	//	err := <-errs
+	//	if err != nil {
+	//		lastErr = err
+	//	}
+	//}
+	//return lastErr
 }
 
 // トップページと画像に負荷をかける
