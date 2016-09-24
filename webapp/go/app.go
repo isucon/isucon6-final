@@ -176,7 +176,7 @@ func outputError(w http.ResponseWriter, err error) {
 	fmt.Fprintln(os.Stderr, err.Error())
 }
 
-func postApiCsrfToken(w http.ResponseWriter, r *http.Request) {
+func postAPICsrfToken(w http.ResponseWriter, r *http.Request) {
 	query := "INSERT INTO `tokens` (`csrf_token`) VALUES"
 	query += " (SHA2(RAND(), 256))"
 
@@ -209,7 +209,7 @@ func postApiCsrfToken(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-func getApiRooms(w http.ResponseWriter, r *http.Request) {
+func getAPIRooms(w http.ResponseWriter, r *http.Request) {
 	query := "SELECT `room_id`, MAX(`id`) AS `max_id` FROM `strokes`"
 	query += " GROUP BY `room_id` ORDER BY `max_id` DESC LIMIT 100"
 
@@ -251,7 +251,7 @@ func getApiRooms(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-func postApiRooms(w http.ResponseWriter, r *http.Request) {
+func postAPIRooms(w http.ResponseWriter, r *http.Request) {
 	t, err := checkToken(r.Header.Get("x-csrf-token"))
 
 	if err != nil {
@@ -318,7 +318,7 @@ func postApiRooms(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-func getApiRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func getAPIRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	idStr := pat.Param(ctx, "id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -368,7 +368,7 @@ func getApiRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 	w.Write(b)
 }
 
-func getApiStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func getAPIStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 
 	idStr := pat.Param(ctx, "id")
@@ -463,7 +463,7 @@ func getApiStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Re
 	}
 }
 
-func postApiStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func postAPIStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	t, err := checkToken(r.Header.Get("x-csrf-token"))
 
 	if err != nil {
@@ -587,7 +587,7 @@ func postApiStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.R
 	w.Write(b)
 }
 
-func getApiInitialize(w http.ResponseWriter, r *http.Request) {
+func getAPIInitialize(w http.ResponseWriter, r *http.Request) {
 	queries := []string{
 		"DELETE FROM `points` WHERE `id` > 1443000",
 		"DELETE FROM `strokes` WHERE `id` > 41000",
@@ -643,13 +643,13 @@ func main() {
 	defer dbx.Close()
 
 	mux := goji.NewMux()
-	mux.HandleFunc(pat.Post("/api/csrf_token"), postApiCsrfToken)
-	mux.HandleFunc(pat.Get("/api/rooms"), getApiRooms)
-	mux.HandleFunc(pat.Post("/api/rooms"), postApiRooms)
-	mux.HandleFuncC(pat.Get("/api/rooms/:id"), getApiRoomsID)
-	mux.HandleFuncC(pat.Get("/api/strokes/rooms/:id"), getApiStrokesRoomsID)
-	mux.HandleFuncC(pat.Post("/api/strokes/rooms/:id"), postApiStrokesRoomsID)
-	mux.HandleFunc(pat.Get("/api/initialize"), getApiInitialize)
+	mux.HandleFunc(pat.Post("/api/csrf_token"), postAPICsrfToken)
+	mux.HandleFunc(pat.Get("/api/rooms"), getAPIRooms)
+	mux.HandleFunc(pat.Post("/api/rooms"), postAPIRooms)
+	mux.HandleFuncC(pat.Get("/api/rooms/:id"), getAPIRoomsID)
+	mux.HandleFuncC(pat.Get("/api/strokes/rooms/:id"), getAPIStrokesRoomsID)
+	mux.HandleFuncC(pat.Post("/api/strokes/rooms/:id"), postAPIStrokesRoomsID)
+	mux.HandleFunc(pat.Get("/api/initialize"), getAPIInitialize)
 
 	log.Fatal(http.ListenAndServe("localhost:8000", mux))
 }
