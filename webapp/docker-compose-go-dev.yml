@@ -20,7 +20,7 @@ services:
     links:
       - mysql
     environment:
-      ISUCON_ENV: production
+      ISUCON_ENV: development
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
