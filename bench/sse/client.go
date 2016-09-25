@@ -10,10 +10,9 @@ import (
 	"time"
 )
 
-type Listener func(data string) error
+type Listener func(data string)
 
-// ErrListener returns whether to retry or not
-type ErrListener func(err error) bool
+type ErrListener func(err error)
 
 type BadContentType struct {
 	ContentType string
@@ -72,7 +71,7 @@ func (s *Stream) On(event string, listener Listener) {
 func (s *Stream) emit(event string, data string) {
 	if listeners, ok := s.listeners[event]; ok {
 		for _, listener := range listeners {
-			err := listener(data)
+			listener(data)
 		}
 	}
 }
@@ -83,7 +82,7 @@ func (s *Stream) OnError(listener ErrListener) {
 
 func (s *Stream) emitError(err error) { // return whether to continue or abort
 	if s.errListener != nil {
-		s.willRetry = s.errListener(err) && s.willRetry // WillRetryは一度falseになったらtrueにはならない
+		s.errListener(err)
 	}
 }
 

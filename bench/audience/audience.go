@@ -22,37 +22,32 @@ func watch(target string, roomID int) {
 	u := fmt.Sprintf("%s://%s/api/strokes/rooms/%d?csrf_token=%s", s.Scheme, s.Host, roomID, token)
 	stream := sse.NewStream(s.Client, u)
 
-	stream.On("stroke", func(data string) error {
+	stream.On("stroke", func(data string) {
 		fmt.Println("stroke")
 		fmt.Println(data)
-		return nil
 	})
-	stream.On("bad_request", func(data string) error {
+	stream.On("bad_request", func(data string) {
 		fmt.Println("bad_request")
 		fmt.Println(data)
-		return nil
+		stream.Close()
 	})
-	stream.On("watcher_count", func(data string) error {
+	stream.On("watcher_count", func(data string) {
 		fmt.Println("watcher_count")
 		fmt.Println(data)
-		return nil
 	})
-	stream.OnError(func(err error) bool {
+	stream.OnError(func(err error) {
 		fmt.Println("error")
 
 		if e, ok := err.(*sse.BadContentType); ok {
 			fmt.Println("bad content type " + e.ContentType)
-			return true
 		}
 		if e, ok := err.(*sse.BadStatusCode); ok {
 			fmt.Printf("bad status code %d\n", e.StatusCode)
 			if 400 <= e.StatusCode && e.StatusCode < 500 {
-				return false
+				stream.Close()
 			}
-			return true
 		}
 		fmt.Println(err)
-		return true
 	})
 
 	go stream.Start()
