@@ -21,22 +21,11 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
-  react:
-    build:
-      context: ./react
-      dockerfile: Dockerfile
-    volumes:
-      - ./ssl:/ssl:ro
+  react_dev_go:
+    extends:
+      file: docker-compose-react.yml
+      service: react_dev
     depends_on:
       - api
     links:
       - api
-    environment:
-      SSL_KEY: /ssl/oreore.key
-      SSL_CERT: /ssl/oreore.crt
-      ISUCON_ENV: production
-      NODE_ENV: production
-      API: http://api:80
-      PORT: 443
-    ports:
-      - "443:443"
