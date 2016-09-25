@@ -75,6 +75,9 @@ func initWeb() error {
 			"contestEnded": func() bool {
 				return getContestStatus() == contestStatusEnded
 			},
+			"plusOne": func(i int) int {
+				return i + 1
+			},
 		})
 
 		if err := parseTemplateAsset(t, templatesRoot+"layout.tmpl"); err != nil {
@@ -118,6 +121,11 @@ type Score struct {
 	Latest int64
 	Best   int64
 	At     time.Time
+}
+
+type PlotLine struct {
+	Name string         `json:"name"`
+	Data map[string]int `json:"data"`
 }
 
 func loadTeam(id uint64) (*Team, error) {
@@ -201,6 +209,7 @@ type viewParamsIndex struct {
 	viewParamsLayout
 	Ranking        []*Score
 	RankingIsFixed bool
+	PlotData       []PlotLine
 	Jobs           []queuedJob
 	LatestResult   latestResult
 	Message        string
@@ -269,6 +278,7 @@ func buildLeaderboardFromTable(team *Team, useSnapshot bool) ([]*Score, *Score, 
 		return nil, nil, err
 	}
 
+	// まず自チームのスコアのみを追加。17時を超えていても自チームだけは常に最新にする
 	if useSnapshot {
 		if len(allScores) == 0 {
 			// スナップショットテーブルが空のときはさっさと処理を終わる
@@ -301,6 +311,7 @@ func buildLeaderboardFromTable(team *Team, useSnapshot bool) ([]*Score, *Score, 
 		}
 	}
 
+	// 次に自チーム以外のスコアを追加
 	sort.Sort(byLatest(allScores))
 	for i, s := range allScores {
 		if i >= rankingPickLatest {
@@ -330,6 +341,62 @@ func buildLeaderboardFromTable(team *Team, useSnapshot bool) ([]*Score, *Score, 
 	return ranking, scoreByTeamID[team.ID], nil
 }
 
+func buildPlotLine(score *Score) (*PlotLine, error) {
+	plotLine := PlotLine{}
+	plotLine.Name = score.Team.Name
+	plotLine.Data = make(map[string]int)
+
+	// 17時になったらsnapshotを使うが、自チームのscoreには最新が入ってる
+	// 自チーム以外の最新scoreがプロットに出てしまわないように、created_atでも絞り込む
+	rows, err := db.Query(`
+		SELECT score, created_at FROM scores
+		WHERE team_id = ? AND created_at <= ?
+	  ORDER BY id ASC
+	`, score.Team.ID, score.At)
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			T time.Time
+			S int
+		)
+
+		err := rows.Scan(&S, &T)
+		if err != nil {
+			return nil, err
+		}
+
+		plotLine.Data[T.Format("2006-01-02T15:04:05")] = S
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &plotLine, nil
+}
+
+func buildPlotData(ranking []*Score) ([]PlotLine, error) {
+	plotData := make([]PlotLine, 0)
+
+	if len(ranking) == 0 {
+		return plotData, nil
+	}
+
+	for _, score := range ranking {
+		plotLine, err := buildPlotLine(score)
+		if err != nil {
+			return nil, err
+		}
+		plotData = append(plotData, *plotLine)
+	}
+
+	return plotData, nil
+}
+
 func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message string) error {
 	if getContestStatus() == contestStatusEnded {
 		http.Error(w, "Today's final has ended", http.StatusForbidden)
@@ -347,6 +414,11 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 	}
 
 	ranking, myScore, rankingIsFixed, err := buildLeaderboard(team)
+	if err != nil {
+		return err
+	}
+
+	plotData, err := buildPlotData(ranking)
 	if err != nil {
 		return err
 	}
@@ -411,6 +483,7 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 			viewParamsLayout{team, day},
 			ranking,
 			rankingIsFixed,
+			plotData,
 			jobs,
 			latestResult{
 				latestScore,

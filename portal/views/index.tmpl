@@ -72,20 +72,30 @@
     <p class="alert alert-warning">競技残り1時間を切りました。自チームを除き、スコアの表示は固定されています</p>
   {{end}}
 
+  <div id="plot" style="height: 300px;"></div>
+  <script>
+    Highcharts.setOptions({useUTC: false});
+    new Chartkick.LineChart("plot", {{.PlotData}}, {min: 0});
+  </script>
+
   <table class="table table-striped">
     <thead>
       <tr>
+        <th>Rank</th>
         <th>Team</th>
         <th>Score</th>
+        <th>Best</th>
         <th>Time</th>
       </tr>
     </thead>
     <tbody>
-      {{range $score := .Ranking}}
+      {{range $index, $score := .Ranking}}
         {{if (ne $score.Team.ID 9999) }}
           <tr {{if $.Team}}{{if (eq $score.Team.ID $.Team.ID)}}class="warning"{{end}}{{end}}>
+            <td>{{plusOne $index}}</td>
             <td>{{$score.Team.Name}}</td>
-            <td>{{$score.Latest}}</td>
+            <td style="color: #f00">{{$score.Latest}}</td>
+            <td style="color: #aaa">{{$score.Best}}</td>
             <td>{{$score.At}}</td>
           </tr>
         {{end}}
