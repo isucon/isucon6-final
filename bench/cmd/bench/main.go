@@ -14,7 +14,7 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
-var BenchmarkTimeout = 30 * time.Second
+const BenchmarkTimeout = 30 * time.Second
 
 func main() {
 
@@ -24,7 +24,7 @@ func main() {
 
 	flag.Parse()
 
-	if !regexp.MustCompile(`\A[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}\z`).MatchString(host) {
+	if !regexp.MustCompile(`\A[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\z`).MatchString(host) {
 		log.Fatal("hostの指定が間違っています（例: 127.0.0.1）")
 	}
 	baseURL := "https://" + host
