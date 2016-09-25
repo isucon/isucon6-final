@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y unzip
 
 RUN a2enmod rewrite
 
+# キャッシュ効率を上げるためにcomposerだけ先にcopyしてインストールする
 COPY ./composer.phar /var/www
 COPY ./composer.json /var/www
 COPY ./composer.lock /var/www
