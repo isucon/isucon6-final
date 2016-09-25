@@ -6,7 +6,7 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y ansible git
 
-cd /mnt
+cd /tmp
 cat > .id_rsa <<EOF
 -----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEApYYNairj4va7CiY2pEe3n/uzspiivADfhqDukClVrtO9XAcK
