@@ -1,103 +1,148 @@
 package sse
 
 import (
-	"net/http"
-	"time"
-	"strconv"
 	"bufio"
+	"context"
+	"fmt"
+	"net/http"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type Listener func(data string) error
 
-type Stream struct {
-	Client *http.Client
-	Request *http.Request
-	Listeners map[string]Listener
-	RetryTime time.Duration
-	WillRetry bool
-	LastEventID string
-	URL string
+// ErrListener returns whether to retry or not
+type ErrListener func(err error) bool
+
+type BadContentType struct {
+	ContentType string
 }
 
-func NewStream(c *http.Client, urlStr string) (*Stream) {
+func (err *BadContentType) Error() string {
+	return fmt.Sprintf("bad content-type %s", err.ContentType)
+}
+
+type BadStatusCode struct {
+	StatusCode int
+}
+
+func (err *BadStatusCode) Error() string {
+	return fmt.Sprintf("bad status code %d", err.StatusCode)
+}
+
+type Stream struct {
+	client      *http.Client
+	ctx         context.Context
+	cancelFunc  context.CancelFunc
+	listeners   map[string][]Listener
+	headers     map[string]string
+	errListener ErrListener
+	retryWait   time.Duration
+	willRetry   bool
+	lastEventID string
+	url         string
+}
+
+func NewStream(c *http.Client, urlStr string) *Stream {
+	ctx, cancelFunc := context.WithCancel(context.Background())
 	return &Stream{
-		Client: c,
-		Listeners: map[string]Listener{},
-		RetryTime: 1 * time.Second,
-		WillRetry: true,
-		URL: urlStr,
+		client:     c,
+		ctx:        ctx,
+		cancelFunc: cancelFunc,
+		listeners:  map[string][]Listener{},
+		headers:    map[string]string{},
+		retryWait:  1 * time.Second,
+		willRetry:  true,
+		url:        urlStr,
 	}
 }
 
+func (s *Stream) AddHeader(name, value string) {
+	s.headers[name] = value
+}
+
 func (s *Stream) On(event string, listener Listener) {
-	s.Listeners[event] = listener
+	if _, ok := s.listeners[event]; !ok {
+		s.listeners[event] = make([]Listener, 0)
+	}
+	s.listeners[event] = append(s.listeners[event], listener)
 }
 
 func (s *Stream) emit(event string, data string) {
-	if listener, ok := s.Listeners[event]; ok {
-		listener(data)
+	if listeners, ok := s.listeners[event]; ok {
+		for _, listener := range listeners {
+			err := listener(data)
+		}
+	}
+}
+
+func (s *Stream) OnError(listener ErrListener) {
+	s.errListener = listener
+}
+
+func (s *Stream) emitError(err error) { // return whether to continue or abort
+	if s.errListener != nil {
+		s.willRetry = s.errListener(err) && s.willRetry // WillRetryは一度falseになったらtrueにはならない
 	}
 }
 
 func (s *Stream) Close() {
-	if s.Request != nil {
-		s.WillRetry = false
-		//close(s.Request.Cancel) // TODO: use context.Context for cancel
-	}
-}
-
-func (s *Stream) retry() {
-	if s.WillRetry {
-		time.Sleep(s.RetryTime)
-		s.Start()
+	if s.ctx != nil {
+		s.cancelFunc()
+		s.willRetry = false
 	}
 }
 
 var defaultEvent = "message"
 
 func (s *Stream) Start() {
-	s.Request = nil // TODO: mutex
-	req, err := http.NewRequest("GET", s.URL, nil)
-	if err != nil {
-		return // TODO: errならabortでいいか
+	for {
+		s.request()
+		if s.willRetry {
+			time.Sleep(s.retryWait)
+			continue
+		}
+		break
 	}
-	s.Request = req
+	s.cancelFunc() // it's best practice to call cancel at the end
+}
 
-	// TODO: should support means to set other headers?
+func (s *Stream) request() {
+	req, err := http.NewRequest("GET", s.url, nil)
+	if err != nil {
+		s.emitError(err)
+		return
+	}
+	req = req.WithContext(s.ctx)
+
 	req.Header.Set("Accept", "text/event-stream")
-
-	// TODO: User-Agent
-
-	if s.LastEventID != "" {
-		req.Header.Set("Last-Event-ID", s.LastEventID)
+	if s.lastEventID != "" {
+		req.Header.Set("Last-Event-ID", s.lastEventID)
+	}
+	for name, value := range s.headers {
+		req.Header.Set(name, value)
 	}
 
 	// TODO: mutex?
-	t := s.Client.Timeout
-	s.Client.Timeout = 0
-	resp, err := s.Client.Do(req)
-	s.Client.Timeout = t
+	t := s.client.Timeout
+	s.client.Timeout = 0
+	resp, err := s.client.Do(req)
+	s.client.Timeout = t
 	if err != nil {
-		s.emit("error", "connection error: " + err.Error())
+		s.emitError(err)
+		return
 	}
 	defer resp.Body.Close()
 
-	if 500 <= resp.StatusCode {
-		s.emit("error", "bad response status: " + strconv.Itoa(resp.StatusCode))
-		s.retry()
-		return
-	} else if 400 <= resp.StatusCode && resp.StatusCode < 500 {
-		// 4XX系ならretryしない
-		s.emit("error", "bad response status: " + strconv.Itoa(resp.StatusCode))
+	if resp.StatusCode != http.StatusOK {
+		s.emitError(&BadStatusCode{StatusCode: resp.StatusCode})
 		return
 	}
-	// TODO: 3XXのときはどうするか
 
 	contentType := resp.Header.Get("Content-Type")
 	if !strings.HasPrefix(contentType, "text/event-stream") {
-		s.emit("error", "bad content type")
-		s.retry()
+		s.emitError(&BadContentType{ContentType: contentType})
 		return
 	}
 
@@ -130,10 +175,10 @@ func (s *Stream) Start() {
 			event = value
 		case "retry":
 			if n, err := strconv.Atoi(value); err != nil {
-				s.RetryTime = time.Duration(n) * time.Millisecond
+				s.retryWait = time.Duration(n) * time.Millisecond
 			}
 		case "id":
-			s.LastEventID = value
+			s.lastEventID = value
 		case "data":
 			if data != "" {
 				data += "\n"
@@ -145,8 +190,6 @@ func (s *Stream) Start() {
 	}
 
 	if err := scanner.Err(); err != nil {
-		s.emit("error", err)
+		s.emitError(err)
 	}
-	s.retry()
 }
-

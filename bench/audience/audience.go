@@ -3,18 +3,18 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 
 	"github.com/catatsuy/isucon6-final/bench/scenario"
 	"github.com/catatsuy/isucon6-final/bench/session"
-	"strconv"
-	"time"
 	"github.com/catatsuy/isucon6-final/bench/sse"
 )
 
 func watch(target string, roomID int) {
 	s := session.New(target)
 
-	token,err := scenario.GetCSRFTokenFromRoom(s, roomID)
+	token, err := scenario.GetCSRFTokenFromRoom(s, roomID)
 	if err != nil {
 		return // 何を返す？
 	}
@@ -23,26 +23,43 @@ func watch(target string, roomID int) {
 	stream := sse.NewStream(s.Client, u)
 
 	stream.On("stroke", func(data string) error {
-		fmt.Println(data)
-		return nil
-	})
-	stream.On("error", func(data string) error {
+		fmt.Println("stroke")
 		fmt.Println(data)
 		return nil
 	})
 	stream.On("bad_request", func(data string) error {
+		fmt.Println("bad_request")
 		fmt.Println(data)
 		return nil
 	})
 	stream.On("watcher_count", func(data string) error {
+		fmt.Println("watcher_count")
 		fmt.Println(data)
 		return nil
+	})
+	stream.OnError(func(err error) bool {
+		fmt.Println("error")
+
+		if e, ok := err.(*sse.BadContentType); ok {
+			fmt.Println("bad content type " + e.ContentType)
+			return true
+		}
+		if e, ok := err.(*sse.BadStatusCode); ok {
+			fmt.Printf("bad status code %d\n", e.StatusCode)
+			if 400 <= e.StatusCode && e.StatusCode < 500 {
+				return false
+			}
+			return true
+		}
+		fmt.Println(err)
+		return true
 	})
 
 	go stream.Start()
 
 	time.Sleep(30 * time.Second)
 
+	fmt.Println("close")
 	stream.Close()
 }
 
