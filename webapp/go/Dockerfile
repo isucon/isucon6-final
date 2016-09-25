@@ -5,6 +5,7 @@ RUN apk update \
 
 RUN go get github.com/Masterminds/glide
 
+# キャッシュ効率を上げるためにglideだけ先にcopyしてインストールする
 COPY ./glide.yaml /go/src/github.com/catatsuy/isucon6-final/webapp/go/
 COPY ./glide.lock /go/src/github.com/catatsuy/isucon6-final/webapp/go/
 WORKDIR /go/src/github.com/catatsuy/isucon6-final/webapp/go
