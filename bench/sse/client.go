@@ -87,10 +87,8 @@ func (s *Stream) emitError(err error) { // return whether to continue or abort
 }
 
 func (s *Stream) Close() {
-	if s.ctx != nil {
-		s.cancelFunc()
-		s.willRetry = false
-	}
+	s.cancelFunc()
+	s.willRetry = false
 }
 
 var defaultEvent = "message"
