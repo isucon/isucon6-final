@@ -10,4 +10,8 @@ WORKDIR /react
 COPY ./package.json /react/package.json
 RUN npm install
 
-ENTRYPOINT ["npm", "run", "dev"]
+COPY ./.babelrc /react/.babelrc
+
+COPY ./gulpfile.babel.js /react/gulpfile.babel.js
+
+CMD ["npm", "run", "dev"]

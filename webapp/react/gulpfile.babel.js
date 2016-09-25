@@ -1,6 +1,6 @@
 import gulp from 'gulp';
 import babel from 'gulp-babel';
-import webpack from 'gulp-webpack';
+import webpack from 'webpack-stream';
 import webpackConfig from './webpack.config.js';
 import {spawn} from 'child_process';
 import del from 'del';
