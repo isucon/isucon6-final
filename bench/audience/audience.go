@@ -20,22 +20,22 @@ func watch(target string, roomID int) {
 	}
 
 	u := fmt.Sprintf("%s://%s/api/strokes/rooms/%d?csrf_token=%s", s.Scheme, s.Host, roomID, token)
-	stream := sse.NewStream(s.Client, u)
+	es := sse.NewEventSource(s.Client, u)
 
-	stream.On("stroke", func(data string) {
+	es.On("stroke", func(data string) {
 		fmt.Println("stroke")
 		fmt.Println(data)
 	})
-	stream.On("bad_request", func(data string) {
+	es.On("bad_request", func(data string) {
 		fmt.Println("bad_request")
 		fmt.Println(data)
-		stream.Close()
+		es.Close()
 	})
-	stream.On("watcher_count", func(data string) {
+	es.On("watcher_count", func(data string) {
 		fmt.Println("watcher_count")
 		fmt.Println(data)
 	})
-	stream.OnError(func(err error) {
+	es.OnError(func(err error) {
 		fmt.Println("error")
 
 		if e, ok := err.(*sse.BadContentType); ok {
@@ -44,18 +44,18 @@ func watch(target string, roomID int) {
 		if e, ok := err.(*sse.BadStatusCode); ok {
 			fmt.Printf("bad status code %d\n", e.StatusCode)
 			if 400 <= e.StatusCode && e.StatusCode < 500 {
-				stream.Close()
+				es.Close()
 			}
 		}
 		fmt.Println(err)
 	})
 
-	go stream.Start()
+	go es.Start()
 
 	time.Sleep(30 * time.Second)
 
 	fmt.Println("close")
-	stream.Close()
+	es.Close()
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {

@@ -30,7 +30,7 @@ func (err *BadStatusCode) Error() string {
 	return fmt.Sprintf("bad status code %d", err.StatusCode)
 }
 
-type Stream struct {
+type EventSource struct {
 	client      *http.Client
 	ctx         context.Context
 	cancelFunc  context.CancelFunc
@@ -43,9 +43,9 @@ type Stream struct {
 	url         string
 }
 
-func NewStream(c *http.Client, urlStr string) *Stream {
+func NewEventSource(c *http.Client, urlStr string) *EventSource {
 	ctx, cancelFunc := context.WithCancel(context.Background())
-	return &Stream{
+	return &EventSource{
 		client:     c,
 		ctx:        ctx,
 		cancelFunc: cancelFunc,
@@ -57,18 +57,18 @@ func NewStream(c *http.Client, urlStr string) *Stream {
 	}
 }
 
-func (s *Stream) AddHeader(name, value string) {
+func (s *EventSource) AddHeader(name, value string) {
 	s.headers[name] = value
 }
 
-func (s *Stream) On(event string, listener Listener) {
+func (s *EventSource) On(event string, listener Listener) {
 	if _, ok := s.listeners[event]; !ok {
 		s.listeners[event] = make([]Listener, 0)
 	}
 	s.listeners[event] = append(s.listeners[event], listener)
 }
 
-func (s *Stream) emit(event string, data string) {
+func (s *EventSource) emit(event string, data string) {
 	if listeners, ok := s.listeners[event]; ok {
 		for _, listener := range listeners {
 			listener(data)
@@ -76,24 +76,24 @@ func (s *Stream) emit(event string, data string) {
 	}
 }
 
-func (s *Stream) OnError(listener ErrListener) {
+func (s *EventSource) OnError(listener ErrListener) {
 	s.errListener = listener
 }
 
-func (s *Stream) emitError(err error) { // return whether to continue or abort
+func (s *EventSource) emitError(err error) { // return whether to continue or abort
 	if s.errListener != nil {
 		s.errListener(err)
 	}
 }
 
-func (s *Stream) Close() {
+func (s *EventSource) Close() {
 	s.cancelFunc()
 	s.willRetry = false
 }
 
 var defaultEvent = "message"
 
-func (s *Stream) Start() {
+func (s *EventSource) Start() {
 	for {
 		s.request()
 		if s.willRetry {
@@ -105,7 +105,7 @@ func (s *Stream) Start() {
 	s.cancelFunc() // it's best practice to call cancel at the end
 }
 
-func (s *Stream) request() {
+func (s *EventSource) request() {
 	req, err := http.NewRequest("GET", s.url, nil)
 	if err != nil {
 		s.emitError(err)
