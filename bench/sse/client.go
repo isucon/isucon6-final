@@ -104,17 +104,11 @@ func (s *Stream) Start() {
 	data := ""
 	event := defaultEvent
 
-	r := bufio.NewReader(resp.Body) // TODO: もしBOMがあったら無視する仕様
+	scanner := bufio.NewScanner(resp.Body) // TODO: もしBOMがあったら無視する仕様
 
-	for {
-		line, err := r.ReadString('\n') // TODO: 仕様上は\rによって行末とすることも許されている
-		if err != nil {
-			s.emit("error", err.Error()) // TODO: 正常なケースもありそう
-			s.retry()
-			return
-		}
+	for scanner.Scan() { // TODO: scanner.Scanは\r?\nをdelimiterとするが、SSEの仕様上は\r単独もあり得る
 
-		line = strings.TrimSuffix(strings.TrimSuffix(line, "\n"), "\r")
+		line := scanner.Text()
 
 		// https://www.w3.org/TR/eventsource/#event-stream-interpretation
 		if line == "" {
@@ -149,5 +143,10 @@ func (s *Stream) Start() {
 			// ignore
 		}
 	}
+
+	if err := scanner.Err(); err != nil {
+		s.emit("error", err)
+	}
+	s.retry()
 }
 
