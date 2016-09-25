@@ -1,0 +1,48 @@
+version: '2'
+services:
+  mysql:
+    image: mysql
+    volumes:
+      - ./.data:/var/lib/mysql
+      - ./sql:/sql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "33060:3306"
+  api:
+    build:
+      context: ./go
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./go:/go/src/github.com/catatsuy/isucon6-final/webapp/go
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      ISUCON_ENV: development
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
+  react:
+    build:
+      context: ./react
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./react/build:/react/build:ro
+      - ./ssl:/ssl:ro
+    depends_on:
+      - api
+    links:
+      - api
+    environment:
+      SSL_KEY: /ssl/oreore.key
+      SSL_CERT: /ssl/oreore.crt
+      ISUCON_ENV: development
+      NODE_ENV: development
+      API: http://api:80
+      PORT: 443
+    ports:
+      - "443:443"
+

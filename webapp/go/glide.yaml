@@ -1,0 +1,12 @@
+package: github.com/catatsuy/isucon6-final/webapp/go
+import:
+- package: github.com/go-sql-driver/mysql
+  version: v1.2
+- package: github.com/jmoiron/sqlx
+- package: goji.io
+  version: v1.0
+  subpackages:
+  - pat
+- package: golang.org/x/net
+  subpackages:
+  - context
