@@ -5,10 +5,13 @@ RUN apk update \
 
 RUN go get github.com/Masterminds/glide
 
-COPY ./ /go/src/github.com/catatsuy/isucon6-final/webapp/go/
+COPY ./glide.yaml /go/src/github.com/catatsuy/isucon6-final/webapp/go/
+COPY ./glide.lock /go/src/github.com/catatsuy/isucon6-final/webapp/go/
 WORKDIR /go/src/github.com/catatsuy/isucon6-final/webapp/go
 
 RUN glide install
+
+COPY ./ /go/src/github.com/catatsuy/isucon6-final/webapp/go/
 
 RUN go build -o app .
 
