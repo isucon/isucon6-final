@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -37,6 +38,7 @@ type EventSource struct {
 	ctx         context.Context
 	cancelFunc  context.CancelFunc
 	listeners   map[string][]Listener
+	muListeners sync.Mutex
 	headers     map[string]string
 	errListener ErrListener
 	endListener EndListener
@@ -65,6 +67,8 @@ func (s *EventSource) AddHeader(name, value string) {
 }
 
 func (s *EventSource) On(event string, listener Listener) {
+	s.muListeners.Lock()
+	defer s.muListeners.Unlock()
 	if _, ok := s.listeners[event]; !ok {
 		s.listeners[event] = make([]Listener, 0)
 	}
@@ -136,7 +140,6 @@ func (s *EventSource) request() {
 		req.Header.Set(name, value)
 	}
 
-	// TODO: mutex?
 	t := s.client.Timeout
 	s.client.Timeout = 0
 	resp, err := s.client.Do(req)
