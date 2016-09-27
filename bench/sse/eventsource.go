@@ -43,7 +43,7 @@ type EventSource struct {
 	errListener ErrListener
 	endListener EndListener
 	retryWait   time.Duration
-	willRetry   bool
+	isClosed    bool
 	lastEventID string
 	url         string
 }
@@ -57,7 +57,7 @@ func NewEventSource(c *http.Client, urlStr string) *EventSource {
 		listeners:  map[string][]Listener{},
 		headers:    map[string]string{},
 		retryWait:  1 * time.Second,
-		willRetry:  true,
+		isClosed:   false,
 		url:        urlStr,
 	}
 }
@@ -88,7 +88,7 @@ func (s *EventSource) OnError(listener ErrListener) {
 }
 
 func (s *EventSource) emitError(err error) { // return whether to continue or abort
-	if s.errListener != nil {
+	if s.errListener != nil && !s.isClosed {
 		s.errListener(err)
 	}
 }
@@ -105,8 +105,8 @@ func (s *EventSource) emitEnd() {
 }
 
 func (s *EventSource) Close() {
+	s.isClosed = true
 	s.cancelFunc()
-	s.willRetry = false
 }
 
 var defaultEvent = "message"
@@ -114,7 +114,7 @@ var defaultEvent = "message"
 func (s *EventSource) Start() {
 	for {
 		s.request()
-		if s.willRetry {
+		if !s.isClosed {
 			time.Sleep(s.retryWait)
 			continue
 		}
