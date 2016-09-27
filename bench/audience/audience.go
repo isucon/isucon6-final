@@ -1,61 +1,16 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/catatsuy/isucon6-final/bench/scenario"
-	"github.com/catatsuy/isucon6-final/bench/session"
-	"github.com/catatsuy/isucon6-final/bench/sse"
 )
 
-func watch(target string, roomID int) {
-	s := session.New(target)
-
-	token, err := scenario.GetCSRFTokenFromRoom(s, roomID)
-	if err != nil {
-		return // 何を返す？
-	}
-
-	u := fmt.Sprintf("%s://%s/api/strokes/rooms/%d?csrf_token=%s", s.Scheme, s.Host, roomID, token)
-	es := sse.NewEventSource(s.Client, u)
-
-	es.On("stroke", func(data string) {
-		fmt.Println("stroke")
-		fmt.Println(data)
-	})
-	es.On("bad_request", func(data string) {
-		fmt.Println("bad_request")
-		fmt.Println(data)
-		es.Close()
-	})
-	es.On("watcher_count", func(data string) {
-		fmt.Println("watcher_count")
-		fmt.Println(data)
-	})
-	es.OnError(func(err error) {
-		fmt.Println("error")
-
-		if e, ok := err.(*sse.BadContentType); ok {
-			fmt.Println("bad content type " + e.ContentType)
-		}
-		if e, ok := err.(*sse.BadStatusCode); ok {
-			fmt.Printf("bad status code %d\n", e.StatusCode)
-			if 400 <= e.StatusCode && e.StatusCode < 500 {
-				es.Close()
-			}
-		}
-		fmt.Println(err)
-	})
-
-	go es.Start()
-
-	time.Sleep(30 * time.Second)
-
-	fmt.Println("close")
-	es.Close()
+type Response struct {
+	Errors []string `json:"errors"`
+	Logs   []Log    `json:"logs"`
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -67,9 +22,40 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("引数が間違っています (例: /?target=https%3A%2F%2F127.0.0.1&room=1)"))
 	}
 
-	watch(target, roomID)
+	watchers := make([]*RoomWatcher, 0)
+	for i := 0; i < 20; i++ {
+		w := NewRoomWatcher(target, roomID)
+		watchers = append(watchers, w)
+	}
+	fmt.Println("start")
 
-	fmt.Fprintf(w, "Hello, World")
+	time.Sleep(30 * time.Second)
+	fmt.Println("stop")
+
+	for _, w := range watchers {
+		w.Leave()
+	}
+	fmt.Println("wait")
+	for _, w := range watchers {
+		<-w.EndCh
+	}
+	fmt.Println("done")
+
+	res := &Response{
+		Errors: make([]string, 0),
+		Logs:   make([]Log, 0),
+	}
+	for _, w := range watchers {
+		res.Errors = append(res.Errors, w.Errors...)
+		res.Logs = append(w.Logs, w.Logs...)
+	}
+
+	b, _ := json.Marshal(res)
+
+	w.Header().Set("Content-Type", "application/json;charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write(b)
+
 }
 
 func main() {

@@ -14,6 +14,8 @@ type Listener func(data string)
 
 type ErrListener func(err error)
 
+type EndListener func()
+
 type BadContentType struct {
 	ContentType string
 }
@@ -37,6 +39,7 @@ type EventSource struct {
 	listeners   map[string][]Listener
 	headers     map[string]string
 	errListener ErrListener
+	endListener EndListener
 	retryWait   time.Duration
 	willRetry   bool
 	lastEventID string
@@ -86,6 +89,17 @@ func (s *EventSource) emitError(err error) { // return whether to continue or ab
 	}
 }
 
+// EndListener is called when the EventSource is closed and there will be no more events fired from it
+func (s *EventSource) OnEnd(listener EndListener) {
+	s.endListener = listener
+}
+
+func (s *EventSource) emitEnd() {
+	if s.endListener != nil {
+		s.endListener()
+	}
+}
+
 func (s *EventSource) Close() {
 	s.cancelFunc()
 	s.willRetry = false
@@ -102,7 +116,8 @@ func (s *EventSource) Start() {
 		}
 		break
 	}
-	s.cancelFunc() // it's best practice to call cancel at the end
+	s.cancelFunc() // it's a good practice to call cancel at the end
+	s.emitEnd()
 }
 
 func (s *EventSource) request() {
