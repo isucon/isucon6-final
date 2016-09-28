@@ -45,35 +45,34 @@ func (w *RoomWatcher) watch(target string, roomID int) {
 
 	s := session.New(target)
 
-	token, err := scenario.GetCSRFTokenFromRoom(s, roomID)
+	path := fmt.Sprintf("/rooms/%d", roomID)
+	token, err := scenario.GetCSRFToken(s, target+path)
 	if err != nil {
-		w.Errors = append(w.Errors, err.Error()) // TODO: mutex
+		w.addError(fmt.Sprintf("GET %s %s", path, err.Error()))
 		fmt.Println(err)
 		w.EndCh <- struct{}{}
 		return
 	}
 
 	startTime := time.Now()
-	u := fmt.Sprintf("%s://%s/api/strokes/rooms/%d?csrf_token=%s", s.Scheme, s.Host, roomID, token)
-	w.es = sse.NewEventSource(s.Client, u)
+	path = "/api/strokes" + path
+	w.es = sse.NewEventSource(s.Client, target+path+"?csrf_token="+token)
 
 	w.es.On("stroke", func(data string) {
-		//fmt.Println("stroke")
-		//fmt.Println(data)
 		var stroke scenario.Stroke
 		err := json.Unmarshal([]byte(data), &stroke)
 		if err != nil {
-			w.Errors = append(w.Errors, err.Error()) // TODO: mutex
+			w.Errors = append(w.Errors, err.Error())
 			fmt.Println(err)
-			w.Leave()
+			w.es.Close()
 		}
 		now := time.Now()
 		// strokes APIには最初はLast-Event-IDをつけずに送るので、これまでに描かれたstrokeが全部降ってくるが、それは無視する。
 		if stroke.CreatedAt.After(startTime) && now.Sub(stroke.CreatedAt) > thresholdResponseTime {
 			fmt.Println("response too late")
-			w.Leave()
+			w.es.Close()
 		}
-		w.Logs = append(w.Logs, Log{ // TODO: mutex
+		w.Logs = append(w.Logs, Log{
 			Time:       now,
 			RoomID:     roomID,
 			StrokeID:   stroke.ID,
@@ -81,33 +80,35 @@ func (w *RoomWatcher) watch(target string, roomID int) {
 		})
 	})
 	w.es.On("bad_request", func(data string) {
-		fmt.Println("bad_request")
-		fmt.Println(data)
-		w.Leave()
+		w.addError(path + " bad_request: " + data)
+		w.es.Close()
 	})
-	w.es.On("watcher_count", func(data string) {
-		fmt.Println("watcher_count")
-		fmt.Println(data)
-	})
+	//w.es.On("watcher_count", func(data string) {
+	//	fmt.Println("watcher_count")
+	//	fmt.Println(data)
+	//})
 	w.es.OnError(func(err error) {
-		fmt.Println("error")
-
 		if e, ok := err.(*sse.BadContentType); ok {
-			fmt.Println("bad content type " + e.ContentType)
+			w.addError(path + " Content-Typeが正しくありません: " + e.ContentType)
+			return
 		}
 		if e, ok := err.(*sse.BadStatusCode); ok {
-			fmt.Printf("bad status code %d\n", e.StatusCode)
-			if 400 <= e.StatusCode && e.StatusCode < 500 {
-				w.Leave()
-			}
+			w.addError(fmt.Sprintf("%s ステータスコードが正しくありません: %d\n", path, e.StatusCode))
+			w.es.Close()
+			return
 		}
 		fmt.Println(err)
+		w.addError(path + " 予期せぬエラー")
 	})
 	w.es.OnEnd(func() {
 		w.EndCh <- struct{}{}
 	})
 
 	w.es.Start()
+}
+
+func (w *RoomWatcher) addError(msg string) {
+	w.Errors = append(w.Errors, fmt.Sprintf("%s", msg))
 }
 
 func (w *RoomWatcher) Leave() {
