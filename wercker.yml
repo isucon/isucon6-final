@@ -5,14 +5,9 @@ build:
         name: initialize
         code: |
           apt-get update
-          apt-get install -y python-pip libffi-dev libssl-dev ansible git
+          apt-get install -y python-pip libffi-dev libssl-dev
           pip install PySocks azure-cli
           mkdir output
-    - script:
-        name: ansible
-        code: |
-          cd ansible
-          ansible-playbook -i development -c local playbook/setup.yml
     - script:
         name: parepare webapp 
         code: |
