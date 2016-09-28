@@ -21,13 +21,13 @@ build:
             -e "s:@CONTAINER_NAME@:$CONTAINER_NAME:g" \
             ansible/playbook/roles/app/tasks//main.yml
           tar zcf output/ansible.tar.gz ansible
-    #- script:
-    #    name: prepare provisioning
-    #    code: |
-    #      sed \
-    #        -e "s:@AZURE_STORAGE_ACCOUNT@:$AZURE_STORAGE_ACCOUNT:g" \
-    #        -e "s:@CONTAINER_NAME@:$CONTAINER_NAME:g" \
-    #        azure/azuredeploy.json > output/azuredeploy.json
+    - script:
+        name: prepare azure template
+        code: |
+          sed \
+            -e "s:@AZURE_STORAGE_ACCOUNT@:$AZURE_STORAGE_ACCOUNT:g" \
+            -e "s:@CONTAINER_NAME@:$CONTAINER_NAME:g" \
+            azure/azuredeploy.json > output/azuredeploy.json
     - script:
         name: upload blob
         code: |
