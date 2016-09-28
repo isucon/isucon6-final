@@ -23,14 +23,16 @@ type RoomWatcher struct {
 	Logs   []Log
 	Errors []string
 
-	es *sse.EventSource
+	es     *sse.EventSource
+	isLeft bool
 }
 
 func NewRoomWatcher(target string, roomID int) *RoomWatcher {
 	w := &RoomWatcher{
-		EndCh:  make(chan struct{}),
+		EndCh:  make(chan struct{}, 1),
 		Logs:   make([]Log, 0),
 		Errors: make([]string, 0),
+		isLeft: false,
 	}
 
 	go w.watch(target, roomID)
@@ -56,6 +58,11 @@ func (w *RoomWatcher) watch(target string, roomID int) {
 
 	startTime := time.Now()
 	path = "/api/strokes" + path
+
+	if w.isLeft {
+		w.EndCh <- struct{}{}
+		return
+	}
 	w.es = sse.NewEventSource(s.Client, target+path+"?csrf_token="+token)
 
 	w.es.On("stroke", func(data string) {
@@ -112,6 +119,7 @@ func (w *RoomWatcher) addError(msg string) {
 }
 
 func (w *RoomWatcher) Leave() {
+	w.isLeft = true
 	if w.es != nil {
 		w.es.Close()
 	}
