@@ -1,4 +1,4 @@
-box: debian
+box: ubuntu
 build:
   steps:
     - script:
@@ -6,8 +6,8 @@ build:
         code: |
           export DEBIAN_FRONTEND=noninteractive
           apt-get update
-          apt-get install -y build-essential libssl-dev libffi-dev libpython-dev python-dev python-pip
-          pip install --upgrade blobxfer
+          apt-get install -y python-pip libffi-dev libssl-dev
+          pip install blobxfer
           mkdir output
     - script:
         name: parepare webapp 
