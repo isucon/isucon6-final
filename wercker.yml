@@ -16,12 +16,18 @@ build:
     - script:
         name: parepare ansible 
         code: |
+          sed -i \
+            -e "s:@AZURE_STORAGE_ACCOUNT@:$AZURE_STORAGE_ACCOUNT:g" \
+            -e "s:@CONTAINER_NAME@:$CONTAINER_NAME:g" \
+            ansible/playbook/roles/app/tasks//main.yml
           tar zcf output/ansible.tar.gz ansible
     #- script:
     #    name: prepare provisioning
     #    code: |
-    #      cp azure/provisioning_isu01.sh output/
-    #      cp azure/provisioning_isu02.sh output/
+    #      sed \
+    #        -e "s:@AZURE_STORAGE_ACCOUNT@:$AZURE_STORAGE_ACCOUNT:g" \
+    #        -e "s:@CONTAINER_NAME@:$CONTAINER_NAME:g" \
+    #        azure/azuredeploy.json > output/azuredeploy.json
     - script:
         name: upload blob
         code: |
