@@ -1,9 +1,13 @@
-box: alfpark/blobxfer
+box: debian
 build:
   steps:
     - script:
         name: initialize
         code: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y python-pip libffi-dev libssl-dev
+          pip install blobxfer
           mkdir output
     - script:
         name: parepare webapp 
