@@ -13,12 +13,12 @@ build:
         code: |
           cd ansible
           ansible-playbook -i development -c local playbook/setup.yml
-    - script: parepare webapp
-        name: 
+    - script:
+        name: parepare webapp 
         code: |
           tar zcf output/webapp.tar.gz --exclude=.gitignore webapp
-    - script: parepare ansible
-        name: 
+    - script:
+        name: parepare ansible 
         code: |
           tar zcf output/ansible.tar.gz ansible
     #- script:
