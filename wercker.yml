@@ -1,0 +1,35 @@
+box: ubuntu
+build:
+  steps:
+    - script:
+        name: initialize
+        code: |
+          apt-get update
+          apt-get install -y python-pip libffi-dev libssl-dev ansible git
+          pip install PySocks azure-cli
+          mkdir output
+    - script:
+        name: ansible
+        code: |
+          cd ansible
+          ansible-playbook -i development -c local playbook/setup.yml
+    - script:parepare webapp
+        name: 
+        code: |
+          tar zcf output/webapp.tar.gz --exclude=.gitignore webapp
+    - script:parepare ansible
+        name: 
+        code: |
+          tar zcf output/ansible.tar.gz ansible
+    #- script:
+    #    name: prepare provisioning
+    #    code: |
+    #      cp azure/provisioning_isu01.sh output/
+    #      cp azure/provisioning_isu02.sh output/
+    - script:
+        name: upload blob
+        code: |
+          az storage blob upload --account-name "$AZURE_STORAGE_ACCOUNT" --sas-token "$SAS_TOKEN" --file output/webapp.tar.gz --container-name "$TARGET_CONTAINER" --name webapp.tar.gz
+          az storage blob upload --account-name "$AZURE_STORAGE_ACCOUNT" --sas-token "$SAS_TOKEN" --file output/ansible.tar.gz --container-name "$TARGET_CONTAINER" --name ansible.tar.gz
+          #az storage blob upload --account-name "$AZURE_STORAGE_ACCOUNT" --sas-token "$SAS_TOKEN" --file output/provisioning_isu01.sh --container-name "$TARGET_CONTAINER" --name provisioning_isu01.sh
+          #az storage blob upload --account-name "$AZURE_STORAGE_ACCOUNT" --sas-token "$SAS_TOKEN" --file output/provisioning_isu02.sh --container-name "$TARGET_CONTAINER" --name provisioning_isu02.sh
