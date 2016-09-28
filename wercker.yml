@@ -29,7 +29,7 @@ build:
     - script:
         name: upload blob
         code: |
-          az storage blob upload --account-name "$AZURE_STORAGE_ACCOUNT" --sas-token "$SAS_TOKEN" --file output/webapp.tar.gz --container-name "$TARGET_CONTAINER" --name webapp.tar.gz
-          az storage blob upload --account-name "$AZURE_STORAGE_ACCOUNT" --sas-token "$SAS_TOKEN" --file output/ansible.tar.gz --container-name "$TARGET_CONTAINER" --name ansible.tar.gz
-          #az storage blob upload --account-name "$AZURE_STORAGE_ACCOUNT" --sas-token "$SAS_TOKEN" --file output/provisioning_isu01.sh --container-name "$TARGET_CONTAINER" --name provisioning_isu01.sh
-          #az storage blob upload --account-name "$AZURE_STORAGE_ACCOUNT" --sas-token "$SAS_TOKEN" --file output/provisioning_isu02.sh --container-name "$TARGET_CONTAINER" --name provisioning_isu02.sh
+          az storage blob upload --account-name "$AZURE_STORAGE_ACCOUNT" --sas-token "$SAS_TOKEN" --file output/webapp.tar.gz --container-name "$CONTAINER_NAME" --name webapp.tar.gz
+          az storage blob upload --account-name "$AZURE_STORAGE_ACCOUNT" --sas-token "$SAS_TOKEN" --file output/ansible.tar.gz --container-name "$CONTAINER_NAME" --name ansible.tar.gz
+          #az storage blob upload --account-name "$AZURE_STORAGE_ACCOUNT" --sas-token "$SAS_TOKEN" --file output/provisioning_isu01.sh --container-name "$CONTAINER_NAME" --name provisioning_isu01.sh
+          #az storage blob upload --account-name "$AZURE_STORAGE_ACCOUNT" --sas-token "$SAS_TOKEN" --file output/provisioning_isu02.sh --container-name "$CONTAINER_NAME" --name provisioning_isu02.sh
