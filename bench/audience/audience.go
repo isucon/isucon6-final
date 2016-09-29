@@ -22,11 +22,14 @@ var timeout int
 
 var listen string
 
+var targetScheme string
+
 func main() {
 	flag.IntVar(&initialWatcherNum, "initialWatcherNum", 5, "最初に入室するクライアント数")
 	flag.IntVar(&watcherIncreaseInterval, "watcherIncreaseInterval", 5, "何秒ごとにクライアントを増やすか")
 	flag.IntVar(&timeout, "timeout", 30, "何秒でクライアントを増やし続けるのをやめてタイムアウトとするか")
 	flag.StringVar(&listen, "listen", "0.0.0.0:10080", "listenするIPとport (例: 0.0.0.0:10080)")
+	flag.StringVar(&targetScheme, "targetScheme", "https", "targetのURLスキーム")
 	flag.Parse()
 
 	fmt.Println("listening on " + listen)
@@ -35,13 +38,14 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	target := r.URL.Query().Get("target")
+	targetHost := r.URL.Query().Get("target")
 	room := r.URL.Query().Get("room")
 	roomID, err := strconv.Atoi(room)
-	if err != nil || target == "" {
+	if err != nil || targetHost == "" {
 		w.WriteHeader(400)
-		w.Write([]byte("引数が間違っています (例: /?target=https%3A%2F%2F127.0.0.1&room=1)"))
+		w.Write([]byte("引数が間違っています (例: /?target=127.0.0.1&room=1)"))
 	}
+	targetURL := targetScheme + "://" + targetHost
 
 	watchers := make([]*RoomWatcher, 0)
 
@@ -50,7 +54,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	// まず最初にinitialWatcherNum人が入室する
 	for i := 0; i < initialWatcherNum; i++ {
 		fmt.Println("watcher", len(watchers)+1)
-		watchers = append(watchers, NewRoomWatcher(target, roomID))
+		watchers = append(watchers, NewRoomWatcher(targetURL, roomID))
 	}
 
 	numToIncreaseWatcher := (timeout - watcherIncreaseInterval) / watcherIncreaseInterval
@@ -61,7 +65,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		for _, w := range watchers {
 			if len(w.EndCh) == 0 {
 				fmt.Println("watcher", len(watchers)+1)
-				watchers = append(watchers, NewRoomWatcher(target, roomID))
+				watchers = append(watchers, NewRoomWatcher(targetURL, roomID))
 			}
 		}
 	}
