@@ -19,7 +19,7 @@ data.each do |s|
     points: [],
   }
   s['points'].each do |p|
-    o[:points].push({x: p["x"] + rand(10) - 5, y: p["y"] + rand(10) - 5})
+    o[:points].push({x: p["x"] + rand(3) - 1.5, y: p["y"] + rand(3) - 1.5})
   end
   output.push(o)
 end
