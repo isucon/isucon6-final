@@ -1,0 +1,35 @@
+box: ubuntu
+build:
+  steps:
+    - script:
+        name: initialize
+        code: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update
+          apt-get install -y python-pip libffi-dev libssl-dev
+          pip install blobxfer
+          mkdir output
+    - script:
+        name: parepare webapp 
+        code: |
+          tar zcf output/webapp.tar.gz --exclude=.gitignore webapp
+    - script:
+        name: parepare ansible 
+        code: |
+          sed -i \
+            -e "s:@AZURE_STORAGE_ACCOUNT@:$AZURE_STORAGE_ACCOUNT:g" \
+            -e "s:@CONTAINER_NAME@:$CONTAINER_NAME:g" \
+            ansible/playbook/roles/app/tasks//main.yml
+          tar zcf output/ansible.tar.gz ansible
+    - script:
+        name: prepare azure template
+        code: |
+          sed \
+            -e "s:@AZURE_STORAGE_ACCOUNT@:$AZURE_STORAGE_ACCOUNT:g" \
+            -e "s:@CONTAINER_NAME@:$CONTAINER_NAME:g" \
+            azure/azuredeploy.json > output/azuredeploy.json
+    - script:
+        name: upload blob
+        code: |
+          cd output
+          blobxfer --storageaccountkey "$AZURE_STORAGE_KEY" --upload "$AZURE_STORAGE_ACCOUNT" "$CONTAINER_NAME" .

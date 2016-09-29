@@ -1,38 +1,18 @@
 ---
-- name: mkdir ssh
-  file:
-    path=/home/isucon/.ssh/
-    state=directory
-    mode=700
-    owner=isucon
-    group=isucon
-- name: deploy key
+- name: get webapp tarball
+  get_url:
+    url=https://@AZURE_STORAGE_ACCOUNT@.blob.core.windows.net/@CONTAINER_NAME@/webapp.tar.gz
+    dest=/tmp/webapp.tar.gz
+    remote_src=yes
+- name: unarchive webapp directory
   become_user: isucon
-  copy:
-    src=home/isucon/.ssh/id_rsa
-    dest=/home/isucon/.ssh/id_rsa
-    mode=600
-    owner=isucon
-    group=isucon
-- name: git clone
-  become_user: isucon
-  git:
-    repo=git@github.com:catatsuy/isucon6-final.git
-    dest=/home/isucon/repos
-    accept_hostkey=yes
-- name: remove webapp directory
+  unarchive:
+    src=/tmp/webapp.tar.gz
+    dest=/home/isucon/
+    remote_src=yes
+- name: remove webapp tarball
   file:
-    path=/home/isucon/webapp/
-    state=absent
-- name: move webapp directory
-  command: "mv /home/isucon/repos/webapp /home/isucon/webapp"
-- name: remove repos directory
-  file:
-    path=/home/isucon/repos/
-    state=absent
-- name: remove ssh directory
-  file:
-    path=/home/isucon/.ssh/
+    path=/tmp/webapp.tar.gz
     state=absent
 - name: symoblic link docker-compose.yml
   become_user: isucon
