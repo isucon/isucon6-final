@@ -45,6 +45,7 @@ const thresholdResponseTime = 5 * time.Second
 
 func (w *RoomWatcher) watch(target string, roomID int) {
 
+	// TODO:用途がだいぶ特殊なので普通のベンチマークと同じsessionを使うべきか悩ましい
 	s := session.New(target)
 	s.Client.Timeout = thresholdResponseTime
 
