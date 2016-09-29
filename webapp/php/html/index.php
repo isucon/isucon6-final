@@ -284,7 +284,7 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         usleep(500 * 1000); // 500ms
 
         $strokes = getStrokes($dbh, $room['id'], $last_stroke_id);
-        $this->logger->info(var_export($strokes, true));
+        //$this->logger->info(var_export($strokes, true));
 
         foreach ($strokes as $stroke) {
             $stroke['points'] = getStrokePoints($dbh, $stroke['id']);

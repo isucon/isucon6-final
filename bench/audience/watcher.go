@@ -46,11 +46,12 @@ const thresholdResponseTime = 5 * time.Second
 func (w *RoomWatcher) watch(target string, roomID int) {
 
 	s := session.New(target)
+	s.Client.Timeout = thresholdResponseTime
 
 	path := fmt.Sprintf("/rooms/%d", roomID)
 	token, err := scenario.GetCSRFToken(s, target+path)
 	if err != nil {
-		w.addError(fmt.Sprintf("GET %s %s", path, err.Error()))
+		w.addError(fmt.Sprintf("GET %s リクエストに失敗しました", path))
 		fmt.Println(err)
 		w.EndCh <- struct{}{}
 		return

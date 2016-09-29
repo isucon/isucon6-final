@@ -13,6 +13,12 @@ type Response struct {
 	Logs   []Log    `json:"logs"`
 }
 
+var initialWatcherNum = 5
+
+var watcherIncreaseInterval = 5 * time.Second
+
+var watcherIncreaseTimes = 5
+
 func handler(w http.ResponseWriter, r *http.Request) {
 	target := r.URL.Query().Get("target")
 	room := r.URL.Query().Get("room")
@@ -23,13 +29,31 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	watchers := make([]*RoomWatcher, 0)
-	for i := 0; i < 20; i++ {
-		w := NewRoomWatcher(target, roomID)
-		watchers = append(watchers, w)
+
+	// まず最初にinitialWatcherNum人が入室する
+	for i := 0; i < initialWatcherNum; i++ {
+		fmt.Println("watcher", len(watchers)+1)
+		watchers = append(watchers, NewRoomWatcher(target, roomID))
 	}
 	fmt.Println("start")
 
-	time.Sleep(30 * time.Second)
+	for k := 0; k < watcherIncreaseTimes; k++ {
+		// watcherIncreaseIntervalごとにその時点でまだ退室していない参加人数の数と同じ人数が入ってくる
+		time.Sleep(watcherIncreaseInterval)
+
+		for _, w := range watchers {
+			if len(w.EndCh) == 0 {
+				fmt.Println("watcher", len(watchers)+1)
+				watchers = append(watchers, NewRoomWatcher(target, roomID))
+			}
+		}
+	}
+
+	time.Sleep(watcherIncreaseInterval)
+
+	// ここまでで合計 watcherIncreaseInterval * watcherIncreaseTimes 秒かかり、
+	// 最大で initialWatcherNum * 2 ^ watcherIncreaseTimes 人が入室してる
+
 	fmt.Println("stop")
 
 	for _, w := range watchers {
@@ -47,7 +71,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, w := range watchers {
 		res.Errors = append(res.Errors, w.Errors...)
-		res.Logs = append(w.Logs, w.Logs...)
+		res.Logs = append(res.Logs, w.Logs...)
 	}
 
 	b, _ := json.Marshal(res)

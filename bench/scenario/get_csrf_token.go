@@ -12,17 +12,17 @@ func GetCSRFToken(s *session.Session, path string) (string, error) {
 
 	err := s.Get(path, func(status int, body io.Reader) error {
 		if status != 200 {
-			return errors.New("ステータスコードが200ではありません")
+			return errors.New("GET " + path + ", ステータスコードが200ではありません")
 		}
 		doc, err := makeDocument(body)
 		if err != nil {
-			return errors.New("HTMLが正しくありません")
+			return errors.New("GET " + path + ", HTMLが正しくありません")
 		}
 
 		token = extractCsrfToken(doc)
 
 		if token == "" {
-			return errors.New("トークンが取得できませんでした")
+			return errors.New("GET " + path + ", トークンが取得できませんでした")
 		}
 
 		return nil
