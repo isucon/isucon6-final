@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -13,11 +14,25 @@ type Response struct {
 	Logs   []Log    `json:"logs"`
 }
 
-var initialWatcherNum = 5
+var initialWatcherNum int
 
-var watcherIncreaseInterval = 5 * time.Second
+var watcherIncreaseInterval int
 
-var watcherIncreaseTimes = 5
+var timeout int
+
+var listen string
+
+func main() {
+	flag.IntVar(&initialWatcherNum, "initialWatcherNum", 5, "最初に入室するクライアント数")
+	flag.IntVar(&watcherIncreaseInterval, "watcherIncreaseInterval", 5, "何秒ごとにクライアントを増やすか")
+	flag.IntVar(&timeout, "timeout", 30, "何秒でクライアントを増やし続けるのをやめてタイムアウトとするか")
+	flag.StringVar(&listen, "listen", "0.0.0.0:10080", "listenするIPとport (例: 0.0.0.0:10080)")
+	flag.Parse()
+
+	fmt.Println("listening on " + listen)
+	http.HandleFunc("/", handler)
+	http.ListenAndServe(listen, nil)
+}
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	target := r.URL.Query().Get("target")
@@ -30,16 +45,18 @@ func handler(w http.ResponseWriter, r *http.Request) {
 
 	watchers := make([]*RoomWatcher, 0)
 
+	fmt.Println("start")
+
 	// まず最初にinitialWatcherNum人が入室する
 	for i := 0; i < initialWatcherNum; i++ {
 		fmt.Println("watcher", len(watchers)+1)
 		watchers = append(watchers, NewRoomWatcher(target, roomID))
 	}
-	fmt.Println("start")
 
-	for k := 0; k < watcherIncreaseTimes; k++ {
+	numToIncreaseWatcher := (timeout - watcherIncreaseInterval) / watcherIncreaseInterval
+	for k := 0; k < numToIncreaseWatcher; k++ {
 		// watcherIncreaseIntervalごとにその時点でまだ退室していない参加人数の数と同じ人数が入ってくる
-		time.Sleep(watcherIncreaseInterval)
+		time.Sleep(time.Duration(watcherIncreaseInterval) * time.Second)
 
 		for _, w := range watchers {
 			if len(w.EndCh) == 0 {
@@ -49,10 +66,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	time.Sleep(watcherIncreaseInterval)
+	time.Sleep(time.Duration(watcherIncreaseInterval) * time.Second)
 
-	// ここまでで合計 watcherIncreaseInterval * watcherIncreaseTimes 秒かかり、
-	// 最大で initialWatcherNum * 2 ^ watcherIncreaseTimes 人が入室してる
+	// ここまでで合計 timeout 秒かかり、
+	// 最大で initialWatcherNum * 2 ^ numToIncreaseWatcher 人が入室してる
 
 	fmt.Println("stop")
 
@@ -80,9 +97,4 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write(b)
 
-}
-
-func main() {
-	http.HandleFunc("/", handler)
-	http.ListenAndServe("0.0.0.0:10080", nil)
 }
