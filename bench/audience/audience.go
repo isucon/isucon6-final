@@ -27,7 +27,7 @@ var targetScheme string
 func main() {
 	flag.IntVar(&initialWatcherNum, "initialWatcherNum", 5, "最初に入室するクライアント数")
 	flag.IntVar(&watcherIncreaseInterval, "watcherIncreaseInterval", 5, "何秒ごとにクライアントを増やすか")
-	flag.IntVar(&timeout, "timeout", 30, "何秒でクライアントを増やし続けるのをやめてタイムアウトとするか")
+	flag.IntVar(&timeout, "timeout", 55, "何秒でクライアントを増やし続けるのをやめてタイムアウトとするか")
 	flag.StringVar(&listen, "listen", "0.0.0.0:10080", "listenするIPとport (例: 0.0.0.0:10080)")
 	flag.StringVar(&targetScheme, "targetScheme", "https", "targetのURLスキーム")
 	flag.Parse()
@@ -38,12 +38,12 @@ func main() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	targetHost := r.URL.Query().Get("target")
+	targetHost := r.URL.Query().Get("host")
 	room := r.URL.Query().Get("room")
 	roomID, err := strconv.Atoi(room)
 	if err != nil || targetHost == "" {
 		w.WriteHeader(400)
-		w.Write([]byte("引数が間違っています (例: /?target=127.0.0.1&room=1)"))
+		w.Write([]byte("引数が間違っています (例: /?host=127.0.0.1&room=1)"))
 	}
 	targetURL := targetScheme + "://" + targetHost
 
