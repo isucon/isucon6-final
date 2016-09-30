@@ -29,6 +29,13 @@ build:
             -e "s:@CONTAINER_NAME@:$WERCKER_GIT_COMMIT:g" \
             azure/azuredeploy.json > output/azuredeploy.json
     - script:
+        name: prepare index.html
+        code: |
+          sed \
+            -e "s:@AZURE_STORAGE_ACCOUNT@:$AZURE_STORAGE_ACCOUNT:g" \
+            -e "s:@CONTAINER_NAME@:$WERCKER_GIT_COMMIT:g" \
+            azure/index.html > output/index.html
+    - script:
         name: upload blob
         code: |
           az storage container create --public-access blob --name "$WERCKER_GIT_COMMIT"
@@ -36,3 +43,4 @@ build:
           az storage blob upload --file webapp.tar.gz --container-name "$WERCKER_GIT_COMMIT" --name webapp.tar.gz
           az storage blob upload --file ansible.tar.gz --container-name "$WERCKER_GIT_COMMIT" --name ansible.tar.gz
           az storage blob upload --file azuredeploy.json --container-name "$WERCKER_GIT_COMMIT" --name azuredeploy.json --content-type application/json
+          az storage blob upload --file index.html --container-name "$WERCKER_GIT_COMMIT" --name index.html --content-type text/html
