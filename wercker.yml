@@ -7,7 +7,7 @@ build:
           export DEBIAN_FRONTEND=noninteractive
           apt-get update
           apt-get install -y python-pip libffi-dev libssl-dev
-          pip install blobxfer
+          pip install azure-cli
           mkdir output
     - script:
         name: parepare webapp 
@@ -18,7 +18,7 @@ build:
         code: |
           sed -i \
             -e "s:@AZURE_STORAGE_ACCOUNT@:$AZURE_STORAGE_ACCOUNT:g" \
-            -e "s:@CONTAINER_NAME@:$CONTAINER_NAME:g" \
+            -e "s:@CONTAINER_NAME@:$WERCKER_GIT_COMMIT:g" \
             ansible/playbook/roles/app/tasks//main.yml
           tar zcf output/ansible.tar.gz ansible
     - script:
@@ -26,10 +26,21 @@ build:
         code: |
           sed \
             -e "s:@AZURE_STORAGE_ACCOUNT@:$AZURE_STORAGE_ACCOUNT:g" \
-            -e "s:@CONTAINER_NAME@:$CONTAINER_NAME:g" \
+            -e "s:@CONTAINER_NAME@:$WERCKER_GIT_COMMIT:g" \
             azure/azuredeploy.json > output/azuredeploy.json
+    - script:
+        name: prepare index.html
+        code: |
+          sed \
+            -e "s:@AZURE_STORAGE_ACCOUNT@:$AZURE_STORAGE_ACCOUNT:g" \
+            -e "s:@CONTAINER_NAME@:$WERCKER_GIT_COMMIT:g" \
+            azure/index.html > output/index.html
     - script:
         name: upload blob
         code: |
+          az storage container create --public-access blob --name "$WERCKER_GIT_COMMIT"
           cd output
-          blobxfer --storageaccountkey "$AZURE_STORAGE_KEY" --upload "$AZURE_STORAGE_ACCOUNT" "$CONTAINER_NAME" .
+          az storage blob upload --file webapp.tar.gz --container-name "$WERCKER_GIT_COMMIT" --name webapp.tar.gz
+          az storage blob upload --file ansible.tar.gz --container-name "$WERCKER_GIT_COMMIT" --name ansible.tar.gz
+          az storage blob upload --file azuredeploy.json --container-name "$WERCKER_GIT_COMMIT" --name azuredeploy.json --content-type application/json
+          az storage blob upload --file index.html --container-name "$WERCKER_GIT_COMMIT" --name index.html --content-type text/html
