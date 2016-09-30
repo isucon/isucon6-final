@@ -33,6 +33,6 @@ build:
         code: |
           az storage container create --public-access blob --name "$WERCKER_GIT_COMMIT"
           cd output
-          for file in * ; do
-              az storage blob upload --file $file --container-name "$WERCKER_GIT_COMMIT" --name $file
-          done
+          az storage blob upload --file webapp.tar.gz --container-name "$WERCKER_GIT_COMMIT" --name webapp.tar.gz
+          az storage blob upload --file ansible.tar.gz --container-name "$WERCKER_GIT_COMMIT" --name ansible.tar.gz
+          az storage blob upload --file azuredeploy.json --container-name "$WERCKER_GIT_COMMIT" --name azuredeploy.json --content-type application/json
