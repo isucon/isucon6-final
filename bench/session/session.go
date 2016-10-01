@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"net/http"
-	"net/http/cookiejar"
 	"net/url"
 	"os"
 	"time"
 
 	"github.com/catatsuy/isucon6-final/bench/fails"
+	"github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/catatsuy/isucon6-final/bench/http/cookiejar"
 )
 
 const DefaultTimeout = time.Duration(10) * time.Second

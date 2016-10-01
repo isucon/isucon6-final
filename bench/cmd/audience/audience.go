@@ -5,11 +5,11 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/catatsuy/isucon6-final/bench/audience"
+	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 var initialWatcherNum int
