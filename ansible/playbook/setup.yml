@@ -3,7 +3,9 @@
   gather_facts: False
   become: yes
   roles:
-    - { role: base, tags: [base, app] }
+    - { role: base, tags: [base, app, azure] }
     - { role: docker, tags: [ app ] }
-    - { role: user, tags: [ app ] }
-    - { role: app, tags: [ app ] }
+    - { role: user, tags: [app, azure] }
+    - { role: github, tags: [ app ] }
+    - { role: azure, tags: [ azure ] }
+    - { role: app, tags: [app, azure] }
