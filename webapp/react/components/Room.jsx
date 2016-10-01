@@ -118,7 +118,6 @@ class Room extends React.Component {
         const stroke = res.stroke;
         this.setState({
           strokes: this.state.strokes.concat([stroke]),
-          tmpStroke: null,
         });
       })
       .catch((err) => {
