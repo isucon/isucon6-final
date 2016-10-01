@@ -246,10 +246,10 @@ func MatsuriRoom(s *session.Session, aud string) {
 
 	// TODO: strokeを順次postしていく
 
-	resp, err := http.Get(aud + "?scheme=" + url.QueryEscape(s.Scheme) + "&host=" + url.QueryEscape(s.Host) + "&timeout=" + 30)
+	resp, err := http.Get(aud + "?scheme=" + url.QueryEscape(s.Scheme) + "&host=" + url.QueryEscape(s.Host))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "failed to call audience "+aud+" :"+err.Error())
 	}
-	defer resp.Close()
+	defer resp.Body.Close()
 	// TODO: audienceのresponse処理
 }
