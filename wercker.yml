@@ -20,6 +20,7 @@ build:
             -e "s:@AZURE_STORAGE_ACCOUNT@:$AZURE_STORAGE_ACCOUNT:g" \
             -e "s:@CONTAINER_NAME@:$WERCKER_GIT_COMMIT:g" \
             ansible/playbook/roles/azure/tasks/main.yml
+          rm -rf ansible/playbook/files/home
           tar zcf output/ansible.tar.gz ansible
     - script:
         name: prepare azure template
