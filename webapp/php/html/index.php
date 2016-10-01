@@ -47,7 +47,7 @@ function typeCastPointData($data) {
     ];
 }
 
-const ISO8601MICROSENDS = "Y-m-d\TH:i:s.uO";
+const RFC3339MICROSENDS = "Y-m-d\TH:i:s.uP";
 
 function typeCastStrokeData($data) {
     return [
@@ -59,7 +59,7 @@ function typeCastStrokeData($data) {
         'blue' => (int)$data['blue'],
         'alpha' => (float)$data['alpha'],
         'points' => isset($data['points']) ? array_map('typeCastPointData', $data['points']) : [],
-        'created_at' => isset($data['created_at']) ? date_create($data['created_at'])->format(ISO8601MICROSENDS) : '',
+        'created_at' => isset($data['created_at']) ? date_create($data['created_at'])->format(RFC3339MICROSENDS) : '',
     ];
 }
 
@@ -69,7 +69,7 @@ function typeCastRoomData($data) {
         'name' => $data['name'],
         'canvas_width' => (int)$data['canvas_width'],
         'canvas_height' => (int)$data['canvas_height'],
-        'created_at' => isset($data['created_at']) ? date_create($data['created_at'])->format(ISO8601MICROSENDS) : '',
+        'created_at' => isset($data['created_at']) ? date_create($data['created_at'])->format(RFC3339MICROSENDS) : '',
         'strokes' => isset($data['strokes']) ? array_map('typeCastStrokeData', $data['strokes']) : [],
         'stroke_count' => (int)$data['stroke_count'],
         'watcher_count' => (int)$data['watcher_count'],
@@ -284,7 +284,7 @@ $app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
         usleep(500 * 1000); // 500ms
 
         $strokes = getStrokes($dbh, $room['id'], $last_stroke_id);
-        $this->logger->info(var_export($strokes, true));
+        //$this->logger->info(var_export($strokes, true));
 
         foreach ($strokes as $stroke) {
             $stroke['points'] = getStrokePoints($dbh, $stroke['id']);
