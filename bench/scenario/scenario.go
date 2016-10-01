@@ -12,17 +12,21 @@ import (
 
 	"net/url"
 
+	"time"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/http"
 	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/session"
+	"github.com/catatsuy/isucon6-final/seed"
 )
 
 var (
-	IndexGetScore   int64 = 2
-	SVGGetScore     int64 = 1
-	RoomCreateScore int64 = 20
+	IndexGetScore     int64 = 2
+	SVGGetScore       int64 = 1
+	CreateRoomScore   int64 = 20
+	CreateStrokeScore int64 = 20
 )
 
 func makeDocument(r io.Reader) (*goquery.Document, error) {
@@ -227,23 +231,93 @@ func MatsuriRoom(s *session.Session, aud string) {
 		"x-csrf-token": token,
 	}
 
-	_ = s.Post("/api/rooms", postBody, headers, func(status int, body io.Reader) error {
+	var RoomID int64
+
+	err = s.Post("/api/rooms", postBody, headers, func(status int, body io.Reader) error {
 		if status != 200 {
 			return errors.New(fails.Add("GET /api/rooms, ステータスが200ではありません: " + strconv.Itoa(status)))
 		}
 
-		res := Response{}
+		var res Response
 		err := json.NewDecoder(body).Decode(&res)
-		if err != nil || res.Room == nil || res.Room.ID <= 0 {
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
 			return errors.New(fails.Add("GET /api/rooms, レスポンス内容が正しくありません"))
 		}
+		fmt.Println(res)
+		if res.Room == nil || res.Room.ID <= 0 {
+			return errors.New(fails.Add("GET /api/rooms, レスポンス内容が正しくありません"))
+		}
+		RoomID = res.Room.ID
 
-		score.Increment(RoomCreateScore)
+		score.Increment(CreateRoomScore)
 
 		return nil
 	})
 
+	if err != nil {
+		return
+	}
+
 	// TODO: strokeを順次postしていく
+	seedStroke := seed.GetStroke("main001")
+
+	type StrokeTime struct {
+		ID           int64
+		PostTime     time.Time
+		ResponseTime time.Time
+	}
+	strokeTimes := make([]StrokeTime, 0)
+
+	go func() {
+		for _, str := range seedStroke {
+			// TODO: 指定時間以上たったら終わる
+
+			postBody, _ := json.Marshal(struct {
+				RoomID int64 `json:"room_id"`
+				seed.Stroke
+			}{
+				RoomID: RoomID,
+				Stroke: str,
+			})
+
+			postTime := time.Now()
+
+			err := s.Post("/api/strokes/rooms/"+strconv.FormatInt(RoomID, 10), postBody, headers, func(status int, body io.Reader) error {
+				responseTime := time.Now()
+
+				if status != 200 {
+					return errors.New(fails.Add("POST /api/strokes/rooms/" + strconv.FormatInt(RoomID, 10) + ", ステータスが200ではありません: " + strconv.Itoa(status)))
+				}
+
+				var res Response
+				err := json.NewDecoder(body).Decode(&res)
+				if err != nil || res.Room == nil || res.Room.ID <= 0 {
+					return errors.New(fails.Add("GET /api/strokes/rooms/" + strconv.FormatInt(RoomID, 10) + ", レスポンス内容が正しくありません"))
+				}
+
+				timeTaken := responseTime.Sub(postTime).Seconds()
+				if timeTaken < 1 {
+					score.Increment(CreateStrokeScore * 2)
+				} else if timeTaken < 3 {
+					score.Increment(CreateStrokeScore)
+				}
+
+				strokeTimes = append(strokeTimes, StrokeTime{
+					ID:           res.Stroke.ID,
+					PostTime:     postTime,
+					ResponseTime: responseTime,
+				})
+
+				return nil
+			})
+			if err != nil {
+				break
+			}
+		}
+	}()
+
+	fmt.Println(strokeTimes)
 
 	resp, err := http.Get(aud + "?scheme=" + url.QueryEscape(s.Scheme) + "&host=" + url.QueryEscape(s.Host))
 	if err != nil {
