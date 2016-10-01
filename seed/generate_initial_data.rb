@@ -18,20 +18,29 @@ stroke_sql = []
 point_sql = []
 
 (1..1000).each do |room_id|
-  room_sql << "(#{room_id}, 'ひたすら椅子を描くスレ【#{room_id}】', '2016-01-01 00:00:00' + INTERVAL #{room_id} SECOND, 1028, 768)"
+  room_sql << "(#{room_id}, 'ひたすら椅子を描くスレ【#{room_id}】', '2016-01-01 00:00:00.#{sprintf('%06d', rand(1000000))}' + INTERVAL #{room_id} SECOND, 1028, 768)"
 
-  strokes.each do|stroke|
+  strokes.each do |stroke|
     stroke_id += 1
-    stroke_sql << "(#{stroke_id}, #{room_id}, '2016-01-01 00:00:00' + INTERVAL #{stroke_id} SECOND, #{stroke[:width]}, #{stroke[:red]}, #{stroke[:green]}, #{stroke[:blue]}, #{stroke[:alpha]})"
 
-    stroke[:points].each do |point|
+    s = {
+      width: rand(40) + 10,
+      red: rand(100) + 100,
+      green: rand(100) + 100,
+      blue: rand(100) + 100,
+      alpha: (rand(5) + 5) / 10.0,
+    }
+
+    stroke_sql << "(#{stroke_id}, #{room_id}, '2016-01-01 00:00:00.#{sprintf('%06d', rand(1000000))}' + INTERVAL #{stroke_id} SECOND, #{s[:width]}, #{s[:red]}, #{s[:green]}, #{s[:blue]}, #{s[:alpha]})"
+
+    stroke[:points].each do |p|
       point_id += 1
-      point_sql << "(#{point_id}, #{stroke_id}, #{point[:x]}, #{point[:y]})"
+      point_sql << "(#{point_id}, #{stroke_id}, #{p[:x] + rand(3) - 1.5}, #{p[:y] + rand(3) - 1.5})"
     end
   end
 end
 
-puts "SET GLOBAL max_allowed_packet=1073741824;"
+puts "SET GLOBAL max_allowed_packet=10737418240;"
 puts "BEGIN;"
 
 puts "INSERT INTO `rooms` (`id`, `name`, `created_at`, `canvas_width`, `canvas_height`) VALUES"
