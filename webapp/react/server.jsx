@@ -111,7 +111,7 @@ function createHtml(appHtml, scriptTag, csrfToken) {
   return `<!DOCTYPE html>
 <html data-csrf-token="${escape(csrfToken)}">
   <head>
-    <title>ISUChannel</title>
+    <title>ISUketch</title>
     <link rel="stylesheet" href="/css/rc-color-picker.css">
     <link rel="stylesheet" href="/css/sanitize.css">
     <script src="/bundle.js" async></script>

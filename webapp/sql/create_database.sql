@@ -1,5 +1,5 @@
-DROP DATABASE IF EXISTS `isuchannel`;
-CREATE DATABASE `isuchannel`;
+DROP DATABASE IF EXISTS `isuketch`;
+CREATE DATABASE `isuketch`;
 
-GRANT ALL PRIVILEGES ON `isuchannel`.* TO 'isucon'@'localhost' IDENTIFIED BY 'isucon';
-GRANT ALL PRIVILEGES ON `isuchannel`.* TO 'isucon'@'%' IDENTIFIED BY 'isucon';
+GRANT ALL PRIVILEGES ON `isuketch`.* TO 'isucon'@'localhost' IDENTIFIED BY 'isucon';
+GRANT ALL PRIVILEGES ON `isuketch`.* TO 'isucon'@'%' IDENTIFIED BY 'isucon';

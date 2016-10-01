@@ -51,4 +51,4 @@
   become_user: isucon
   with_items:
     - docker exec webapp_mysql_1 sh -c 'MYSQL_PWD=password mysql -uroot < /sql/create_database.sql'
-    - docker exec webapp_mysql_1 sh -c 'MYSQL_PWD=password mysql -uroot -Disuchannel < /sql/schema.sql'
+    - docker exec webapp_mysql_1 sh -c 'MYSQL_PWD=password mysql -uroot -Disuketch < /sql/schema.sql'

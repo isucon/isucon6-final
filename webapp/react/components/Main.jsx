@@ -12,7 +12,7 @@ function Main({ children }) {
         <AppBar
           title={
             <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>
-              ISU-Channel 〜描ける巨大匿名掲示板サイト〜
+              ISUketch 〜描ける巨大匿名掲示板サイト〜
             </Link>
           }
           showMenuIconButton={false}

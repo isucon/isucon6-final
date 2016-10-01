@@ -627,7 +627,7 @@ func main() {
 		user = "root"
 	}
 	password := os.Getenv("MYSQL_PASS")
-	dbname := "isuchannel"
+	dbname := "isuketch"
 
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=true&loc=Local",
