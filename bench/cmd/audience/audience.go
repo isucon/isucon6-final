@@ -8,12 +8,9 @@ import (
 	"net/http"
 	"strconv"
 	"time"
-)
 
-type Response struct {
-	Errors     []string    `json:"errors"`
-	StrokeLogs []StrokeLog `json:"stroke_logs"`
-}
+	"github.com/catatsuy/isucon6-final/bench/audience"
+)
 
 var initialWatcherNum int
 
@@ -46,14 +43,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	baseURL := scheme + "://" + host
-	watchers := make([]*RoomWatcher, 0)
+	watchers := make([]*audience.RoomWatcher, 0)
 
 	fmt.Println("start")
 
 	// まず最初にinitialWatcherNum人が入室する
 	for i := 0; i < initialWatcherNum; i++ {
 		fmt.Println("watcher", len(watchers)+1)
-		watchers = append(watchers, NewRoomWatcher(baseURL, roomID))
+		watchers = append(watchers, audience.NewRoomWatcher(baseURL, roomID))
 	}
 
 	numToIncreaseWatcher := (timeout - watcherIncreaseInterval) / watcherIncreaseInterval
@@ -64,7 +61,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		for _, w := range watchers {
 			if len(w.EndCh) == 0 {
 				fmt.Println("watcher", len(watchers)+1)
-				watchers = append(watchers, NewRoomWatcher(baseURL, roomID))
+				watchers = append(watchers, audience.NewRoomWatcher(baseURL, roomID))
 			}
 		}
 	}
@@ -85,9 +82,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println("done")
 
-	res := &Response{
+	res := &audience.Response{
 		Errors:     make([]string, 0),
-		StrokeLogs: make([]StrokeLog, 0),
+		StrokeLogs: make([]audience.StrokeLog, 0),
 	}
 	for _, w := range watchers {
 		res.Errors = append(res.Errors, w.Errors...)

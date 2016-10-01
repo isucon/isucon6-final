@@ -1,4 +1,4 @@
-package main
+package audience
 
 import (
 	"fmt"
@@ -10,13 +10,6 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/session"
 	"github.com/catatsuy/isucon6-final/bench/sse"
 )
-
-type StrokeLog struct {
-	Time       time.Time `json:"time"`
-	RoomID     int       `json:"room_id"`
-	StrokeID   int64     `json:"stroke_id"`
-	StrokeTime time.Time `json:"stroke_time"`
-}
 
 type RoomWatcher struct {
 	EndCh  chan struct{}
