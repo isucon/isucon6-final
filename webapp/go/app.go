@@ -178,7 +178,7 @@ func outputError(w http.ResponseWriter, err error) {
 
 func postAPICsrfToken(w http.ResponseWriter, r *http.Request) {
 	query := "INSERT INTO `tokens` (`csrf_token`) VALUES"
-	query += " (SHA2(RAND(), 256))"
+	query += " (SHA2(CONCAT(RAND(), UUID_SHORT()), 256))"
 
 	result, err := dbx.Exec(query)
 	if err != nil {
