@@ -8,6 +8,7 @@ WORKDIR /react
 
 # キャッシュ効率を上げるためにまずpackage.jsonだけcopyしてnpm installする
 COPY ./package.json /react/package.json
+COPY ./npm-shrinkwrap.json /react/npm-shrinkwrap.json
 RUN npm install
 
 COPY . /react
