@@ -14,11 +14,12 @@ import (
 	"fmt"
 	"internal/testenv"
 	"io"
-	"github.com/catatsuy/isucon6-final/bench/http"
 	"net/http/httptest"
 	"os"
 	"testing"
 	"time"
+
+	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 // This test is a CGI host (testing host.go) that runs its own binary

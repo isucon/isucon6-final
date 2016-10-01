@@ -11,12 +11,13 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"github.com/catatsuy/isucon6-final/bench/http/internal"
 	"net/textproto"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/catatsuy/isucon6-final/bench/http/internal"
 
 	"golang.org/x/net/lex/httplex"
 )

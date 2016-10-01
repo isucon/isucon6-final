@@ -12,13 +12,14 @@ import (
 	"io"
 	"io/ioutil"
 	"mime/multipart"
-	. "github.com/catatsuy/isucon6-final/bench/http"
 	"net/url"
 	"os"
 	"reflect"
 	"regexp"
 	"strings"
 	"testing"
+
+	. "github.com/catatsuy/isucon6-final/bench/http"
 )
 
 func TestQuery(t *testing.T) {

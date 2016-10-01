@@ -6,12 +6,13 @@ package cookiejar
 
 import (
 	"fmt"
-	"github.com/catatsuy/isucon6-final/bench/http"
 	"net/url"
 	"sort"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 // tNow is the synthetic current time used as now during testing.

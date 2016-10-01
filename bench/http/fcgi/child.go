@@ -12,12 +12,13 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
-	"github.com/catatsuy/isucon6-final/bench/http"
 	"net/http/cgi"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 // request holds the state for an in-progress request. As soon as it's complete,

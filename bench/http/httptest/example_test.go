@@ -8,8 +8,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"github.com/catatsuy/isucon6-final/bench/http"
 	"net/http/httptest"
+
+	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 func ExampleResponseRecorder() {

@@ -53,7 +53,6 @@ import (
 	"html/template"
 	"io"
 	"log"
-	"github.com/catatsuy/isucon6-final/bench/http"
 	"os"
 	"runtime"
 	"runtime/pprof"
@@ -61,6 +60,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 func init() {

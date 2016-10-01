@@ -6,13 +6,14 @@ package http_test
 
 import (
 	"fmt"
-	"github.com/catatsuy/isucon6-final/bench/http"
 	"os"
 	"runtime"
 	"sort"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 func TestMain(m *testing.M) {
