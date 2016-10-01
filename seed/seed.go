@@ -1,5 +1,5 @@
 package seed
-
+// ベンチマーカーから参照される
 import "encoding/json"
 
 type Stroke struct {
