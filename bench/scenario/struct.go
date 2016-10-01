@@ -5,7 +5,7 @@ import "time"
 type Response struct {
 	Error  string  `json:"error,omitempty"`
 	Room   *Room   `json:"room,omitempty"`
-	Rooms  *[]Room `json:"rooms,omitempty"`
+	Rooms  []Room  `json:"rooms,omitempty"`
 	Stroke *Stroke `json:"stroke,omitempty"`
 	Token  string  `json:"token,omitempty"`
 }

@@ -14,13 +14,16 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
-var BenchmarkTimeout = 30 * time.Second
+var BenchmarkTimeout int
+var Audience1 string
 
 func main() {
 
 	host := ""
 
 	flag.StringVar(&host, "host", "", "ベンチマーク対象のIPアドレス")
+	flag.StringVar(&Audience1, "audience1", "", "オーディエンスAPIのURLその1 (http://xxx.xxx.xxx.xxx/)")
+	flag.IntVar(&BenchmarkTimeout, "timeout", 60, "ソフトタイムアウト")
 
 	flag.Parse()
 
@@ -47,8 +50,9 @@ func initialCheck(baseURL string) {
 func benchmark(baseURL string) {
 	loadIndexPageCh := makeChan(2)
 	checkCSRFTokenRefreshedCh := makeChan(1)
+	matsuriRoomCh := makeChan(1)
 
-	timeoutCh := time.After(BenchmarkTimeout)
+	timeoutCh := time.After(time.Duration(BenchmarkTimeout) * time.Second)
 
 L:
 	for {
@@ -62,6 +66,11 @@ L:
 			go func() {
 				scenario.CheckCSRFTokenRefreshed(session.New(baseURL))
 				checkCSRFTokenRefreshedCh <- struct{}{}
+			}()
+		case <-matsuriRoomCh:
+			go func() {
+				scenario.MatsuriRoom(session.New(baseURL), Audience1)
+				matsuriRoomCh <- struct{}{}
 			}()
 		case <-timeoutCh:
 			break L

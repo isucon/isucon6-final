@@ -5,6 +5,15 @@ import (
 	"io"
 	"strconv"
 
+	"encoding/json"
+
+	"net/http"
+
+	"fmt"
+	"os"
+
+	"net/url"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/score"
@@ -12,8 +21,9 @@ import (
 )
 
 var (
-	IndexGetScore int64 = 2
-	SVGGetScore   int64 = 1
+	IndexGetScore   int64 = 2
+	SVGGetScore     int64 = 1
+	RoomCreateScore int64 = 20
 )
 
 func makeDocument(r io.Reader) (*goquery.Document, error) {
@@ -174,4 +184,72 @@ func CheckCSRFTokenRefreshed(s *session.Session) {
 
 		return nil
 	})
+}
+
+// 一人がroomを作る→大勢がそのroomをwatchする
+func MatsuriRoom(s *session.Session, aud string) {
+	var token string
+
+	err := s.Get("/", func(status int, body io.Reader) error {
+		if status != 200 {
+			return errors.New(fails.Add("GET /, ステータスが200ではありません: " + strconv.Itoa(status)))
+		}
+		doc, err := makeDocument(body)
+		if err != nil {
+			return err
+		}
+
+		token = extractCsrfToken(doc)
+
+		if token == "" {
+			return errors.New(fails.Add("GET /, csrf_tokenが取得できませんでした"))
+		}
+
+		score.Increment(IndexGetScore)
+
+		return nil
+	})
+	if err != nil {
+		return
+	}
+
+	postBody, _ := json.Marshal(struct {
+		Name         string `json:"name"`
+		CanvasWidth  int    `json:"canvas_width"`
+		CanvasHeight int    `json:"canvas_height"`
+	}{
+		Name:         "ひたすら椅子を描く部屋",
+		CanvasWidth:  1024,
+		CanvasHeight: 768,
+	})
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+		"x-csrf-token": token,
+	}
+
+	_ = s.Post("/api/rooms", postBody, headers, func(status int, body io.Reader) error {
+		if status != 200 {
+			return errors.New(fails.Add("GET /api/rooms, ステータスが200ではありません: " + strconv.Itoa(status)))
+		}
+
+		res := Response{}
+		err := json.NewDecoder(body).Decode(&res)
+		if err != nil || res.Room == nil || res.Room.ID <= 0 {
+			return errors.New(fails.Add("GET /api/rooms, レスポンス内容が正しくありません"))
+		}
+
+		score.Increment(RoomCreateScore)
+
+		return nil
+	})
+
+	// TODO: strokeを順次postしていく
+
+	resp, err := http.Get(aud + "?scheme=" + url.QueryEscape(s.Scheme) + "&host=" + url.QueryEscape(s.Host) + "&timeout=" + 30)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "failed to call audience "+aud+" :"+err.Error())
+	}
+	defer resp.Close()
+	// TODO: audienceのresponse処理
 }

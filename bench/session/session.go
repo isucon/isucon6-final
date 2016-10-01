@@ -60,14 +60,14 @@ func New(baseURL string) *Session {
 	return s
 }
 
-func (s *Session) NewRequest(method, path string, body *bytes.Buffer) (*http.Request, error) {
+func (s *Session) NewRequest(method, path string, body io.Reader) (*http.Request, error) {
 	u, err := url.Parse(path)
 	if err != nil {
 		return nil, err
 	}
 	u.Scheme = s.Scheme
 	u.Host = s.Host
-	return http.NewRequest(method, u.String(), nil)
+	return http.NewRequest(method, u.String(), body)
 }
 
 func (s *Session) Get(path string, checkFunc CheckFunc) error {
@@ -101,9 +101,9 @@ func (s *Session) Get(path string, checkFunc CheckFunc) error {
 	return nil
 }
 
-func (s *Session) Post(path string, body *bytes.Buffer, checkFunc CheckFunc) error { // TODO: bodyはstringでもいいかも
+func (s *Session) Post(path string, body []byte, headers map[string]string, checkFunc CheckFunc) error {
 
-	req, err := s.NewRequest("POST", path, body)
+	req, err := s.NewRequest("POST", path, bytes.NewBuffer(body))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "POST "+path+", error:"+err.Error())
 		fails.Add("POST " + path + ", 予期せぬ失敗です (主催者に連絡してください)")
@@ -111,6 +111,9 @@ func (s *Session) Post(path string, body *bytes.Buffer, checkFunc CheckFunc) err
 	}
 
 	req.Header.Set("User-Agent", s.UserAgent)
+	for key, val := range headers {
+		req.Header.Set(key, val)
+	}
 
 	res, err := s.Client.Do(req)
 
