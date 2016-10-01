@@ -48,7 +48,7 @@ gulp.task('server', () => {
 gulp.task('browser', () => {
   return gulp.src(['browser.js'])
     .pipe(webpack(webpackConfig))
-    .pipe(gulp.dest('build'));
+    .pipe(gulp.dest('public'));
 });
 
 process.on('exit', () => {
