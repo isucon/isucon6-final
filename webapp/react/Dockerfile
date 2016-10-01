@@ -15,4 +15,4 @@ COPY . /react
 
 RUN NODE_ENV=production npm run build
 
-CMD ["npm", "run", "start"]
+CMD ["node", "build/server.js"]
