@@ -60,7 +60,7 @@ room_watcher_sql = []
   room_watcher_sql.push("(#{room_id}, #{token_id}, #{date_at}, #{date_at})")
 end
 
-puts "SET GLOBAL max_allowed_packet=10737418240;"
+puts "SET GLOBAL max_allowed_packet=107374182400;"
 puts "BEGIN;"
 
 puts "INSERT INTO `rooms` (`id`, `name`, `created_at`, `canvas_width`, `canvas_height`) VALUES"
