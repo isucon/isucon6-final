@@ -11,7 +11,7 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/sse"
 )
 
-type Log struct {
+type StrokeLog struct {
 	Time       time.Time `json:"time"`
 	RoomID     int       `json:"room_id"`
 	StrokeID   int64     `json:"stroke_id"`
@@ -20,7 +20,7 @@ type Log struct {
 
 type RoomWatcher struct {
 	EndCh  chan struct{}
-	Logs   []Log
+	Logs   []StrokeLog
 	Errors []string
 
 	es     *sse.EventSource
@@ -30,7 +30,7 @@ type RoomWatcher struct {
 func NewRoomWatcher(target string, roomID int) *RoomWatcher {
 	w := &RoomWatcher{
 		EndCh:  make(chan struct{}, 1),
-		Logs:   make([]Log, 0),
+		Logs:   make([]StrokeLog, 0),
 		Errors: make([]string, 0),
 		isLeft: false,
 	}
@@ -80,7 +80,7 @@ func (w *RoomWatcher) watch(target string, roomID int) {
 			fmt.Println("response too late")
 			w.es.Close()
 		}
-		w.Logs = append(w.Logs, Log{
+		w.Logs = append(w.Logs, StrokeLog{
 			Time:       now,
 			RoomID:     roomID,
 			StrokeID:   stroke.ID,
