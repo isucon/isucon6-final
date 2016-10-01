@@ -51,7 +51,7 @@ func (w *RoomWatcher) watch(target string, roomID int) {
 	}
 
 	startTime := time.Now()
-	path = "/api/strokes" + path
+	path = "/api/stream" + path
 
 	if w.isLeft {
 		w.EndCh <- struct{}{}

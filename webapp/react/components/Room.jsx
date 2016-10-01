@@ -44,7 +44,7 @@ class Room extends React.Component {
 
   componentDidMount() {
     const token = this.props.csrfToken;
-    this.eventSource = new EventSource(`/api/strokes/rooms/${this.props.id}?csrf_token=${token}`);
+    this.eventSource = new EventSource(`/api/stream/rooms/${this.props.id}?csrf_token=${token}`);
     this.eventSource.addEventListener('stroke', (ev) => {
       const strokes = this.state.strokes;
       const stroke = JSON.parse(ev.data);

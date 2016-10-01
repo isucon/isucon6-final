@@ -370,7 +370,7 @@ func getAPIRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 	w.Write(b)
 }
 
-func getAPIStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func getAPIStreamRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 
 	idStr := pat.Param(ctx, "id")
@@ -649,7 +649,7 @@ func main() {
 	mux.HandleFunc(pat.Get("/api/rooms"), getAPIRooms)
 	mux.HandleFunc(pat.Post("/api/rooms"), postAPIRooms)
 	mux.HandleFuncC(pat.Get("/api/rooms/:id"), getAPIRoomsID)
-	mux.HandleFuncC(pat.Get("/api/strokes/rooms/:id"), getAPIStrokesRoomsID)
+	mux.HandleFuncC(pat.Get("/api/stream/rooms/:id"), getAPIStreamRoomsID)
 	mux.HandleFuncC(pat.Post("/api/strokes/rooms/:id"), postAPIStrokesRoomsID)
 	mux.HandleFunc(pat.Get("/api/initialize"), getAPIInitialize)
 

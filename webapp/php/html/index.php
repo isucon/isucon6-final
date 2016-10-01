@@ -238,7 +238,7 @@ $app->get('/api/rooms/[{id}]', function ($request, $response, $args) {
     return $response->withJson(['room' => typeCastRoomData($room)]);
 });
 
-$app->get('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
+$app->get('/api/stream/rooms/[{id}]', function ($request, $response, $args) {
     header('Content-Type: text/event-stream');
 
     $dbh = getPDO();
