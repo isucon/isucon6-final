@@ -5,7 +5,6 @@
     dest=/tmp/webapp.tar.gz
     remote_src=yes
 - name: unarchive webapp directory
-  become_user: isucon
   unarchive:
     src=/tmp/webapp.tar.gz
     dest=/home/isucon/
