@@ -39,7 +39,8 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	roomID, err := strconv.Atoi(room)
 	if err != nil || scheme == "" || host == "" {
 		w.WriteHeader(400)
-		w.Write([]byte("引数が間違っています (例: /?baseURL=https%3A%2F%2F127.0.0.1&room=1)"))
+		w.Write([]byte("引数が間違っています (例: /?scheme=https&host=127.0.0.1&room=1)"))
+		return
 	}
 
 	baseURL := scheme + "://" + host
