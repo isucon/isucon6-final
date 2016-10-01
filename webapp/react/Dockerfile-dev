@@ -6,7 +6,13 @@ RUN apk update \
 RUN mkdir -p /react
 WORKDIR /react
 
-RUN npm install -g node-dev
+# キャッシュ効率を上げるためにまずpackage.jsonだけcopyしてnpm installする
+COPY ./package.json /react/package.json
+COPY ./npm-shrinkwrap.json /react/npm-shrinkwrap.json
+RUN npm install
 
-# /react/build ディレクトリは外側のディレクトリをマウントする
-ENTRYPOINT ["node-dev", "/react/build/server.js"]
+COPY ./.babelrc /react/.babelrc
+
+COPY ./gulpfile.babel.js /react/gulpfile.babel.js
+
+CMD ["npm", "run", "dev"]
