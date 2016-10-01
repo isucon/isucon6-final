@@ -6,7 +6,7 @@ package http_test
 
 import (
 	"fmt"
-	"net/http"
+	"github.com/catatsuy/isucon6-final/bench/http"
 	"os"
 	"runtime"
 	"sort"

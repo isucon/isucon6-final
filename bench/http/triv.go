@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
+	"github.com/catatsuy/isucon6-final/bench/http"
 	"os"
 	"os/exec"
 	"strconv"

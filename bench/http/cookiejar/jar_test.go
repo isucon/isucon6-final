@@ -6,7 +6,7 @@ package cookiejar
 
 import (
 	"fmt"
-	"net/http"
+	"github.com/catatsuy/isucon6-final/bench/http"
 	"net/url"
 	"sort"
 	"strings"

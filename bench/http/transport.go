@@ -27,7 +27,7 @@ import (
 	"sync"
 	"time"
 
-	"golang_org/x/net/lex/httplex"
+	"golang.org/x/net/lex/httplex"
 )
 
 // DefaultTransport is the default implementation of Transport and is

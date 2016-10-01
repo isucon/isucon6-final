@@ -15,7 +15,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
-	. "net/http"
+	. "github.com/catatsuy/isucon6-final/bench/http"
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"

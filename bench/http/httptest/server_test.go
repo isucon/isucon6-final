@@ -8,7 +8,7 @@ import (
 	"bufio"
 	"io/ioutil"
 	"net"
-	"net/http"
+	"github.com/catatsuy/isucon6-final/bench/http"
 	"testing"
 )
 

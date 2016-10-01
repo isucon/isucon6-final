@@ -7,7 +7,7 @@ package httptest
 import (
 	"bytes"
 	"io/ioutil"
-	"net/http"
+	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 // ResponseRecorder is an implementation of http.ResponseWriter that

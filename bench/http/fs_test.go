@@ -14,7 +14,7 @@ import (
 	"mime"
 	"mime/multipart"
 	"net"
-	. "net/http"
+	. "github.com/catatsuy/isucon6-final/bench/http"
 	"net/http/httptest"
 	"net/url"
 	"os"

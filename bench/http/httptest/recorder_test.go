@@ -7,7 +7,7 @@ package httptest
 import (
 	"fmt"
 	"io"
-	"net/http"
+	"github.com/catatsuy/isucon6-final/bench/http"
 	"testing"
 )
 

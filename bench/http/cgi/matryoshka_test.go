@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"internal/testenv"
 	"io"
-	"net/http"
+	"github.com/catatsuy/isucon6-final/bench/http"
 	"net/http/httptest"
 	"os"
 	"testing"
