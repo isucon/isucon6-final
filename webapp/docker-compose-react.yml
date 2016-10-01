@@ -29,3 +29,5 @@ services:
       NODE_ENV: production
       API: http://api:80
       PORT: 443
+    ports:
+      - "443:443"

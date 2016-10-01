@@ -31,5 +31,3 @@ services:
       - api
     links:
       - api
-    ports:
-      - "443:443"

@@ -8,7 +8,7 @@
     "dev": "./node_modules/.bin/gulp watch",
     "test": "echo \"Error: no test specified\" && exit 1",
     "webpack": "./node_modules/.bin/webpack",
-    "build": "mkdir -p build/public && cp package.json build && npm install --production --prefix build && rm build/package.json && babel -d build *.jsx components/*.jsx util/*.jsx && webpack && cp -r public/* build/public/"
+    "build": "./node_modules/.bin/gulp default"
   },
   "private": true,
   "dependencies": {
