@@ -50,7 +50,8 @@ func initialCheck(baseURL string) {
 func benchmark(baseURL string) {
 	loadIndexPageCh := makeChan(2)
 	checkCSRFTokenRefreshedCh := makeChan(1)
-	matsuriRoomCh := makeChan(1)
+	matsuriCh := makeChan(1)
+	matsuriEndCh := make(chan struct{})
 
 	timeoutCh := time.After(time.Duration(BenchmarkTimeout) * time.Second)
 
@@ -67,15 +68,17 @@ L:
 				scenario.CheckCSRFTokenRefreshed(session.New(baseURL))
 				checkCSRFTokenRefreshedCh <- struct{}{}
 			}()
-		case <-matsuriRoomCh:
+		case <-matsuriCh:
 			go func() {
 				scenario.Matsuri(session.New(baseURL), Audience1)
 				//matsuriRoomCh <- struct{}{} // Never again.
+				matsuriEndCh <- struct{}{}
 			}()
 		case <-timeoutCh:
 			break L
 		}
 	}
+	<-matsuriEndCh
 }
 
 func output() {
