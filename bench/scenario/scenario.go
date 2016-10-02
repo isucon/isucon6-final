@@ -289,8 +289,8 @@ func MatsuriRoom(s *session.Session, aud string) {
 				}
 
 				var res Response
-				err := json.NewDecoder(body).Decode(&res)
-				if err != nil || res.Room == nil || res.Room.ID <= 0 {
+				err = json.NewDecoder(body).Decode(&res)
+				if err != nil || res.Stroke == nil || res.Stroke.ID <= 0 {
 					return errors.New(fails.Add("POST /api/strokes/rooms/" + strconv.FormatInt(RoomID, 10) + ", レスポンス内容が正しくありません"))
 				}
 
