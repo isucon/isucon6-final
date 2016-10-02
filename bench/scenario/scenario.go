@@ -311,7 +311,12 @@ func MatsuriRoom(s *session.Session, aud string) {
 		end <- struct{}{}
 	}()
 
-	resp, err := http.Get(aud + "?scheme=" + url.QueryEscape(s.Scheme) + "&host=" + url.QueryEscape(s.Host) + "&room=" + strconv.FormatInt(RoomID, 10))
+	v := url.Values{}
+	v.Set("scheme", s.Scheme)
+	v.Set("host", s.Host)
+	v.Set("room", strconv.FormatInt(RoomID, 10))
+
+	resp, err := http.Get(aud + "?" + v.Encode())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "failed to call audience "+aud+" :"+err.Error())
 	}
