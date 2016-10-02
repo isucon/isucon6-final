@@ -10,6 +10,7 @@ import (
 
 	"github.com/catatsuy/isucon6-final/bench/audience"
 	"github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/catatsuy/isucon6-final/bench/scenario"
 )
 
 var initialWatcherNum int
@@ -36,7 +37,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	scheme := r.URL.Query().Get("scheme")
 	host := r.URL.Query().Get("host")
 	room := r.URL.Query().Get("room")
-	roomID, err := strconv.Atoi(room)
+	roomID, err := strconv.ParseInt(room, 10, 64)
 	if err != nil || scheme == "" || host == "" {
 		w.WriteHeader(400)
 		w.Write([]byte("引数が間違っています (例: /?scheme=https&host=127.0.0.1&room=1)"))
@@ -83,9 +84,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println("done")
 
-	res := &audience.Response{
+	res := &scenario.AudienceResponse{
 		Errors:     make([]string, 0),
-		StrokeLogs: make([]audience.StrokeLog, 0),
+		StrokeLogs: make([]scenario.StrokeLog, 0),
 	}
 	for _, w := range watchers {
 		res.Errors = append(res.Errors, w.Errors...)

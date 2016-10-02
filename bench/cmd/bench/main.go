@@ -59,18 +59,18 @@ L:
 		select {
 		case <-loadIndexPageCh:
 			go func() {
-				scenario.LoadIndexPage(session.New(baseURL))
+				//scenario.LoadIndexPage(session.New(baseURL))
 				loadIndexPageCh <- struct{}{}
 			}()
 		case <-checkCSRFTokenRefreshedCh:
 			go func() {
-				scenario.CheckCSRFTokenRefreshed(session.New(baseURL))
+				//scenario.CheckCSRFTokenRefreshed(session.New(baseURL))
 				checkCSRFTokenRefreshedCh <- struct{}{}
 			}()
 		case <-matsuriRoomCh:
 			go func() {
 				scenario.MatsuriRoom(session.New(baseURL), Audience1)
-				matsuriRoomCh <- struct{}{}
+				//matsuriRoomCh <- struct{}{} // Never again.
 			}()
 		case <-timeoutCh:
 			break L

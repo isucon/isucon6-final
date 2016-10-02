@@ -47,7 +47,10 @@ function typeCastPointData($data) {
     ];
 }
 
-const RFC3339MICROSENDS = "Y-m-d\TH:i:s.uP";
+function toRFC3339Micro($date) {
+    // RFC3339では+00:00のときはZにするという仕様だが、PHPの"P"は準拠していないため
+    return str_replace('+00:00', 'Z', date_create($data['created_at'])->format("Y-m-d\TH:i:s.uP"));
+}
 
 function typeCastStrokeData($data) {
     return [
@@ -59,7 +62,7 @@ function typeCastStrokeData($data) {
         'blue' => (int)$data['blue'],
         'alpha' => (float)$data['alpha'],
         'points' => isset($data['points']) ? array_map('typeCastPointData', $data['points']) : [],
-        'created_at' => isset($data['created_at']) ? date_create($data['created_at'])->format(RFC3339MICROSENDS) : '',
+        'created_at' => isset($data['created_at']) ? toRFC3339Micro($data['created_at']) : '',
     ];
 }
 
@@ -69,7 +72,7 @@ function typeCastRoomData($data) {
         'name' => $data['name'],
         'canvas_width' => (int)$data['canvas_width'],
         'canvas_height' => (int)$data['canvas_height'],
-        'created_at' => isset($data['created_at']) ? date_create($data['created_at'])->format(RFC3339MICROSENDS) : '',
+        'created_at' => isset($data['created_at']) ? toRFC3339Micro($data['created_at']) : '',
         'strokes' => isset($data['strokes']) ? array_map('typeCastStrokeData', $data['strokes']) : [],
         'stroke_count' => (int)$data['stroke_count'],
         'watcher_count' => (int)$data['watcher_count'],

@@ -13,17 +13,17 @@ import (
 
 type RoomWatcher struct {
 	EndCh  chan struct{}
-	Logs   []StrokeLog
+	Logs   []scenario.StrokeLog
 	Errors []string
 
 	es     *sse.EventSource
 	isLeft bool
 }
 
-func NewRoomWatcher(target string, roomID int) *RoomWatcher {
+func NewRoomWatcher(target string, roomID int64) *RoomWatcher {
 	w := &RoomWatcher{
 		EndCh:  make(chan struct{}, 1),
-		Logs:   make([]StrokeLog, 0),
+		Logs:   make([]scenario.StrokeLog, 0),
 		Errors: make([]string, 0),
 		isLeft: false,
 	}
@@ -36,7 +36,7 @@ func NewRoomWatcher(target string, roomID int) *RoomWatcher {
 // 描いたstrokeがこの時間以上経ってから届いたら、ユーザーがストレスに感じてタブを閉じる、という設定にした。
 const thresholdResponseTime = 5 * time.Second
 
-func (w *RoomWatcher) watch(target string, roomID int) {
+func (w *RoomWatcher) watch(target string, roomID int64) {
 
 	// TODO:用途がだいぶ特殊なので普通のベンチマークと同じsessionを使うべきか悩ましい
 	s := session.New(target)
@@ -73,11 +73,10 @@ func (w *RoomWatcher) watch(target string, roomID int) {
 			fmt.Println("response too late")
 			w.es.Close()
 		}
-		w.Logs = append(w.Logs, StrokeLog{
-			Time:       now,
-			RoomID:     roomID,
-			StrokeID:   stroke.ID,
-			StrokeTime: stroke.CreatedAt,
+		w.Logs = append(w.Logs, scenario.StrokeLog{
+			ReceivedTime: now,
+			RoomID:       roomID,
+			StrokeID:     stroke.ID,
 		})
 	})
 	w.es.On("bad_request", func(data string) {
