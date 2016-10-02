@@ -9,10 +9,10 @@ isucon6f/bench: seed/bindata.go
 isucon6f/audience:
 	GOOS=linux go build -ldflags="-s -w" -o $@ ./cmd/audience
 
-isucon6f/bench-worker:
+isucon6f/worker:
 	GOOS=linux go build -ldflags="-s -w" -o $@ ./cmd/worker
 
-isucon6f: isucon6f/bench isucon6f/audience isucon6f/bench-worker
+isucon6f: isucon6f/bench isucon6f/audience isucon6f/worker
 
 seed/bindata.go:
 	$(MAKE) -C seed
