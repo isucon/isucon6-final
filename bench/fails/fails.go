@@ -9,6 +9,7 @@ import (
 
 var mu sync.RWMutex
 var msgs []string
+var isCritical bool
 
 func Get() []string {
 	mu.RLock()
@@ -44,4 +45,12 @@ func Add(msg string) string {
 	mu.Unlock()
 
 	return msg
+}
+
+func Critical() {
+	isCritical = true
+}
+
+func GetIsCritical() bool {
+	return isCritical
 }

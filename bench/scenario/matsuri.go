@@ -23,6 +23,7 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 
 	err := s.Get("/", func(status int, body io.Reader) error {
 		if status != 200 {
+			fails.Critical()
 			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 		}
 		doc, err := makeDocument(body)
@@ -33,6 +34,7 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 		token = extractCsrfToken(doc)
 
 		if token == "" {
+			fails.Critical()
 			return errors.New("csrf_tokenが取得できませんでした")
 		}
 
@@ -63,16 +65,19 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 
 	err = s.Post("/api/rooms", postBody, headers, func(status int, body io.Reader) error {
 		if status != 200 {
+			fails.Critical()
 			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 		}
 
 		var res Response
 		err := json.NewDecoder(body).Decode(&res)
 		if err != nil {
+			fails.Critical()
 			stderr.Log.Println(err.Error())
 			return errors.New("レスポンス内容が正しくありません")
 		}
 		if res.Room == nil || res.Room.ID <= 0 {
+			fails.Critical()
 			return errors.New("レスポンス内容が正しくありません")
 		}
 		RoomID = res.Room.ID
@@ -109,12 +114,19 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 					responseTime := time.Now()
 
 					if status != 200 {
+						fails.Critical()
 						return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 					}
 
 					var res Response
 					err = json.NewDecoder(body).Decode(&res)
-					if err != nil || res.Stroke == nil || res.Stroke.ID <= 0 {
+					if err != nil {
+						fails.Critical()
+						stderr.Log.Println(err.Error())
+						return errors.New("レスポンス内容が正しくありません")
+					}
+					if res.Stroke == nil || res.Stroke.ID <= 0 {
+						fails.Critical()
 						return errors.New("レスポンス内容が正しくありません")
 					}
 

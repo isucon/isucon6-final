@@ -90,10 +90,14 @@ L:
 }
 
 func output() {
+	s := score.Get()
+	if fails.GetIsCritical() {
+		s = 0
+	}
 	b, _ := json.Marshal(struct {
 		Score    int64    `json:"score"`
 		Messages []string `json:"messages"`
-	}{Score: score.Get(), Messages: fails.GetUnique()})
+	}{Score: s, Messages: fails.GetUnique()})
 
 	fmt.Println(string(b))
 }
