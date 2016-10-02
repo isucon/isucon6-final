@@ -4,7 +4,7 @@ services:
     extends:
       file: docker-compose-mysql.yml
       service: mysql
-  api:
+  go:
     build:
       context: ./go
       dockerfile: Dockerfile
@@ -23,6 +23,8 @@ services:
       file: docker-compose-react.yml
       service: react
     depends_on:
-      - api
+      - go
     links:
-      - api
+      - go
+    environment:
+      API: http://go:80

@@ -13,7 +13,6 @@ services:
       SSL_KEY: /ssl/oreore.key
       SSL_CERT: /ssl/oreore.crt
       ISUCON_ENV: development
-      API: http://api:80
       PORT: 443
     ports:
       - "443:443"
@@ -28,7 +27,6 @@ services:
       SSL_CERT: /ssl/oreore.crt
       ISUCON_ENV: production
       NODE_ENV: production
-      API: http://api:80
       PORT: 443
     ports:
       - "443:443"
