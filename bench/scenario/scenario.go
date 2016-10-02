@@ -7,12 +7,11 @@ import (
 
 	"encoding/json"
 
-	"fmt"
-	"os"
-
 	"net/url"
 
 	"time"
+
+	"io/ioutil"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/catatsuy/isucon6-final/bench/fails"
@@ -20,6 +19,7 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/seed"
 	"github.com/catatsuy/isucon6-final/bench/session"
+	"github.com/catatsuy/isucon6-final/bench/stderr"
 )
 
 var (
@@ -242,7 +242,7 @@ func MatsuriRoom(s *session.Session, aud string) {
 		var res Response
 		err := json.NewDecoder(body).Decode(&res)
 		if err != nil {
-			fmt.Fprintln(os.Stderr, err)
+			stderr.Log.Println(err.Error())
 			return errors.New(fails.Add("GET /api/rooms, レスポンス内容が正しくありません"))
 		}
 		if res.Room == nil || res.Room.ID <= 0 {
@@ -259,7 +259,6 @@ func MatsuriRoom(s *session.Session, aud string) {
 		return
 	}
 
-	// TODO: strokeを順次postしていく
 	seedStroke := seed.GetStroke("main001")
 
 	postTimes := make(map[int64]time.Time)
@@ -267,7 +266,7 @@ func MatsuriRoom(s *session.Session, aud string) {
 	end := make(chan struct{})
 
 	go func() {
-		for _, str := range seedStroke {
+		for _, stroke := range seedStroke {
 			// TODO: 指定時間以上たったら終わる
 
 			postBody, _ := json.Marshal(struct {
@@ -275,7 +274,7 @@ func MatsuriRoom(s *session.Session, aud string) {
 				seed.Stroke
 			}{
 				RoomID: RoomID,
-				Stroke: str,
+				Stroke: stroke,
 			})
 
 			postTime := time.Now()
@@ -318,23 +317,35 @@ func MatsuriRoom(s *session.Session, aud string) {
 
 	resp, err := http.Get(aud + "?" + v.Encode())
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "failed to call audience "+aud+" :"+err.Error())
+		stderr.Log.Println("failed to call audience " + aud + " :" + err.Error())
+		fails.Add("予期せぬエラー (主催者に連絡してください)")
+		return
 	}
 	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			stderr.Log.Println("failed to call audience " + aud)
+		} else {
+			stderr.Log.Println("failed to call audience " + aud + " :" + string(body))
+		}
+		fails.Add("予期せぬエラー (主催者に連絡してください)")
+		return
+	}
 
 	var audRes AudienceResponse
 	err = json.NewDecoder(resp.Body).Decode(&audRes)
 	if err != nil {
-		fmt.Println(err.Error())
-		// TODO: 主催者に連絡してください的なエラーを出す
+		stderr.Log.Println("failed to decode json from audience: " + err.Error())
+		fails.Add("予期せぬエラー (主催者に連絡してください)")
 		return
 	}
-	for _, e := range audRes.Errors {
-		fmt.Println(e) // TODO: 単純にfails.Addしてしまってよいか？
+	for _, msg := range audRes.Errors {
+		fails.Add(msg)
 	}
-	for _, l := range audRes.StrokeLogs {
-		postTime := postTimes[l.StrokeID]
-		timeTaken := l.ReceivedTime.Sub(postTime).Seconds()
+	for _, strokeLog := range audRes.StrokeLogs {
+		postTime := postTimes[strokeLog.StrokeID]
+		timeTaken := strokeLog.ReceivedTime.Sub(postTime).Seconds()
 		if timeTaken < 1 { // TODO: この時間は要調整
 			score.Increment(StrokeReceiveScore * 2)
 		} else if timeTaken < 3 {
