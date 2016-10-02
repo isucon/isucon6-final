@@ -18,7 +18,7 @@ import (
 )
 
 // 一人がroomを作る→大勢がそのroomをwatchする
-func Matsuri(s *session.Session, aud string) {
+func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 	var token string
 
 	err := s.Get("/", func(status int, body io.Reader) error {
@@ -93,45 +93,51 @@ func Matsuri(s *session.Session, aud string) {
 	end := make(chan struct{})
 
 	go func() {
-		for _, stroke := range seedStroke {
-			// TODO: 指定時間以上たったら終わる
-
-			postBody, _ := json.Marshal(struct {
-				RoomID int64 `json:"room_id"`
-				seed.Stroke
-			}{
-				RoomID: RoomID,
-				Stroke: stroke,
-			})
-
-			postTime := time.Now()
-
-			err := s.Post("/api/strokes/rooms/"+strconv.FormatInt(RoomID, 10), postBody, headers, func(status int, body io.Reader) error {
-				responseTime := time.Now()
-
-				if status != 200 {
-					return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
+	L:
+		for {
+			for _, stroke := range seedStroke {
+				if len(timeoutCh) > 0 {
+					// http://mattn.kaoriya.net/software/lang/go/20160706165757.htm
+					break L
 				}
 
-				var res Response
-				err = json.NewDecoder(body).Decode(&res)
-				if err != nil || res.Stroke == nil || res.Stroke.ID <= 0 {
-					return errors.New("レスポンス内容が正しくありません")
+				postBody, _ := json.Marshal(struct {
+					RoomID int64 `json:"room_id"`
+					seed.Stroke
+				}{
+					RoomID: RoomID,
+					Stroke: stroke,
+				})
+
+				postTime := time.Now()
+
+				err := s.Post("/api/strokes/rooms/"+strconv.FormatInt(RoomID, 10), postBody, headers, func(status int, body io.Reader) error {
+					responseTime := time.Now()
+
+					if status != 200 {
+						return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
+					}
+
+					var res Response
+					err = json.NewDecoder(body).Decode(&res)
+					if err != nil || res.Stroke == nil || res.Stroke.ID <= 0 {
+						return errors.New("レスポンス内容が正しくありません")
+					}
+
+					timeTaken := responseTime.Sub(postTime).Seconds()
+					if timeTaken < 1 { // TODO: この時間は要調整
+						score.Increment(CreateStrokeScore * 2)
+					} else if timeTaken < 3 {
+						score.Increment(CreateStrokeScore)
+					}
+
+					postTimes[res.Stroke.ID] = postTime
+
+					return nil
+				})
+				if err != nil {
+					break L
 				}
-
-				timeTaken := responseTime.Sub(postTime).Seconds()
-				if timeTaken < 1 { // TODO: この時間は要調整
-					score.Increment(CreateStrokeScore * 2)
-				} else if timeTaken < 3 {
-					score.Increment(CreateStrokeScore)
-				}
-
-				postTimes[res.Stroke.ID] = postTime
-
-				return nil
-			})
-			if err != nil {
-				break
 			}
 		}
 		end <- struct{}{}
