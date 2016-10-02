@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/catatsuy/isucon6-final/bench/audience"
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/http"
 	"github.com/catatsuy/isucon6-final/bench/score"
@@ -246,7 +245,6 @@ func MatsuriRoom(s *session.Session, aud string) {
 			fmt.Fprintln(os.Stderr, err)
 			return errors.New(fails.Add("GET /api/rooms, レスポンス内容が正しくありません"))
 		}
-		fmt.Println(res)
 		if res.Room == nil || res.Room.ID <= 0 {
 			return errors.New(fails.Add("GET /api/rooms, レスポンス内容が正しくありません"))
 		}
@@ -267,6 +265,7 @@ func MatsuriRoom(s *session.Session, aud string) {
 	postTimes := make(map[int64]time.Time)
 
 	end := make(chan struct{})
+	fmt.Println(RoomID)
 
 	go func() {
 		for _, str := range seedStroke {
@@ -292,7 +291,7 @@ func MatsuriRoom(s *session.Session, aud string) {
 				var res Response
 				err := json.NewDecoder(body).Decode(&res)
 				if err != nil || res.Room == nil || res.Room.ID <= 0 {
-					return errors.New(fails.Add("GET /api/strokes/rooms/" + strconv.FormatInt(RoomID, 10) + ", レスポンス内容が正しくありません"))
+					return errors.New(fails.Add("POST /api/strokes/rooms/" + strconv.FormatInt(RoomID, 10) + ", レスポンス内容が正しくありません"))
 				}
 
 				timeTaken := responseTime.Sub(postTime).Seconds()
@@ -320,7 +319,7 @@ func MatsuriRoom(s *session.Session, aud string) {
 	defer resp.Body.Close()
 	// TODO: audienceのresponse処理
 
-	var audRes audience.AudienceResponse
+	var audRes AudienceResponse
 	err = json.NewDecoder(resp.Body).Decode(&audRes)
 	if err != nil {
 		fmt.Println(err.Error())

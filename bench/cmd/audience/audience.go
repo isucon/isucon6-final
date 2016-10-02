@@ -10,6 +10,7 @@ import (
 
 	"github.com/catatsuy/isucon6-final/bench/audience"
 	"github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/catatsuy/isucon6-final/bench/scenario"
 )
 
 var initialWatcherNum int
@@ -83,9 +84,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println("done")
 
-	res := &audience.AudienceResponse{
+	res := &scenario.AudienceResponse{
 		Errors:     make([]string, 0),
-		StrokeLogs: make([]audience.StrokeLog, 0),
+		StrokeLogs: make([]scenario.StrokeLog, 0),
 	}
 	for _, w := range watchers {
 		res.Errors = append(res.Errors, w.Errors...)

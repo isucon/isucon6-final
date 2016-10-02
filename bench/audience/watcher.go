@@ -13,7 +13,7 @@ import (
 
 type RoomWatcher struct {
 	EndCh  chan struct{}
-	Logs   []StrokeLog
+	Logs   []scenario.StrokeLog
 	Errors []string
 
 	es     *sse.EventSource
@@ -23,7 +23,7 @@ type RoomWatcher struct {
 func NewRoomWatcher(target string, roomID int64) *RoomWatcher {
 	w := &RoomWatcher{
 		EndCh:  make(chan struct{}, 1),
-		Logs:   make([]StrokeLog, 0),
+		Logs:   make([]scenario.StrokeLog, 0),
 		Errors: make([]string, 0),
 		isLeft: false,
 	}
@@ -73,7 +73,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 			fmt.Println("response too late")
 			w.es.Close()
 		}
-		w.Logs = append(w.Logs, StrokeLog{
+		w.Logs = append(w.Logs, scenario.StrokeLog{
 			ReceivedTime: now,
 			RoomID:       roomID,
 			StrokeID:     stroke.ID,
