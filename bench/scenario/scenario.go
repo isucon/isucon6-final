@@ -3,7 +3,10 @@ package scenario
 import (
 	"errors"
 	"io"
+	"math/rand"
 	"strconv"
+
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/catatsuy/isucon6-final/bench/score"
@@ -12,6 +15,7 @@ import (
 
 var (
 	IndexGetScore      int64 = 1
+	RoomGetScore       int64 = 1
 	SVGGetScore        int64 = 1
 	CreateRoomScore    int64 = 20
 	CreateStrokeScore  int64 = 20
@@ -125,6 +129,60 @@ func LoadIndexPage(s *session.Session) {
 	}
 
 	err = loadImages(s, images)
+	if err != nil {
+		return
+	}
+}
+
+// トップページを開いて適当な部屋を開く（Ajaxじゃないのは「別タブで」開いたということにでもしておく）
+func LoadRoomPage(s *session.Session) {
+	var images []string
+	var rooms []string
+
+	err := s.Get("/", func(status int, body io.Reader) error {
+		if status != 200 {
+			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
+		}
+		doc, err := makeDocument(body)
+		if err != nil {
+			return err
+		}
+
+		images = extractImages(doc)
+
+		doc.Find("a").Each(func(_ int, selection *goquery.Selection) {
+			if url, ok := selection.Attr("href"); ok {
+				if strings.HasPrefix(url, "/rooms/") {
+					rooms = append(rooms, url)
+				}
+			}
+		})
+
+		score.Increment(IndexGetScore)
+
+		return nil
+	})
+	if err != nil {
+		return
+	}
+
+	err = loadImages(s, images)
+	if err != nil {
+		return
+	}
+
+	roomURL := rooms[rand.Intn(len(rooms))]
+
+	_ = s.Get(roomURL, func(status int, body io.Reader) error {
+		if status != 200 {
+			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
+		}
+
+		// TODO: polylineのidを上で開いたSVGと比較するか？
+
+		score.Increment(RoomGetScore)
+		return nil
+	})
 	if err != nil {
 		return
 	}

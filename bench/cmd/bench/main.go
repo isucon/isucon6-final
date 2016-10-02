@@ -49,6 +49,7 @@ func initialCheck(baseURL string) {
 
 func benchmark(baseURL string) {
 	loadIndexPageCh := makeChan(2)
+	loadRoomPageCh := makeChan(2)
 	checkCSRFTokenRefreshedCh := makeChan(1)
 	matsuriCh := makeChan(1)
 	matsuriEndCh := make(chan struct{})
@@ -63,6 +64,11 @@ L:
 			go func() {
 				scenario.LoadIndexPage(session.New(baseURL))
 				loadIndexPageCh <- struct{}{}
+			}()
+		case <-loadRoomPageCh:
+			go func() {
+				scenario.LoadRoomPage(session.New(baseURL))
+				loadRoomPageCh <- struct{}{}
 			}()
 		case <-checkCSRFTokenRefreshedCh:
 			go func() {
