@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/catatsuy/isucon6-final/bench/audience"
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/http"
 	"github.com/catatsuy/isucon6-final/bench/score"
@@ -269,6 +270,8 @@ func MatsuriRoom(s *session.Session, aud string) {
 	}
 	strokeTimes := make([]StrokeTime, 0)
 
+	end := make(chan struct{})
+
 	go func() {
 		for _, str := range seedStroke {
 			// TODO: 指定時間以上たったら終わる
@@ -315,9 +318,8 @@ func MatsuriRoom(s *session.Session, aud string) {
 				break
 			}
 		}
+		end <- struct{}{}
 	}()
-
-	fmt.Println(strokeTimes)
 
 	resp, err := http.Get(aud + "?scheme=" + url.QueryEscape(s.Scheme) + "&host=" + url.QueryEscape(s.Host))
 	if err != nil {
@@ -325,4 +327,18 @@ func MatsuriRoom(s *session.Session, aud string) {
 	}
 	defer resp.Body.Close()
 	// TODO: audienceのresponse処理
+
+	var audRes audience.Response
+	err = json.NewDecoder(resp.Body).Decode(&audRes)
+	if err != nil {
+		fmt.Println(err.Error())
+		// TODO: 主催者に連絡してください的なエラーを出す
+		return
+	}
+
+	audRes.StrokeLogs
+
+	<-end
+	fmt.Println(strokeTimes)
+
 }
