@@ -55,8 +55,8 @@ app.get('/img/:id', (req, res) => {
       );
     })
     .catch((err) => {
-      res.status(500);
       console.log(`error: ${err.message}`);
+      return res.status(500);
     });
 });
 
@@ -65,11 +65,11 @@ app.get('*', (req, res) => {
   match({ routes, location: req.url }, (err, redirectLocation, renderProps) => {
     if (err) {
       console.error(err);
-      res.status(500).send('Internal Server Error');
+      return res.status(500).send('Internal Server Error');
     } else if (redirectLocation) {
-      res.redirect(302, redirectLocation.pathname + redirectLocation.search);
+      return res.redirect(302, redirectLocation.pathname + redirectLocation.search);
     } else if (!renderProps) {
-      res.status(404).send('Not found');
+      return res.status(404).send('Not found');
     }
 
     fetch(`${apiBaseUrl}/api/csrf_token`, {
@@ -84,7 +84,7 @@ app.get('*', (req, res) => {
         loadPropsOnServer(renderProps, loadContext, (err, asyncProps, scriptTag) => {
           if (err) {
             console.error(err);
-            res.status(500).send('Internal Server Error');
+            return res.status(500).send('Internal Server Error');
           } else {
             const appHTML = renderToString(
               <AsyncProps {...renderProps} {...asyncProps} />
@@ -92,14 +92,14 @@ app.get('*', (req, res) => {
 
             const html = createHtml(appHTML, scriptTag, csrfToken);
 
-            res.status(200).send(html);
+            return res.status(200).send(html);
           }
         });
 
       })
       .catch((err) => {
         console.error(err);
-        res.status(500).send('Internal Server Error');
+        return res.status(500).send('Internal Server Error');
       });
   });
 });
