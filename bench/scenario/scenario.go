@@ -24,10 +24,11 @@ import (
 )
 
 var (
-	IndexGetScore     int64 = 2
-	SVGGetScore       int64 = 1
-	CreateRoomScore   int64 = 20
-	CreateStrokeScore int64 = 20
+	IndexGetScore      int64 = 2
+	SVGGetScore        int64 = 1
+	CreateRoomScore    int64 = 20
+	CreateStrokeScore  int64 = 20
+	StrokeReceiveScore int64 = 1
 )
 
 func makeDocument(r io.Reader) (*goquery.Document, error) {
@@ -263,12 +264,7 @@ func MatsuriRoom(s *session.Session, aud string) {
 	// TODO: strokeを順次postしていく
 	seedStroke := seed.GetStroke("main001")
 
-	type StrokeTime struct {
-		ID           int64
-		PostTime     time.Time
-		ResponseTime time.Time
-	}
-	strokeTimes := make([]StrokeTime, 0)
+	postTimes := make(map[int64]time.Time)
 
 	end := make(chan struct{})
 
@@ -300,17 +296,13 @@ func MatsuriRoom(s *session.Session, aud string) {
 				}
 
 				timeTaken := responseTime.Sub(postTime).Seconds()
-				if timeTaken < 1 {
+				if timeTaken < 1 { // TODO: この時間は要調整
 					score.Increment(CreateStrokeScore * 2)
 				} else if timeTaken < 3 {
 					score.Increment(CreateStrokeScore)
 				}
 
-				strokeTimes = append(strokeTimes, StrokeTime{
-					ID:           res.Stroke.ID,
-					PostTime:     postTime,
-					ResponseTime: responseTime,
-				})
+				postTimes[res.Stroke.ID] = postTime
 
 				return nil
 			})
@@ -328,17 +320,23 @@ func MatsuriRoom(s *session.Session, aud string) {
 	defer resp.Body.Close()
 	// TODO: audienceのresponse処理
 
-	var audRes audience.Response
+	var audRes audience.AudienceResponse
 	err = json.NewDecoder(resp.Body).Decode(&audRes)
 	if err != nil {
 		fmt.Println(err.Error())
 		// TODO: 主催者に連絡してください的なエラーを出す
 		return
 	}
-
-	audRes.StrokeLogs
+	// TODO: audRes.Errorsの処理
+	for _, l := range audRes.StrokeLogs {
+		postTime := postTimes[l.StrokeID]
+		timeTaken := l.ReceivedTime.Sub(postTime).Seconds()
+		if timeTaken < 1 { // TODO: この時間は要調整
+			score.Increment(StrokeReceiveScore * 2)
+		} else if timeTaken < 3 {
+			score.Increment(StrokeReceiveScore)
+		}
+	}
 
 	<-end
-	fmt.Println(strokeTimes)
-
 }

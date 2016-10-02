@@ -3,13 +3,12 @@ package audience
 import "time"
 
 type StrokeLog struct {
-	Time       time.Time `json:"time"`
-	RoomID     int       `json:"room_id"`
-	StrokeID   int64     `json:"stroke_id"`
-	StrokeTime time.Time `json:"stroke_time"`
+	ReceivedTime time.Time `json:"received_time"`
+	RoomID       int64     `json:"room_id"`
+	StrokeID     int64     `json:"stroke_id"`
 }
 
-type Response struct {
+type AudienceResponse struct {
 	Errors     []string    `json:"errors"`
 	StrokeLogs []StrokeLog `json:"stroke_logs"`
 }

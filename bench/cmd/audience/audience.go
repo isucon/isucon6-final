@@ -36,7 +36,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	scheme := r.URL.Query().Get("scheme")
 	host := r.URL.Query().Get("host")
 	room := r.URL.Query().Get("room")
-	roomID, err := strconv.Atoi(room)
+	roomID, err := strconv.ParseInt(room, 10, 64)
 	if err != nil || scheme == "" || host == "" {
 		w.WriteHeader(400)
 		w.Write([]byte("引数が間違っています (例: /?scheme=https&host=127.0.0.1&room=1)"))
@@ -83,7 +83,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Println("done")
 
-	res := &audience.Response{
+	res := &audience.AudienceResponse{
 		Errors:     make([]string, 0),
 		StrokeLogs: make([]audience.StrokeLog, 0),
 	}
