@@ -21,10 +21,10 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
-  react_dev_go:
+  react_go:
     extends:
       file: docker-compose-react.yml
-      service: react_dev
+      service: react
     depends_on:
       - api
     links:
