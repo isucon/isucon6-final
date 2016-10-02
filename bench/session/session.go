@@ -3,6 +3,7 @@ package session
 import (
 	"bytes"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -76,8 +77,7 @@ func (s *Session) Get(path string, checkFunc CheckFunc) error {
 	req, err := s.NewRequest("GET", path, nil)
 	if err != nil {
 		stderr.Log.Println(errPrefix + "error: " + err.Error())
-		fails.Add(errPrefix + "予期せぬ失敗です (主催者に連絡してください)")
-		return err
+		return errors.New(fails.Add(errPrefix + "予期せぬ失敗です (主催者に連絡してください)"))
 	}
 
 	req.Header.Set("User-Agent", s.UserAgent)
@@ -86,8 +86,7 @@ func (s *Session) Get(path string, checkFunc CheckFunc) error {
 
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
-			fails.Add(errPrefix + "リクエストがタイムアウトしました")
-			return err
+			return errors.New(fails.Add(errPrefix + "リクエストがタイムアウトしました"))
 		}
 		stderr.Log.Println(errPrefix + "error: " + err.Error())
 		fails.Add(errPrefix + "リクエストに失敗しました")
@@ -97,8 +96,7 @@ func (s *Session) Get(path string, checkFunc CheckFunc) error {
 
 	err = checkFunc(res.StatusCode, res.Body)
 	if err != nil {
-		fails.Add(errPrefix + err.Error())
-		return err
+		return errors.New(fails.Add(errPrefix + err.Error()))
 	}
 	return nil
 }
@@ -109,8 +107,7 @@ func (s *Session) Post(path string, body []byte, headers map[string]string, chec
 	req, err := s.NewRequest("POST", path, bytes.NewBuffer(body))
 	if err != nil {
 		stderr.Log.Println(errPrefix + "error: " + err.Error())
-		fails.Add(errPrefix + "予期せぬ失敗です (主催者に連絡してください)")
-		return err
+		return errors.New(fails.Add(errPrefix + "予期せぬ失敗です (主催者に連絡してください)"))
 	}
 
 	req.Header.Set("User-Agent", s.UserAgent)
@@ -122,19 +119,16 @@ func (s *Session) Post(path string, body []byte, headers map[string]string, chec
 
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
-			fails.Add(errPrefix + "リクエストがタイムアウトしました")
-			return err
+			return errors.New(fails.Add(errPrefix + "リクエストがタイムアウトしました"))
 		}
 		stderr.Log.Println(errPrefix + "error: " + err.Error())
-		fails.Add(errPrefix + "リクエストに失敗しました")
-		return err
+		return errors.New(fails.Add(errPrefix + "リクエストに失敗しました"))
 	}
 	defer res.Body.Close()
 
 	err = checkFunc(res.StatusCode, res.Body)
 	if err != nil {
-		fails.Add(errPrefix + err.Error())
-		return err
+		return errors.New(fails.Add(errPrefix + err.Error()))
 	}
 	return nil
 }

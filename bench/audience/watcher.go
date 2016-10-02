@@ -45,7 +45,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 	path := fmt.Sprintf("/rooms/%d", roomID)
 	token, err := scenario.GetCSRFToken(s, path)
 	if err != nil {
-		w.addError("GET " + path + ", " + err.Error())
+		w.addError(err.Error())
 		w.EndCh <- struct{}{}
 		return
 	}
@@ -64,8 +64,8 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 		var stroke scenario.Stroke
 		err := json.Unmarshal([]byte(data), &stroke)
 		if err != nil {
-			w.Errors = append(w.Errors, err.Error())
 			fmt.Println(err)
+			w.addError(path + ", jsonのデコードに失敗しました")
 			w.es.Close()
 		}
 		now := time.Now()
@@ -109,7 +109,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 }
 
 func (w *RoomWatcher) addError(msg string) {
-	w.Errors = append(w.Errors, fmt.Sprintf("%s", msg))
+	w.Errors = append(w.Errors, msg)
 }
 
 func (w *RoomWatcher) Leave() {
