@@ -1,12 +1,9 @@
 version: '2'
 services:
   mysql:
-    image: mysql
-    volumes:
-      - ./.data:/var/lib/mysql
-      - ./sql:/sql
-    environment:
-      MYSQL_ROOT_PASSWORD: password
+    extends:
+      file: docker-compose-mysql.yml
+      service: mysql
   api:
     build:
       context: ./php
