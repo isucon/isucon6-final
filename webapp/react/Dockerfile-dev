@@ -7,12 +7,7 @@ RUN mkdir -p /react
 WORKDIR /react
 
 # キャッシュ効率を上げるためにまずpackage.jsonだけcopyしてnpm installする
-COPY ./package.json /react/package.json
-COPY ./npm-shrinkwrap.json /react/npm-shrinkwrap.json
-RUN npm install
-
-COPY ./.babelrc /react/.babelrc
-
-COPY ./gulpfile.babel.js /react/gulpfile.babel.js
+COPY ./package.json ./npm-shrinkwrap.json /react/
+RUN npm install && npm cache clean
 
 CMD ["npm", "run", "dev"]

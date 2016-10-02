@@ -5,7 +5,8 @@ services:
       context: ./react
       dockerfile: Dockerfile-dev
     volumes:
-      - ./react/:/react/
+      - ./react:/react
+      - /react/node_modules
       - ./ssl:/ssl:ro
     environment:
       SSL_KEY: /ssl/oreore.key
