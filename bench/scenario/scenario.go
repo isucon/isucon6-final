@@ -265,7 +265,6 @@ func MatsuriRoom(s *session.Session, aud string) {
 	postTimes := make(map[int64]time.Time)
 
 	end := make(chan struct{})
-	fmt.Println(RoomID)
 
 	go func() {
 		for _, str := range seedStroke {
@@ -312,12 +311,11 @@ func MatsuriRoom(s *session.Session, aud string) {
 		end <- struct{}{}
 	}()
 
-	resp, err := http.Get(aud + "?scheme=" + url.QueryEscape(s.Scheme) + "&host=" + url.QueryEscape(s.Host))
+	resp, err := http.Get(aud + "?scheme=" + url.QueryEscape(s.Scheme) + "&host=" + url.QueryEscape(s.Host) + "&room=" + strconv.FormatInt(RoomID, 10))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "failed to call audience "+aud+" :"+err.Error())
 	}
 	defer resp.Body.Close()
-	// TODO: audienceのresponse処理
 
 	var audRes AudienceResponse
 	err = json.NewDecoder(resp.Body).Decode(&audRes)
@@ -326,7 +324,9 @@ func MatsuriRoom(s *session.Session, aud string) {
 		// TODO: 主催者に連絡してください的なエラーを出す
 		return
 	}
-	// TODO: audRes.Errorsの処理
+	for _, e := range audRes.Errors {
+		fmt.Println(e) // TODO: 単純にfails.Addしてしまってよいか？
+	}
 	for _, l := range audRes.StrokeLogs {
 		postTime := postTimes[l.StrokeID]
 		timeTaken := l.ReceivedTime.Sub(postTime).Seconds()
