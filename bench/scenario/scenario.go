@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	IndexGetScore      int64 = 2
+	IndexGetScore      int64 = 1
 	SVGGetScore        int64 = 1
 	CreateRoomScore    int64 = 20
 	CreateStrokeScore  int64 = 20
