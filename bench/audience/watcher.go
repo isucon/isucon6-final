@@ -45,7 +45,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 	path := fmt.Sprintf("/rooms/%d", roomID)
 	token, err := scenario.GetCSRFToken(s, target+path)
 	if err != nil {
-		w.addError(err.Error())
+		w.addError("GET " + path + ", " + err.Error())
 		w.EndCh <- struct{}{}
 		return
 	}
