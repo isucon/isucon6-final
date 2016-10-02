@@ -69,7 +69,7 @@ L:
 			}()
 		case <-matsuriRoomCh:
 			go func() {
-				scenario.MatsuriRoom(session.New(baseURL), Audience1)
+				scenario.Matsuri(session.New(baseURL), Audience1)
 				//matsuriRoomCh <- struct{}{} // Never again.
 			}()
 		case <-timeoutCh:
