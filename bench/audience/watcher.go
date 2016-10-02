@@ -58,6 +58,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 		return
 	}
 	w.es = sse.NewEventSource(s.Client, target+path+"?csrf_token="+token)
+	w.es.AddHeader("User-Agent", s.UserAgent)
 
 	w.es.On("stroke", func(data string) {
 		var stroke scenario.Stroke
