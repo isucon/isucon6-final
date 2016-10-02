@@ -60,6 +60,10 @@ room_watcher_sql = []
   room_watcher_sql.push("(#{room_id}, #{token_id}, #{date_at}, #{date_at})")
 end
 
+puts "SET NAMES utf8mb4;"
+
+puts "use `isuketch`;"
+
 puts "BEGIN;"
 
 puts "INSERT INTO `rooms` (`id`, `name`, `created_at`, `canvas_width`, `canvas_height`) VALUES"

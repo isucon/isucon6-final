@@ -4,6 +4,6 @@ services:
     image: mysql
     volumes:
       - ./.data:/var/lib/mysql
-      - ./sql:/sql
+      - ./sql:/docker-entrypoint-initdb.d
     environment:
       MYSQL_ROOT_PASSWORD: password
