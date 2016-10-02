@@ -101,23 +101,6 @@
       "resources": [
         {
           "type": "Microsoft.Compute/virtualMachines/extensions",
-          "name": "[concat(variables('vms')[copyIndex()].name, '/DockerExtension')]",
-          "apiVersion": "2015-06-15",
-          "location": "[variables('location')]",
-          "properties": {
-            "publisher": "Microsoft.Azure.Extensions",
-            "type": "DockerExtension",
-            "typeHandlerVersion": "1.2",
-            "autoUpgradeMinorVersion": true,
-            "settings": {},
-            "protectedSettings": {}
-          },
-          "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', variables('vms')[copyIndex()].name)]"
-          ]
-        },
-        {
-          "type": "Microsoft.Compute/virtualMachines/extensions",
           "name": "[concat(variables('vms')[copyIndex()].name, '/Provisioning')]",
           "apiVersion": "2015-06-15",
           "location": "[variables('location')]",
