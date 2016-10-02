@@ -18,8 +18,8 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/http"
 	"github.com/catatsuy/isucon6-final/bench/score"
+	"github.com/catatsuy/isucon6-final/bench/seed"
 	"github.com/catatsuy/isucon6-final/bench/session"
-	"github.com/catatsuy/isucon6-final/seed"
 )
 
 var (
