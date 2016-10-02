@@ -93,14 +93,8 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 	end := make(chan struct{})
 
 	go func() {
-	L:
 		for {
 			for _, stroke := range seedStroke {
-				if len(timeoutCh) > 0 {
-					// http://mattn.kaoriya.net/software/lang/go/20160706165757.htm
-					break L
-				}
-
 				postBody, _ := json.Marshal(struct {
 					RoomID int64 `json:"room_id"`
 					seed.Stroke
@@ -135,12 +129,11 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 
 					return nil
 				})
-				if err != nil {
-					break L
+				if err != nil || len(timeoutCh) > 0 {
+					end <- struct{}{}
 				}
 			}
 		}
-		end <- struct{}{}
 	}()
 
 	v := url.Values{}

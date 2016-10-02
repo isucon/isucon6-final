@@ -52,7 +52,7 @@ func benchmark(baseURL string) {
 	checkCSRFTokenRefreshedCh := makeChan(1)
 	matsuriCh := makeChan(1)
 	matsuriEndCh := make(chan struct{})
-	matsuriTimeoutCh := make(chan struct{}, 2)
+	matsuriTimeoutCh := make(chan struct{}, 2) // http://mattn.kaoriya.net/software/lang/go/20160706165757.htm
 
 	timeoutCh := time.After(time.Duration(BenchmarkTimeout) * time.Second)
 
