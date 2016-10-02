@@ -43,7 +43,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 	s.Client.Timeout = 3 * time.Second
 
 	path := fmt.Sprintf("/rooms/%d", roomID)
-	token, err := scenario.GetCSRFToken(s, target+path)
+	token, err := scenario.GetCSRFToken(s, path)
 	if err != nil {
 		w.addError("GET " + path + ", " + err.Error())
 		w.EndCh <- struct{}{}
