@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/session"
 )
@@ -22,7 +21,7 @@ var (
 func makeDocument(r io.Reader) (*goquery.Document, error) {
 	doc, err := goquery.NewDocumentFromReader(r)
 	if err != nil {
-		return nil, errors.New(fails.Add("ページのHTMLがパースできませんでした"))
+		return nil, errors.New("ページのHTMLがパースできませんでした")
 	}
 	return doc, nil
 }
@@ -56,7 +55,7 @@ func loadImages(s *session.Session, images []string) error {
 	for _, image := range images {
 		err := s.Get(image, func(status int, body io.Reader) error {
 			if status != 200 {
-				return errors.New(fails.Add("GET /, ステータスが200ではありません: " + strconv.Itoa(status)))
+				return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 			}
 			score.Increment(SVGGetScore)
 			return nil
@@ -74,7 +73,7 @@ func loadImages(s *session.Session, images []string) error {
 	//	go func(image string) {
 	//		err := s.Get(image, func(status int, body io.Reader) error {
 	//			if status != 200 {
-	//				return errors.New(fails.Add("GET /, ステータスが200ではありません: " + strconv.Itoa(status)))
+	//				return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 	//			}
 	//			score.Increment(SVGGetScore)
 	//			return nil
@@ -99,7 +98,7 @@ func LoadIndexPage(s *session.Session) {
 
 	err := s.Get("/", func(status int, body io.Reader) error {
 		if status != 200 {
-			return errors.New(fails.Add("GET /, ステータスが200ではありません: " + strconv.Itoa(status)))
+			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 		}
 		doc, err := makeDocument(body)
 		if err != nil {
@@ -109,12 +108,12 @@ func LoadIndexPage(s *session.Session) {
 		token = extractCsrfToken(doc)
 
 		if token == "" {
-			return errors.New(fails.Add("GET /, csrf_tokenが取得できませんでした"))
+			return errors.New("csrf_tokenが取得できませんでした")
 		}
 
 		images = extractImages(doc)
 		if len(images) < 100 {
-			return errors.New(fails.Add("GET /, 画像の枚数が少なすぎます"))
+			return errors.New("画像の枚数が少なすぎます")
 		}
 
 		score.Increment(IndexGetScore)
@@ -137,7 +136,7 @@ func CheckCSRFTokenRefreshed(s *session.Session) {
 
 	err := s.Get("/", func(status int, body io.Reader) error {
 		if status != 200 {
-			return errors.New(fails.Add("GET /, ステータスが200ではありません: " + strconv.Itoa(status)))
+			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 		}
 		doc, err := makeDocument(body)
 		if err != nil {
@@ -147,7 +146,7 @@ func CheckCSRFTokenRefreshed(s *session.Session) {
 		token = extractCsrfToken(doc)
 
 		if token == "" {
-			return errors.New(fails.Add("GET /, csrf_tokenが取得できませんでした"))
+			return errors.New("csrf_tokenが取得できませんでした")
 		}
 
 		score.Increment(IndexGetScore)
@@ -160,7 +159,7 @@ func CheckCSRFTokenRefreshed(s *session.Session) {
 
 	_ = s.Get("/", func(status int, body io.Reader) error {
 		if status != 200 {
-			return errors.New(fails.Add("GET /, ステータスが200ではありません: " + strconv.Itoa(status)))
+			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 		}
 		doc, err := makeDocument(body)
 		if err != nil {
@@ -170,7 +169,7 @@ func CheckCSRFTokenRefreshed(s *session.Session) {
 		t := extractCsrfToken(doc)
 
 		if t == token {
-			return errors.New(fails.Add("GET /, csrf_tokenが使いまわされています"))
+			return errors.New("csrf_tokenが使いまわされています")
 		}
 
 		score.Increment(IndexGetScore)

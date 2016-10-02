@@ -7,12 +7,12 @@ import (
 	"io"
 	"net"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/http"
 	"github.com/catatsuy/isucon6-final/bench/http/cookiejar"
+	"github.com/catatsuy/isucon6-final/bench/stderr"
 )
 
 const DefaultTimeout = time.Duration(10) * time.Second
@@ -71,11 +71,12 @@ func (s *Session) NewRequest(method, path string, body io.Reader) (*http.Request
 }
 
 func (s *Session) Get(path string, checkFunc CheckFunc) error {
+	errPrefix := "GET " + path + ", "
 
 	req, err := s.NewRequest("GET", path, nil)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "GET "+path+", error:"+err.Error())
-		fails.Add("GET " + path + ", 予期せぬ失敗です (主催者に連絡してください)")
+		stderr.Log.Println(errPrefix + "error: " + err.Error())
+		fails.Add(errPrefix + "予期せぬ失敗です (主催者に連絡してください)")
 		return err
 	}
 
@@ -85,28 +86,30 @@ func (s *Session) Get(path string, checkFunc CheckFunc) error {
 
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
-			fails.Add("GET " + path + ", リクエストがタイムアウトしました")
+			fails.Add(errPrefix + "リクエストがタイムアウトしました")
 			return err
 		}
-		fmt.Fprintln(os.Stderr, "GET "+path+", error:"+err.Error())
-		fails.Add("GET " + path + ", リクエストに失敗しました")
+		stderr.Log.Println(errPrefix + "error: " + err.Error())
+		fails.Add(errPrefix + "リクエストに失敗しました")
 		return err
 	}
 	defer res.Body.Close()
 
 	err = checkFunc(res.StatusCode, res.Body)
 	if err != nil {
+		fails.Add(errPrefix + err.Error())
 		return err
 	}
 	return nil
 }
 
 func (s *Session) Post(path string, body []byte, headers map[string]string, checkFunc CheckFunc) error {
+	errPrefix := "POST " + path + ", "
 
 	req, err := s.NewRequest("POST", path, bytes.NewBuffer(body))
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "POST "+path+", error:"+err.Error())
-		fails.Add("POST " + path + ", 予期せぬ失敗です (主催者に連絡してください)")
+		stderr.Log.Println(errPrefix + "error: " + err.Error())
+		fails.Add(errPrefix + "予期せぬ失敗です (主催者に連絡してください)")
 		return err
 	}
 
@@ -119,17 +122,18 @@ func (s *Session) Post(path string, body []byte, headers map[string]string, chec
 
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
-			fails.Add("リクエストがタイムアウトしました")
+			fails.Add(errPrefix + "リクエストがタイムアウトしました")
 			return err
 		}
-		fmt.Fprintln(os.Stderr, "POST "+path+", error:"+err.Error())
-		fails.Add("POST " + path + ", リクエストに失敗しました")
+		stderr.Log.Println(errPrefix + "error: " + err.Error())
+		fails.Add(errPrefix + "リクエストに失敗しました")
 		return err
 	}
 	defer res.Body.Close()
 
 	err = checkFunc(res.StatusCode, res.Body)
 	if err != nil {
+		fails.Add(errPrefix + err.Error())
 		return err
 	}
 	return nil

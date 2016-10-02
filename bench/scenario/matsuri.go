@@ -23,7 +23,7 @@ func Matsuri(s *session.Session, aud string) {
 
 	err := s.Get("/", func(status int, body io.Reader) error {
 		if status != 200 {
-			return errors.New(fails.Add("GET /, ステータスが200ではありません: " + strconv.Itoa(status)))
+			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 		}
 		doc, err := makeDocument(body)
 		if err != nil {
@@ -33,7 +33,7 @@ func Matsuri(s *session.Session, aud string) {
 		token = extractCsrfToken(doc)
 
 		if token == "" {
-			return errors.New(fails.Add("GET /, csrf_tokenが取得できませんでした"))
+			return errors.New("csrf_tokenが取得できませんでした")
 		}
 
 		score.Increment(IndexGetScore)
@@ -63,17 +63,17 @@ func Matsuri(s *session.Session, aud string) {
 
 	err = s.Post("/api/rooms", postBody, headers, func(status int, body io.Reader) error {
 		if status != 200 {
-			return errors.New(fails.Add("GET /api/rooms, ステータスが200ではありません: " + strconv.Itoa(status)))
+			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 		}
 
 		var res Response
 		err := json.NewDecoder(body).Decode(&res)
 		if err != nil {
 			stderr.Log.Println(err.Error())
-			return errors.New(fails.Add("GET /api/rooms, レスポンス内容が正しくありません"))
+			return errors.New("レスポンス内容が正しくありません")
 		}
 		if res.Room == nil || res.Room.ID <= 0 {
-			return errors.New(fails.Add("GET /api/rooms, レスポンス内容が正しくありません"))
+			return errors.New("レスポンス内容が正しくありません")
 		}
 		RoomID = res.Room.ID
 
@@ -110,13 +110,13 @@ func Matsuri(s *session.Session, aud string) {
 				responseTime := time.Now()
 
 				if status != 200 {
-					return errors.New(fails.Add("POST /api/strokes/rooms/" + strconv.FormatInt(RoomID, 10) + ", ステータスが200ではありません: " + strconv.Itoa(status)))
+					return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 				}
 
 				var res Response
 				err = json.NewDecoder(body).Decode(&res)
 				if err != nil || res.Stroke == nil || res.Stroke.ID <= 0 {
-					return errors.New(fails.Add("POST /api/strokes/rooms/" + strconv.FormatInt(RoomID, 10) + ", レスポンス内容が正しくありません"))
+					return errors.New("レスポンス内容が正しくありません")
 				}
 
 				timeTaken := responseTime.Sub(postTime).Seconds()
