@@ -18,8 +18,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Songmu/isucon6-qualifier/bench/score"
-	"github.com/Songmu/isucon6-qualifier/portal/job"
+	"github.com/catatsuy/isucon6-final/bench/score"
+	"github.com/catatsuy/isucon6-final/bench/job"
 	"github.com/Songmu/timeout"
 	"github.com/mitchellh/go-homedir"
 )
