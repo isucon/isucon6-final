@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/session"
 )
@@ -102,6 +103,7 @@ func LoadIndexPage(s *session.Session) {
 
 	err := s.Get("/", func(status int, body io.Reader) error {
 		if status != 200 {
+			fails.Critical()
 			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 		}
 		doc, err := makeDocument(body)
@@ -112,11 +114,13 @@ func LoadIndexPage(s *session.Session) {
 		token = extractCsrfToken(doc)
 
 		if token == "" {
+			fails.Critical()
 			return errors.New("csrf_tokenが取得できませんでした")
 		}
 
 		images = extractImages(doc)
 		if len(images) < 100 {
+			fails.Critical()
 			return errors.New("画像の枚数が少なすぎます")
 		}
 
@@ -141,10 +145,12 @@ func LoadRoomPage(s *session.Session) {
 
 	err := s.Get("/", func(status int, body io.Reader) error {
 		if status != 200 {
+			fails.Critical()
 			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 		}
 		doc, err := makeDocument(body)
 		if err != nil {
+			fails.Critical()
 			return err
 		}
 
@@ -175,6 +181,7 @@ func LoadRoomPage(s *session.Session) {
 
 	_ = s.Get(roomURL, func(status int, body io.Reader) error {
 		if status != 200 {
+			fails.Critical()
 			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 		}
 
@@ -194,16 +201,19 @@ func CheckCSRFTokenRefreshed(s *session.Session) {
 
 	err := s.Get("/", func(status int, body io.Reader) error {
 		if status != 200 {
+			fails.Critical()
 			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 		}
 		doc, err := makeDocument(body)
 		if err != nil {
+			fails.Critical()
 			return err
 		}
 
 		token = extractCsrfToken(doc)
 
 		if token == "" {
+			fails.Critical()
 			return errors.New("csrf_tokenが取得できませんでした")
 		}
 
@@ -217,16 +227,19 @@ func CheckCSRFTokenRefreshed(s *session.Session) {
 
 	_ = s.Get("/", func(status int, body io.Reader) error {
 		if status != 200 {
+			fails.Critical()
 			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 		}
 		doc, err := makeDocument(body)
 		if err != nil {
+			fails.Critical()
 			return err
 		}
 
 		t := extractCsrfToken(doc)
 
 		if t == token {
+			fails.Critical()
 			return errors.New("csrf_tokenが使いまわされています")
 		}
 
