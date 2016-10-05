@@ -1,10 +1,20 @@
-hash: e51fff99e94c248cae99ba7b3ce4c2197935b215c5a4a50b6291b812faa75a10
-updated: 2016-09-04T14:59:34.802314148+09:00
+hash: 328583861b7db3d342dc5d3df0fb7f3ee8300a96f0a667da85361319175f55db
+updated: 2016-10-03T13:25:17.865102971+09:00
 imports:
+- name: cloud.google.com/go
+  version: 90296fd601ebfc594192e722a022663b0c3f8756
+  subpackages:
+  - compute/metadata
+  - internal
 - name: github.com/braintree/manners
   version: 0b5e6b2c2843f4c83c2a40f96980b09cf4af733c
 - name: github.com/go-sql-driver/mysql
   version: a732e14c62dde3285440047bba97581bc472ae18
+- name: github.com/golang/gddo
+  version: aa8084e58a66f26ac6f479a75f0da68ed2067d4e
+  subpackages:
+  - httputil
+  - httputil/header
 - name: github.com/gorilla/context
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/securecookie
@@ -17,4 +27,22 @@ imports:
   - listener
 - name: github.com/pkg/errors
   version: 17b591df37844cde689f4d5813e5cea0927d8dd2
-testImports: []
+- name: golang.org/x/net
+  version: 819f4c5391c3fa3e3f7dab092b388a396c6723a8
+  subpackages:
+  - context
+  - context/ctxhttp
+testImports:
+- name: github.com/davecgh/go-spew
+  version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  subpackages:
+  - difflib
+- name: github.com/stretchr/testify
+  version: 976c720a22c8eb4eb6a0b4348ad85ad12491a506
+  subpackages:
+  - assert
+  - require
