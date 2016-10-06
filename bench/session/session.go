@@ -61,26 +61,28 @@ func New(baseURL string) *Session {
 	return s
 }
 
-func (s *Session) NewRequest(method, path string, body io.Reader) (*http.Request, error) {
+func (s *Session) request(method, path string, body io.Reader, headers map[string]string, checkFunc CheckFunc) error {
+	errPrefix := method + " " + path + ", "
+
 	u, err := url.Parse(path)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	u.Scheme = s.Scheme
 	u.Host = s.Host
-	return http.NewRequest(method, u.String(), body)
-}
 
-func (s *Session) Get(path string, checkFunc CheckFunc) error {
-	errPrefix := "GET " + path + ", "
-
-	req, err := s.NewRequest("GET", path, nil)
+	req, err := http.NewRequest(method, u.String(), body)
 	if err != nil {
 		stderr.Log.Println(errPrefix + "error: " + err.Error())
 		return errors.New(fails.Add(errPrefix + "予期せぬ失敗です (主催者に連絡してください)"))
 	}
 
 	req.Header.Set("User-Agent", s.UserAgent)
+	if headers != nil {
+		for key, val := range headers {
+			req.Header.Set(key, val)
+		}
+	}
 
 	res, err := s.Client.Do(req)
 
@@ -101,34 +103,10 @@ func (s *Session) Get(path string, checkFunc CheckFunc) error {
 	return nil
 }
 
+func (s *Session) Get(path string, checkFunc CheckFunc) error {
+	return s.request("GET", path, nil, nil, checkFunc)
+}
+
 func (s *Session) Post(path string, body []byte, headers map[string]string, checkFunc CheckFunc) error {
-	errPrefix := "POST " + path + ", "
-
-	req, err := s.NewRequest("POST", path, bytes.NewBuffer(body))
-	if err != nil {
-		stderr.Log.Println(errPrefix + "error: " + err.Error())
-		return errors.New(fails.Add(errPrefix + "予期せぬ失敗です (主催者に連絡してください)"))
-	}
-
-	req.Header.Set("User-Agent", s.UserAgent)
-	for key, val := range headers {
-		req.Header.Set(key, val)
-	}
-
-	res, err := s.Client.Do(req)
-
-	if err != nil {
-		if err, ok := err.(net.Error); ok && err.Timeout() {
-			return errors.New(fails.Add(errPrefix + "リクエストがタイムアウトしました"))
-		}
-		stderr.Log.Println(errPrefix + "error: " + err.Error())
-		return errors.New(fails.Add(errPrefix + "リクエストに失敗しました"))
-	}
-	defer res.Body.Close()
-
-	err = checkFunc(res.StatusCode, res.Body)
-	if err != nil {
-		return errors.New(fails.Add(errPrefix + err.Error()))
-	}
-	return nil
+	return s.request("POST", path, bytes.NewBuffer(body), headers, checkFunc)
 }
