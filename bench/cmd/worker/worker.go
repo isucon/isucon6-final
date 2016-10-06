@@ -18,9 +18,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/catatsuy/isucon6-final/bench/score"
-	"github.com/catatsuy/isucon6-final/bench/job"
 	"github.com/Songmu/timeout"
+	"github.com/catatsuy/isucon6-final/bench/job"
+	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/mitchellh/go-homedir"
 )
 

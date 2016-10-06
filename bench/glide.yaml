@@ -3,3 +3,4 @@ import:
 - package: github.com/PuerkitoBio/goquery
   version: v1.0.1
 - package: github.com/Songmu/timeout
+- package: github.com/mitchellh/go-homedir
