@@ -80,7 +80,6 @@ sub to_stroke_json {
 
 sub to_room_json {
     my ($data) = @_;
-    use Data::Dumper; warn Dumper $data;
     return {
         id            => int $data->{id},
         name          => $data->{name},
@@ -247,8 +246,8 @@ post '/api/rooms' => sub {
 };
 
 get '/api/rooms/:id' => sub {
-    my ($self, $c, $id) = @_;
-    my $room = get_room($self->dbh, $id);
+    my ($self, $c) = @_;
+    my $room = get_room($self->dbh, $c->args->{id});
     unless ($room) {
         $c->res->code(404);
         $c->render_json({
@@ -258,10 +257,9 @@ get '/api/rooms/:id' => sub {
 
     my $strokes = get_strokes($self->dbh, $room->{id}, 0);
     foreach my $stroke (@$strokes) {
-        $strokes->{points} = get_stroke_points($self->dbh, $stroke->{id})
+        $stroke->{points} = get_stroke_points($self->dbh, $stroke->{id});
     }
     $room->{strokes} = $strokes;
-    # XXX
     $room->{watcher_count} = get_watcher_count($self->dbh, $room->{id});
     $c->render_json({
         room => to_room_json($room),
