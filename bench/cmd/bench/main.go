@@ -15,7 +15,6 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/scenario"
 	"github.com/catatsuy/isucon6-final/bench/score"
-	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
 var BenchmarkTimeout int
@@ -65,7 +64,7 @@ func makeOrigins(urls string) ([]string, error) {
 }
 
 func initialCheck(origins []string) {
-	scenario.CheckCSRFTokenRefreshed(session.New(origins[0]))
+	scenario.CheckCSRFTokenRefreshed(origins)
 }
 
 func benchmark(origins []string) {
@@ -83,22 +82,22 @@ L:
 		select {
 		case <-loadIndexPageCh:
 			go func() {
-				scenario.LoadIndexPage(session.New(origins[0]))
+				scenario.LoadIndexPage(origins)
 				loadIndexPageCh <- struct{}{}
 			}()
 		case <-loadRoomPageCh:
 			go func() {
-				scenario.LoadRoomPage(session.New(origins[0]))
+				scenario.LoadRoomPage(origins)
 				loadRoomPageCh <- struct{}{}
 			}()
 		case <-checkCSRFTokenRefreshedCh:
 			go func() {
-				scenario.CheckCSRFTokenRefreshed(session.New(origins[0]))
+				scenario.CheckCSRFTokenRefreshed(origins)
 				checkCSRFTokenRefreshedCh <- struct{}{}
 			}()
 		case <-matsuriCh:
 			go func() {
-				scenario.Matsuri(session.New(origins[0]), Audience1, matsuriTimeoutCh)
+				scenario.Matsuri(origins, Audience1, matsuriTimeoutCh)
 				//matsuriRoomCh <- struct{}{} // Never again.
 				matsuriEndCh <- struct{}{}
 			}()

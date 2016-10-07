@@ -2,11 +2,16 @@ package scenario
 
 import (
 	"io"
+	"math/rand"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/session"
 )
+
+func newSession(origins []string) *session.Session {
+	return session.New(origins[rand.Intn(len(origins))])
+}
 
 func fetchCSRFToken(s *session.Session, path string) (string, bool) {
 	var token string

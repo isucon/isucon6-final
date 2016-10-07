@@ -50,7 +50,9 @@ func loadImages(s *session.Session, images []string) bool {
 }
 
 // トップページと画像に負荷をかける
-func LoadIndexPage(s *session.Session) {
+func LoadIndexPage(origins []string) {
+	s := newSession(origins)
+
 	var token string
 	var images []string
 
@@ -81,7 +83,9 @@ func LoadIndexPage(s *session.Session) {
 }
 
 // トップページを開いて適当な部屋を開く（Ajaxじゃないのは「別タブで」開いたということにでもしておく）
-func LoadRoomPage(s *session.Session) {
+func LoadRoomPage(origins []string) {
+	s := newSession(origins)
+
 	var images []string
 	var rooms []string
 
@@ -123,7 +127,9 @@ func LoadRoomPage(s *session.Session) {
 }
 
 // ページ内のCSRFトークンが毎回変わっていることをチェック
-func CheckCSRFTokenRefreshed(s *session.Session) {
+func CheckCSRFTokenRefreshed(origins []string) {
+	s := newSession(origins)
+
 	token1, ok := fetchCSRFToken(s, "/")
 	if !ok {
 		return

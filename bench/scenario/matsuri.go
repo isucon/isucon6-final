@@ -12,11 +12,12 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/seed"
-	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
 // 一人がroomを作る→大勢がそのroomをwatchする
-func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
+func Matsuri(origins []string, aud string, timeoutCh chan struct{}) {
+	s := newSession(origins)
+
 	var token string
 
 	ok := s.Get("/", func(body io.Reader, l *fails.Logger) bool {
