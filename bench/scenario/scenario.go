@@ -14,18 +14,6 @@ var (
 	StrokeReceiveScore int64 = 1
 )
 
-func extractImages(doc *goquery.Document) []string {
-	imageUrls := []string{}
-
-	doc.Find("img").Each(func(_ int, selection *goquery.Selection) {
-		if url, ok := selection.Attr("src"); ok {
-			imageUrls = append(imageUrls, url)
-		}
-	})
-
-	return imageUrls
-}
-
 // TODO: ステータスコード以外にもチェックしたい
 func loadImages(s *session.Session, images []string) bool {
 	status := true

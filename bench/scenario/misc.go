@@ -52,3 +52,15 @@ func extractCsrfToken(doc *goquery.Document, l *fails.Logger) (string, bool) {
 
 	return token, ok
 }
+
+func extractImages(doc *goquery.Document) []string {
+	imageUrls := []string{}
+
+	doc.Find("img").Each(func(_ int, selection *goquery.Selection) {
+		if url, ok := selection.Attr("src"); ok {
+			imageUrls = append(imageUrls, url)
+		}
+	})
+
+	return imageUrls
+}
