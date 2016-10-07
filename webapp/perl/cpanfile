@@ -1,0 +1,5 @@
+requires 'DBIx::Sunny';
+requires 'DBD::mysql';
+requires 'Kossy';
+requires 'Plack';
+requires 'Starlet';

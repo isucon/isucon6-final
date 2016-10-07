@@ -1,0 +1,5 @@
+FROM perl:5.24.0
+
+RUN cpanm Carton
+
+CMD carton install && carton exec -- plackup -s Starlet -R lib
