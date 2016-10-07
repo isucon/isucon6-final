@@ -7,16 +7,10 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/catatsuy/isucon6-final/bench/fails"
-	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
 var (
-	IndexGetScore      int64 = 1
-	RoomGetScore       int64 = 1
-	SVGGetScore        int64 = 1
-	CreateRoomScore    int64 = 20
-	CreateStrokeScore  int64 = 20
 	StrokeReceiveScore int64 = 1
 )
 
@@ -37,7 +31,6 @@ func loadImages(s *session.Session, images []string) bool {
 	status := true
 	for _, image := range images {
 		ok := s.Get(image, func(body io.Reader, l *fails.Logger) bool {
-			score.Increment(SVGGetScore)
 			return false
 		})
 		status = status && ok
@@ -53,7 +46,6 @@ func loadImages(s *session.Session, images []string) bool {
 	//			if status != 200 {
 	//				return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 	//			}
-	//			score.Increment(SVGGetScore)
 	//			return nil
 	//		})
 	//		errs <- err
@@ -91,8 +83,6 @@ func LoadIndexPage(s *session.Session) {
 			return false
 		}
 
-		score.Increment(IndexGetScore)
-
 		return true
 	})
 	if !ok {
@@ -123,8 +113,6 @@ func LoadRoomPage(s *session.Session) {
 			}
 		})
 
-		score.Increment(IndexGetScore)
-
 		return true
 	})
 	if !ok {
@@ -142,7 +130,6 @@ func LoadRoomPage(s *session.Session) {
 
 		// TODO: polylineのidを上で開いたSVGと比較するか？
 
-		score.Increment(RoomGetScore)
 		return true
 	})
 }

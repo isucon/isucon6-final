@@ -14,9 +14,14 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/http"
 	"github.com/catatsuy/isucon6-final/bench/http/cookiejar"
+	"github.com/catatsuy/isucon6-final/bench/score"
 )
 
-const DefaultTimeout = time.Duration(10) * time.Second
+const (
+	DefaultTimeout = time.Duration(10) * time.Second
+	GetScore       = 1
+	PostScore      = 20
+)
 
 type Session struct {
 	Scheme    string
@@ -105,9 +110,17 @@ func (s *Session) request(method, path string, body io.Reader, headers map[strin
 }
 
 func (s *Session) Get(path string, checkFunc CheckFunc) bool {
-	return s.request("GET", path, nil, nil, checkFunc)
+	ok := s.request("GET", path, nil, nil, checkFunc)
+	if ok {
+		score.Increment(GetScore)
+	}
+	return ok
 }
 
 func (s *Session) Post(path string, body []byte, headers map[string]string, checkFunc CheckFunc) bool {
-	return s.request("POST", path, bytes.NewBuffer(body), headers, checkFunc)
+	ok := s.request("POST", path, bytes.NewBuffer(body), headers, checkFunc)
+	if ok {
+		score.Increment(PostScore)
+	}
+	return ok
 }

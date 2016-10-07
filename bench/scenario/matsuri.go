@@ -30,8 +30,6 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 			return false
 		}
 
-		score.Increment(IndexGetScore)
-
 		return true
 	})
 	if !ok {
@@ -73,8 +71,6 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 		}
 		RoomID = res.Room.ID
 
-		score.Increment(CreateRoomScore)
-
 		return true
 	})
 
@@ -103,7 +99,6 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 
 				u := "/api/strokes/rooms/" + strconv.FormatInt(RoomID, 10)
 				ok := s.Post(u, postBody, headers, func(body io.Reader, l *fails.Logger) bool {
-					responseTime := time.Now()
 
 					b, err := ioutil.ReadAll(body)
 					if err != nil {
@@ -120,13 +115,6 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 					if res.Stroke == nil || res.Stroke.ID <= 0 {
 						l.Add("レスポンス内容が正しくありません"+string(b[:20]), nil)
 						return false
-					}
-
-					timeTaken := responseTime.Sub(postTime).Seconds()
-					if timeTaken < 1 { // TODO: この時間は要調整
-						score.Increment(CreateStrokeScore * 2)
-					} else if timeTaken < 3 {
-						score.Increment(CreateStrokeScore)
 					}
 
 					postTimes[res.Stroke.ID] = postTime
