@@ -5,24 +5,25 @@ import (
 	"io"
 
 	"github.com/catatsuy/isucon6-final/bench/session"
+	"github.com/catatsuy/isucon6-final/bench/fails"
+	"github.com/PuerkitoBio/goquery"
 )
 
 func GetCSRFToken(s *session.Session, path string) (string, error) {
 	var token string
 
-	err := s.Get(path, func(status int, body io.Reader) error {
-		if status != 200 {
-			return errors.New("ステータスコードが200ではありません")
-		}
-		doc, err := makeDocument(body)
+	err := s.Get(path, func(body io.Reader, l *fails.Logger) error {
+		doc, err := goquery.NewDocumentFromReader(body)
 		if err != nil {
-			return errors.New("HTMLが正しくありません")
+			l.Add("ページのHTMLがパースできませんでした", err)
+			return err
 		}
 
 		token = extractCsrfToken(doc)
 
 		if token == "" {
-			return errors.New("トークンが取得できませんでした")
+			l.Add("トークンが取得できませんでした", nil)
+			return errors.New("bad csrf_token")
 		}
 
 		return nil

@@ -37,20 +37,34 @@ func GetUnique() []string {
 	return retMsgs
 }
 
-func Add(msg string) string {
-	fmt.Fprintln(os.Stderr, msg) // TODO: デバッグモードのみにする
-
+func Add(msg string, err error)  {
 	mu.Lock()
 	msgs = append(msgs, msg)
 	mu.Unlock()
 
-	return msg
+	if err != nil {
+		msg += " error: " + err.Error()
+	}
+	fmt.Fprintln(os.Stderr, msg) // TODO: デバッグモードのみにする?
 }
 
 func Critical() {
-	isCritical = true
+	isCritical = true // TODO: mutex
 }
 
 func GetIsCritical() bool {
 	return isCritical
+}
+
+type Logger struct {
+	Prefix string
+}
+
+func (l *Logger) Add(msg string, err error) {
+	 Add(msg, err)
+}
+
+func (l *Logger) Critical(msg string, err error) {
+	Add(msg + " (critical)", err)
+	isCritical = true
 }

@@ -14,28 +14,25 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/seed"
 	"github.com/catatsuy/isucon6-final/bench/session"
-	"github.com/catatsuy/isucon6-final/bench/stderr"
+	"github.com/PuerkitoBio/goquery"
 )
 
 // 一人がroomを作る→大勢がそのroomをwatchする
 func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 	var token string
 
-	err := s.Get("/", func(status int, body io.Reader) error {
-		if status != 200 {
-			fails.Critical()
-			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-		}
-		doc, err := makeDocument(body)
+	err := s.Get("/", func(body io.Reader, l *fails.Logger) error {
+		doc, err := goquery.NewDocumentFromReader(body)
 		if err != nil {
+			l.Add("ページのHTMLがパースできませんでした", err)
 			return err
 		}
 
 		token = extractCsrfToken(doc)
 
 		if token == "" {
-			fails.Critical()
-			return errors.New("csrf_tokenが取得できませんでした")
+			l.Add("csrf_tokenが取得できませんでした", nil)
+			return errors.New("could not get csrf_token")
 		}
 
 		score.Increment(IndexGetScore)
@@ -63,22 +60,21 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 
 	var RoomID int64
 
-	err = s.Post("/api/rooms", postBody, headers, func(status int, body io.Reader) error {
-		if status != 200 {
-			fails.Critical()
-			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-		}
-
-		var res Response
-		err := json.NewDecoder(body).Decode(&res)
+	err = s.Post("/api/rooms", postBody, headers, func(body io.Reader, l *fails.Logger) error {
+		b, err := ioutil.ReadAll(body)
 		if err != nil {
-			fails.Critical()
-			stderr.Log.Println(err.Error())
-			return errors.New("レスポンス内容が正しくありません")
+			l.Add("レスポンス内容が読み込めませんでした", err)
+			return err
+		}
+		var res Response
+		err = json.Unmarshal(b, &res)
+		if err != nil {
+			l.Add("レスポンス内容が正しくありません" + string(b[:20]), err)
+			return err
 		}
 		if res.Room == nil || res.Room.ID <= 0 {
-			fails.Critical()
-			return errors.New("レスポンス内容が正しくありません")
+			l.Add("レスポンス内容が正しくありません" + string(b[:20]), nil)
+			return errors.New("bad response")
 		}
 		RoomID = res.Room.ID
 
@@ -110,24 +106,25 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 
 				postTime := time.Now()
 
-				err := s.Post("/api/strokes/rooms/"+strconv.FormatInt(RoomID, 10), postBody, headers, func(status int, body io.Reader) error {
+				u := "/api/strokes/rooms/"+strconv.FormatInt(RoomID, 10)
+				err := s.Post(u, postBody, headers, func(body io.Reader, l *fails.Logger) error {
 					responseTime := time.Now()
 
-					if status != 200 {
-						fails.Critical()
-						return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
+					b, err := ioutil.ReadAll(body)
+					if err != nil {
+						l.Add("レスポンス内容が読み込めませんでした", err)
+						return err
 					}
 
 					var res Response
-					err = json.NewDecoder(body).Decode(&res)
+					err = json.Unmarshal(b, &res)
 					if err != nil {
-						fails.Critical()
-						stderr.Log.Println(err.Error())
-						return errors.New("レスポンス内容が正しくありません")
+						l.Add("レスポンス内容が正しくありません" + string(b[:20]), err)
+						return err
 					}
 					if res.Stroke == nil || res.Stroke.ID <= 0 {
-						fails.Critical()
-						return errors.New("レスポンス内容が正しくありません")
+						l.Add("レスポンス内容が正しくありません" + string(b[:20]), nil)
+						return errors.New("bad response")
 					}
 
 					timeTaken := responseTime.Sub(postTime).Seconds()
@@ -155,31 +152,24 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 
 	resp, err := http.Get(aud + "?" + v.Encode())
 	if err != nil {
-		stderr.Log.Println("failed to call audience " + aud + " :" + err.Error())
-		fails.Add("予期せぬエラー (主催者に連絡してください)")
+		fails.Add("予期せぬエラー (主催者に連絡してください)", err)
 		return
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			stderr.Log.Println("failed to call audience " + aud)
-		} else {
-			stderr.Log.Println("failed to call audience " + aud + " :" + string(body))
-		}
-		fails.Add("予期せぬエラー (主催者に連絡してください)")
+		_, err := ioutil.ReadAll(resp.Body)
+		fails.Add("予期せぬエラー (主催者に連絡してください)", err)
 		return
 	}
 
 	var audRes AudienceResponse
 	err = json.NewDecoder(resp.Body).Decode(&audRes)
 	if err != nil {
-		stderr.Log.Println("failed to decode json from audience: " + err.Error())
-		fails.Add("予期せぬエラー (主催者に連絡してください)")
+		fails.Add("予期せぬエラー (主催者に連絡してください)", err)
 		return
 	}
 	for _, msg := range audRes.Errors {
-		fails.Add(msg)
+		fails.Add(msg, nil)
 	}
 	for _, strokeLog := range audRes.StrokeLogs {
 		postTime := postTimes[strokeLog.StrokeID]

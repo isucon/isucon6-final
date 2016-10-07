@@ -13,7 +13,7 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/http"
 	"github.com/catatsuy/isucon6-final/bench/http/cookiejar"
-	"github.com/catatsuy/isucon6-final/bench/stderr"
+	"strconv"
 )
 
 const DefaultTimeout = time.Duration(10) * time.Second
@@ -26,7 +26,7 @@ type Session struct {
 	Transport *http.Transport
 }
 
-type CheckFunc func(status int, body io.Reader) error // TODO: Headerも受け取る？
+type CheckFunc func(body io.Reader, l *fails.Logger) error
 
 func New(baseURL string) *Session {
 	s := &Session{}
@@ -62,7 +62,7 @@ func New(baseURL string) *Session {
 }
 
 func (s *Session) request(method, path string, body io.Reader, headers map[string]string, checkFunc CheckFunc) error {
-	errPrefix := method + " " + path + ", "
+	l := &fails.Logger{Prefix : "["+ method + " " + path + "] "}
 
 	u, err := url.Parse(path)
 	if err != nil {
@@ -73,8 +73,8 @@ func (s *Session) request(method, path string, body io.Reader, headers map[strin
 
 	req, err := http.NewRequest(method, u.String(), body)
 	if err != nil {
-		stderr.Log.Println(errPrefix + "error: " + err.Error())
-		return errors.New(fails.Add(errPrefix + "予期せぬ失敗です (主催者に連絡してください)"))
+		l.Critical("予期せぬ失敗です (主催者に連絡してください)", err)
+		return err
 	}
 
 	req.Header.Set("User-Agent", s.UserAgent)
@@ -88,17 +88,22 @@ func (s *Session) request(method, path string, body io.Reader, headers map[strin
 
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
-			return errors.New(fails.Add(errPrefix + "リクエストがタイムアウトしました"))
+			l.Add("リクエストがタイムアウトしました", err)
+			return err
 		}
-		stderr.Log.Println(errPrefix + "error: " + err.Error())
-		fails.Add(errPrefix + "リクエストに失敗しました")
+		l.Add("リクエストが失敗しました", err)
 		return err
 	}
 	defer res.Body.Close()
 
-	err = checkFunc(res.StatusCode, res.Body)
+	if res.StatusCode != 200 {
+		l.Add("ステータスが200ではありません: " + strconv.Itoa(res.StatusCode), nil)
+		return errors.New("bad status")
+	}
+
+	err = checkFunc(res.Body, l)
 	if err != nil {
-		return errors.New(fails.Add(errPrefix + err.Error()))
+		return err
 	}
 	return nil
 }

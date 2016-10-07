@@ -4,8 +4,6 @@ import (
 	"errors"
 	"io"
 	"math/rand"
-	"strconv"
-
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -22,14 +20,6 @@ var (
 	CreateStrokeScore  int64 = 20
 	StrokeReceiveScore int64 = 1
 )
-
-func makeDocument(r io.Reader) (*goquery.Document, error) {
-	doc, err := goquery.NewDocumentFromReader(r)
-	if err != nil {
-		return nil, errors.New("ページのHTMLがパースできませんでした")
-	}
-	return doc, nil
-}
 
 func extractImages(doc *goquery.Document) []string {
 	imageUrls := []string{}
@@ -55,13 +45,11 @@ func extractCsrfToken(doc *goquery.Document) string {
 	return token
 }
 
+// TODO: ステータスコード以外にもチェックしたい
 func loadImages(s *session.Session, images []string) error {
 	var lastErr error
 	for _, image := range images {
-		err := s.Get(image, func(status int, body io.Reader) error {
-			if status != 200 {
-				return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-			}
+		err := s.Get(image, func(body io.Reader, l *fails.Logger) error {
 			score.Increment(SVGGetScore)
 			return nil
 		})
@@ -101,27 +89,24 @@ func LoadIndexPage(s *session.Session) {
 	var token string
 	var images []string
 
-	err := s.Get("/", func(status int, body io.Reader) error {
-		if status != 200 {
-			fails.Critical()
-			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-		}
-		doc, err := makeDocument(body)
+	err := s.Get("/", func(body io.Reader, l *fails.Logger) error {
+		doc, err := goquery.NewDocumentFromReader(body)
 		if err != nil {
+			l.Add("ページのHTMLがパースできませんでした", err)
 			return err
 		}
 
 		token = extractCsrfToken(doc)
 
 		if token == "" {
-			fails.Critical()
-			return errors.New("csrf_tokenが取得できませんでした")
+			l.Add("csrf_tokenが取得できませんでした", nil)
+			return errors.New("could not get csrf_token")
 		}
 
 		images = extractImages(doc)
 		if len(images) < 100 {
-			fails.Critical()
-			return errors.New("画像の枚数が少なすぎます")
+			l.Critical("画像の枚数が少なすぎます", nil)
+			return errors.New("could not get csrf_token")
 		}
 
 		score.Increment(IndexGetScore)
@@ -132,10 +117,7 @@ func LoadIndexPage(s *session.Session) {
 		return
 	}
 
-	err = loadImages(s, images)
-	if err != nil {
-		return
-	}
+	loadImages(s, images)
 }
 
 // トップページを開いて適当な部屋を開く（Ajaxじゃないのは「別タブで」開いたということにでもしておく）
@@ -143,14 +125,10 @@ func LoadRoomPage(s *session.Session) {
 	var images []string
 	var rooms []string
 
-	err := s.Get("/", func(status int, body io.Reader) error {
-		if status != 200 {
-			fails.Critical()
-			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-		}
-		doc, err := makeDocument(body)
+	err := s.Get("/", func(body io.Reader, l *fails.Logger) error {
+		doc, err := goquery.NewDocumentFromReader(body)
 		if err != nil {
-			fails.Critical()
+			l.Add("ページのHTMLがパースできませんでした", err)
 			return err
 		}
 
@@ -179,42 +157,31 @@ func LoadRoomPage(s *session.Session) {
 
 	roomURL := rooms[rand.Intn(len(rooms))]
 
-	_ = s.Get(roomURL, func(status int, body io.Reader) error {
-		if status != 200 {
-			fails.Critical()
-			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-		}
+	_ = s.Get(roomURL, func(body io.Reader, l *fails.Logger) error {
 
 		// TODO: polylineのidを上で開いたSVGと比較するか？
 
 		score.Increment(RoomGetScore)
 		return nil
 	})
-	if err != nil {
-		return
-	}
 }
 
 // ページ内のCSRFトークンが毎回変わっていることをチェック
 func CheckCSRFTokenRefreshed(s *session.Session) {
 	var token string
 
-	err := s.Get("/", func(status int, body io.Reader) error {
-		if status != 200 {
-			fails.Critical()
-			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-		}
-		doc, err := makeDocument(body)
+	err := s.Get("/", func(body io.Reader, l *fails.Logger) error {
+		doc, err := goquery.NewDocumentFromReader(body)
 		if err != nil {
-			fails.Critical()
+			l.Add("ページのHTMLがパースできませんでした", err)
 			return err
 		}
 
 		token = extractCsrfToken(doc)
 
 		if token == "" {
-			fails.Critical()
-			return errors.New("csrf_tokenが取得できませんでした")
+			l.Add("csrf_tokenが取得できませんでした", nil)
+			return errors.New("could not get csrf_token")
 		}
 
 		score.Increment(IndexGetScore)
@@ -225,22 +192,18 @@ func CheckCSRFTokenRefreshed(s *session.Session) {
 		return
 	}
 
-	_ = s.Get("/", func(status int, body io.Reader) error {
-		if status != 200 {
-			fails.Critical()
-			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-		}
-		doc, err := makeDocument(body)
+	_ = s.Get("/", func(body io.Reader, l *fails.Logger) error {
+		doc, err := goquery.NewDocumentFromReader(body)
 		if err != nil {
-			fails.Critical()
+			l.Add("ページのHTMLがパースできませんでした", err)
 			return err
 		}
 
-		t := extractCsrfToken(doc)
+		newToken := extractCsrfToken(doc)
 
-		if t == token {
-			fails.Critical()
-			return errors.New("csrf_tokenが使いまわされています")
+		if newToken == token {
+			l.Critical("csrf_tokenが使いまわされています", nil)
+			return errors.New("bad csrf_token")
 		}
 
 		score.Increment(IndexGetScore)
