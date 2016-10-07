@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/catatsuy/isucon6-final/bench/audience"
 	"github.com/catatsuy/isucon6-final/bench/http"
 	"github.com/catatsuy/isucon6-final/bench/scenario"
 )
@@ -45,14 +44,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	baseURL := scheme + "://" + host
-	watchers := make([]*audience.RoomWatcher, 0)
+	watchers := make([]*scenario.RoomWatcher, 0)
 
 	fmt.Println("start")
 
 	// まず最初にinitialWatcherNum人が入室する
 	for i := 0; i < initialWatcherNum; i++ {
 		fmt.Println("watcher", len(watchers)+1)
-		watchers = append(watchers, audience.NewRoomWatcher(baseURL, roomID))
+		watchers = append(watchers, scenario.NewRoomWatcher(baseURL, roomID))
 	}
 
 	numToIncreaseWatcher := (timeout - watcherIncreaseInterval) / watcherIncreaseInterval
@@ -63,7 +62,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		for _, w := range watchers {
 			if len(w.EndCh) == 0 {
 				fmt.Println("watcher", len(watchers)+1)
-				watchers = append(watchers, audience.NewRoomWatcher(baseURL, roomID))
+				watchers = append(watchers, scenario.NewRoomWatcher(baseURL, roomID))
 			}
 		}
 	}

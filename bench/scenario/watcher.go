@@ -1,4 +1,4 @@
-package audience
+package scenario
 
 import (
 	"fmt"
@@ -6,14 +6,13 @@ import (
 
 	"encoding/json"
 
-	"github.com/catatsuy/isucon6-final/bench/scenario"
 	"github.com/catatsuy/isucon6-final/bench/session"
 	"github.com/catatsuy/isucon6-final/bench/sse"
 )
 
 type RoomWatcher struct {
 	EndCh  chan struct{}
-	Logs   []scenario.StrokeLog
+	Logs   []StrokeLog
 	Errors []string
 
 	es     *sse.EventSource
@@ -23,7 +22,7 @@ type RoomWatcher struct {
 func NewRoomWatcher(target string, roomID int64) *RoomWatcher {
 	w := &RoomWatcher{
 		EndCh:  make(chan struct{}, 1),
-		Logs:   make([]scenario.StrokeLog, 0),
+		Logs:   make([]StrokeLog, 0),
 		Errors: make([]string, 0),
 		isLeft: false,
 	}
@@ -44,7 +43,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 
 	path := fmt.Sprintf("/rooms/%d", roomID)
 
-	token, ok := scenario.GetCSRFToken(s, path)
+	token, ok := GetCSRFToken(s, path)
 	if !ok {
 		w.EndCh <- struct{}{}
 		return
@@ -61,7 +60,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 	w.es.AddHeader("User-Agent", s.UserAgent)
 
 	w.es.On("stroke", func(data string) {
-		var stroke scenario.Stroke
+		var stroke Stroke
 		err := json.Unmarshal([]byte(data), &stroke)
 		if err != nil {
 			fmt.Println(err)
@@ -74,7 +73,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 			fmt.Println("response too late")
 			w.es.Close()
 		}
-		w.Logs = append(w.Logs, scenario.StrokeLog{
+		w.Logs = append(w.Logs, StrokeLog{
 			ReceivedTime: now,
 			RoomID:       roomID,
 			StrokeID:     stroke.ID,
