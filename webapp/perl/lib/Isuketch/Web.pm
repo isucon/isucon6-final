@@ -200,9 +200,7 @@ post '/api/rooms' => sub {
         });
     }
 
-    # TODO(php): getParsedBody
-    # TODO(php): empty()
-    my $posted_room = $c->req->parameters;
+    my $posted_room = decode_json $c->req->content;
     if (!length($posted_room->{name}) || !length($posted_room->{canvas_width}) || !length($posted_room->{canvas_height})) {
         $c->res->code(400);
         return $c->render_json({
@@ -260,6 +258,7 @@ get '/api/rooms/:id' => sub {
         $stroke->{points} = get_stroke_points($self->dbh, $stroke->{id});
     }
     $room->{strokes} = $strokes;
+    # XXX stroke_count?
     $room->{watcher_count} = get_watcher_count($self->dbh, $room->{id});
     return $c->render_json({
         room => to_room_json($room),
@@ -330,7 +329,7 @@ sub get_api_stream_room {
           update_room_watcher($self->dbh, $room->{id}, $token->{id});
           my $new_watcher_count = get_watcher_count($self->dbh, $room->{id});
           if ($new_watcher_count != $watcher_count) {
-              # XXX
+              # XXX $new_watcher_count?
               $writer->write(
                   "event:watcher_count\n" .
                   "data:$watcher_count\n\n"
@@ -362,7 +361,7 @@ post '/api/strokes/rooms/:id' => sub {
         })
     }
 
-    my $posted_stroke = $c->req->parameters;
+    my $posted_stroke = decode_json $c->req->content;
     if (!length($posted_stroke->{width}) || !length($posted_stroke->{points})) {
         $c->res->code(400);
         return $c->render_json({
