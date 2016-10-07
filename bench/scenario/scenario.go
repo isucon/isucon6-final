@@ -32,18 +32,6 @@ func extractImages(doc *goquery.Document) []string {
 	return imageUrls
 }
 
-func extractCsrfToken(doc *goquery.Document) string {
-	var token string
-
-	doc.Find("html").Each(func(_ int, selection *goquery.Selection) {
-		if t, ok := selection.Attr("data-csrf-token"); ok {
-			token = t
-		}
-	})
-
-	return token
-}
-
 // TODO: ステータスコード以外にもチェックしたい
 func loadImages(s *session.Session, images []string) bool {
 	status := true
@@ -87,16 +75,13 @@ func LoadIndexPage(s *session.Session) {
 	var images []string
 
 	ok := s.Get("/", func(body io.Reader, l *fails.Logger) bool {
-		doc, err := goquery.NewDocumentFromReader(body)
-		if err != nil {
-			l.Add("ページのHTMLがパースできませんでした", err)
+		doc, ok := makeDocument(body, l)
+		if !ok {
 			return false
 		}
 
-		token = extractCsrfToken(doc)
-
-		if token == "" {
-			l.Add("csrf_tokenが取得できませんでした", nil)
+		token, ok = extractCsrfToken(doc, l)
+		if !ok {
 			return false
 		}
 
@@ -123,9 +108,8 @@ func LoadRoomPage(s *session.Session) {
 	var rooms []string
 
 	ok := s.Get("/", func(body io.Reader, l *fails.Logger) bool {
-		doc, err := goquery.NewDocumentFromReader(body)
-		if err != nil {
-			l.Add("ページのHTMLがパースできませんでした", err)
+		doc, ok := makeDocument(body, l)
+		if !ok {
 			return false
 		}
 
@@ -168,16 +152,13 @@ func CheckCSRFTokenRefreshed(s *session.Session) {
 	var token string
 
 	ok := s.Get("/", func(body io.Reader, l *fails.Logger) bool {
-		doc, err := goquery.NewDocumentFromReader(body)
-		if err != nil {
-			l.Add("ページのHTMLがパースできませんでした", err)
+		doc, ok := makeDocument(body, l)
+		if !ok {
 			return false
 		}
 
-		token = extractCsrfToken(doc)
-
-		if token == "" {
-			l.Add("csrf_tokenが取得できませんでした", nil)
+		token, ok = extractCsrfToken(doc, l)
+		if !ok {
 			return false
 		}
 
@@ -190,13 +171,15 @@ func CheckCSRFTokenRefreshed(s *session.Session) {
 	}
 
 	_ = s.Get("/", func(body io.Reader, l *fails.Logger) bool {
-		doc, err := goquery.NewDocumentFromReader(body)
-		if err != nil {
-			l.Add("ページのHTMLがパースできませんでした", err)
+		doc, ok := makeDocument(body, l)
+		if !ok {
 			return false
 		}
 
-		newToken := extractCsrfToken(doc)
+		newToken, ok := extractCsrfToken(doc, l)
+		if !ok {
+			return false
+		}
 
 		if newToken == token {
 			l.Critical("csrf_tokenが使いまわされています", nil)

@@ -9,7 +9,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/seed"
@@ -21,16 +20,13 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 	var token string
 
 	ok := s.Get("/", func(body io.Reader, l *fails.Logger) bool {
-		doc, err := goquery.NewDocumentFromReader(body)
-		if err != nil {
-			l.Add("ページのHTMLがパースできませんでした", err)
+		doc, ok := makeDocument(body, l)
+		if !ok {
 			return false
 		}
 
-		token = extractCsrfToken(doc)
-
-		if token == "" {
-			l.Add("csrf_tokenが取得できませんでした", nil)
+		token, ok = extractCsrfToken(doc, l)
+		if !ok {
 			return false
 		}
 

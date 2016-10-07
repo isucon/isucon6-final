@@ -43,7 +43,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 
 	path := fmt.Sprintf("/rooms/%d", roomID)
 
-	token, ok := GetCSRFToken(s, path)
+	token, ok := fetchCSRFToken(s, path)
 	if !ok {
 		w.EndCh <- struct{}{}
 		return
