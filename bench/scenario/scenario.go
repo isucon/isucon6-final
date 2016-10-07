@@ -149,45 +149,17 @@ func LoadRoomPage(s *session.Session) {
 
 // ページ内のCSRFトークンが毎回変わっていることをチェック
 func CheckCSRFTokenRefreshed(s *session.Session) {
-	var token string
-
-	ok := s.Get("/", func(body io.Reader, l *fails.Logger) bool {
-		doc, ok := makeDocument(body, l)
-		if !ok {
-			return false
-		}
-
-		token, ok = extractCsrfToken(doc, l)
-		if !ok {
-			return false
-		}
-
-		score.Increment(IndexGetScore)
-
-		return true
-	})
+	token1, ok := fetchCSRFToken(s, "/")
 	if !ok {
 		return
 	}
 
-	_ = s.Get("/", func(body io.Reader, l *fails.Logger) bool {
-		doc, ok := makeDocument(body, l)
-		if !ok {
-			return false
-		}
+	token2, ok := fetchCSRFToken(s, "/")
+	if !ok {
+		return
+	}
 
-		newToken, ok := extractCsrfToken(doc, l)
-		if !ok {
-			return false
-		}
-
-		if newToken == token {
-			l.Critical("csrf_tokenが使いまわされています", nil)
-			return false
-		}
-
-		score.Increment(IndexGetScore)
-
-		return true
-	})
+	if token1 != token2 {
+		fails.Critical("csrf_tokenが使いまわされています", nil)
+	}
 }
