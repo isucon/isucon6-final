@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use Kossy;
 use DBIx::Sunny;
+use Time::HiRes qw(usleep);
+use JSON qw(encode_json);
 
 sub config {
     state $conf = {
@@ -136,7 +138,7 @@ sub update_room_watcher {
     my ($dbh, $room_id, $token_id) = @_;
     $dbh->query(q[
         INSERT INTO `room_watchers` (`room_id`, `token_id`)
-        VALUES (?, ?)'
+        VALUES (?, ?)
         ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP(6)
     ], $room_id, $token_id);
 }
@@ -266,11 +268,81 @@ get '/api/rooms/:id' => sub {
     });
 };
 
-get '/api/stream/rooms/:id' => sub {
-    my ($self, $c) = @_;
-    $c->res->headers->add('Content-Type' => 'text/event-stream');
-    # TODO
-};
+# get /api/stream/rooms/:id
+sub get_api_stream_room {
+  my ($self, $env, $room_id) = @_;
+  my $req = Plack::Request->new($env);
+
+  return sub {
+      my ($respond) = @_;
+      my $writer = $respond->([ 200, [ 'Content-Type' => 'text/event-stream' ] ]);
+
+      my $token = eval {
+          check_token($self->dbh, $req->parameters->{csrf_token});
+      };
+      if ($@) {
+          $writer->write(
+            "event:bad_request\n" .
+            "data:トークンエラー。ページを再読み込みしてください。\n\n"
+          );
+          $writer->close();
+          return;
+      }
+
+      my $room = get_room($self->dbh, $room_id);
+      unless ($room) {
+          $writer->write(
+            "event:bad_request\n" .
+            "data:この部屋は存在しません\n\n"
+          );
+          $writer->close();
+          return;
+      }
+
+      update_room_watcher($self->dbh, $room->{id}, $token->{id});
+      my $watcher_count = get_watcher_count($self->dbh, $room->{id});
+
+      $writer->write(
+        "retry:500\n\n" .
+        "event:watcher_count\n" .
+        "data:$watcher_count\n\n"
+      );
+
+      my $last_stroke_id = 0;
+      if ($req->header('Last-Event-ID')) {
+          $last_stroke_id = int $req->header('Last-Event-ID');
+      }
+
+      my $loop = 6;
+      while ($loop > 0) {
+          $loop--;
+          usleep(500 * 1000); # 500ms
+
+          my $strokes = get_strokes($self->dbh, $room->{id}, $last_stroke_id);
+          foreach my $stroke (@$strokes) {
+              $stroke->{points} = get_stroke_points($self->dbh, $stroke->{id});
+              $writer->write(
+                  "id:$stroke->{id}\n\n" .
+                  "event:stroke\n" .
+                  'data:' . encode_json(to_stroke_json($stroke)) . "\n\n"
+              );
+              $last_stroke_id = $stroke->{id};
+          }
+
+          update_room_watcher($self->dbh, $room->{id}, $token->{id});
+          my $new_watcher_count = get_watcher_count($self->dbh, $room->{id});
+          if ($new_watcher_count != $watcher_count) {
+              # XXX
+              $writer->write(
+                  "event:watcher_count\n" .
+                  "data:$watcher_count\n\n"
+              );
+              $watcher_count = $new_watcher_count;
+          }
+      }
+      $writer->close;
+  };
+}
 
 post '/api/strokes/rooms/:id' => sub {
     my ($self, $c) = @_;

@@ -10,4 +10,14 @@ use Plack::Builder;
 use Isuketch::Web;
 
 my $root_dir = $FindBin::Bin;
-my $app = Isuketch::Web->psgi($root_dir);
+my $app = Isuketch::Web->new(root_dir => $root_dir);
+my $psgi_app = $app->build_app;
+
+sub {
+    my ($env) = @_;
+    if ($env->{PATH_INFO} =~ m<\A/api/stream/rooms/([^/]+)\z>) {
+        return $app->get_api_stream_room($env, $1);
+    } else {
+        return $psgi_app->($env);
+    }
+};
