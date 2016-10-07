@@ -2,7 +2,6 @@ package scenario
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -10,36 +9,36 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/seed"
 	"github.com/catatsuy/isucon6-final/bench/session"
-	"github.com/PuerkitoBio/goquery"
 )
 
 // 一人がroomを作る→大勢がそのroomをwatchする
 func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 	var token string
 
-	err := s.Get("/", func(body io.Reader, l *fails.Logger) error {
+	ok := s.Get("/", func(body io.Reader, l *fails.Logger) bool {
 		doc, err := goquery.NewDocumentFromReader(body)
 		if err != nil {
 			l.Add("ページのHTMLがパースできませんでした", err)
-			return err
+			return false
 		}
 
 		token = extractCsrfToken(doc)
 
 		if token == "" {
 			l.Add("csrf_tokenが取得できませんでした", nil)
-			return errors.New("could not get csrf_token")
+			return false
 		}
 
 		score.Increment(IndexGetScore)
 
-		return nil
+		return true
 	})
-	if err != nil {
+	if !ok {
 		return
 	}
 
@@ -60,30 +59,30 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 
 	var RoomID int64
 
-	err = s.Post("/api/rooms", postBody, headers, func(body io.Reader, l *fails.Logger) error {
+	ok = s.Post("/api/rooms", postBody, headers, func(body io.Reader, l *fails.Logger) bool {
 		b, err := ioutil.ReadAll(body)
 		if err != nil {
 			l.Add("レスポンス内容が読み込めませんでした", err)
-			return err
+			return false
 		}
 		var res Response
 		err = json.Unmarshal(b, &res)
 		if err != nil {
-			l.Add("レスポンス内容が正しくありません" + string(b[:20]), err)
-			return err
+			l.Add("レスポンス内容が正しくありません"+string(b[:20]), err)
+			return false
 		}
 		if res.Room == nil || res.Room.ID <= 0 {
-			l.Add("レスポンス内容が正しくありません" + string(b[:20]), nil)
-			return errors.New("bad response")
+			l.Add("レスポンス内容が正しくありません"+string(b[:20]), nil)
+			return false
 		}
 		RoomID = res.Room.ID
 
 		score.Increment(CreateRoomScore)
 
-		return nil
+		return true
 	})
 
-	if err != nil {
+	if !ok {
 		return
 	}
 
@@ -106,25 +105,25 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 
 				postTime := time.Now()
 
-				u := "/api/strokes/rooms/"+strconv.FormatInt(RoomID, 10)
-				err := s.Post(u, postBody, headers, func(body io.Reader, l *fails.Logger) error {
+				u := "/api/strokes/rooms/" + strconv.FormatInt(RoomID, 10)
+				ok := s.Post(u, postBody, headers, func(body io.Reader, l *fails.Logger) bool {
 					responseTime := time.Now()
 
 					b, err := ioutil.ReadAll(body)
 					if err != nil {
 						l.Add("レスポンス内容が読み込めませんでした", err)
-						return err
+						return false
 					}
 
 					var res Response
 					err = json.Unmarshal(b, &res)
 					if err != nil {
-						l.Add("レスポンス内容が正しくありません" + string(b[:20]), err)
-						return err
+						l.Add("レスポンス内容が正しくありません"+string(b[:20]), err)
+						return false
 					}
 					if res.Stroke == nil || res.Stroke.ID <= 0 {
-						l.Add("レスポンス内容が正しくありません" + string(b[:20]), nil)
-						return errors.New("bad response")
+						l.Add("レスポンス内容が正しくありません"+string(b[:20]), nil)
+						return false
 					}
 
 					timeTaken := responseTime.Sub(postTime).Seconds()
@@ -136,9 +135,9 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 
 					postTimes[res.Stroke.ID] = postTime
 
-					return nil
+					return true
 				})
-				if err != nil || len(timeoutCh) > 0 {
+				if !ok || len(timeoutCh) > 0 {
 					end <- struct{}{}
 				}
 			}

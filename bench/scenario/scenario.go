@@ -1,7 +1,6 @@
 package scenario
 
 import (
-	"errors"
 	"io"
 	"math/rand"
 	"strings"
@@ -46,18 +45,16 @@ func extractCsrfToken(doc *goquery.Document) string {
 }
 
 // TODO: ステータスコード以外にもチェックしたい
-func loadImages(s *session.Session, images []string) error {
-	var lastErr error
+func loadImages(s *session.Session, images []string) bool {
+	status := true
 	for _, image := range images {
-		err := s.Get(image, func(body io.Reader, l *fails.Logger) error {
+		ok := s.Get(image, func(body io.Reader, l *fails.Logger) bool {
 			score.Increment(SVGGetScore)
-			return nil
+			return false
 		})
-		if err != nil {
-			lastErr = err
-		}
+		status = status && ok
 	}
-	return lastErr
+	return status
 
 	// TODO: 画像を並列リクエストするようにしてみたが、 connection reset by peer というエラーが出るので直列に戻した
 	// もしかすると s.Transport.MaxIdleConnsPerHost ずつ処理するといけるのかも
@@ -89,31 +86,31 @@ func LoadIndexPage(s *session.Session) {
 	var token string
 	var images []string
 
-	err := s.Get("/", func(body io.Reader, l *fails.Logger) error {
+	ok := s.Get("/", func(body io.Reader, l *fails.Logger) bool {
 		doc, err := goquery.NewDocumentFromReader(body)
 		if err != nil {
 			l.Add("ページのHTMLがパースできませんでした", err)
-			return err
+			return false
 		}
 
 		token = extractCsrfToken(doc)
 
 		if token == "" {
 			l.Add("csrf_tokenが取得できませんでした", nil)
-			return errors.New("could not get csrf_token")
+			return false
 		}
 
 		images = extractImages(doc)
 		if len(images) < 100 {
 			l.Critical("画像の枚数が少なすぎます", nil)
-			return errors.New("could not get csrf_token")
+			return false
 		}
 
 		score.Increment(IndexGetScore)
 
-		return nil
+		return true
 	})
-	if err != nil {
+	if !ok {
 		return
 	}
 
@@ -125,11 +122,11 @@ func LoadRoomPage(s *session.Session) {
 	var images []string
 	var rooms []string
 
-	err := s.Get("/", func(body io.Reader, l *fails.Logger) error {
+	ok := s.Get("/", func(body io.Reader, l *fails.Logger) bool {
 		doc, err := goquery.NewDocumentFromReader(body)
 		if err != nil {
 			l.Add("ページのHTMLがパースできませんでした", err)
-			return err
+			return false
 		}
 
 		images = extractImages(doc)
@@ -144,25 +141,25 @@ func LoadRoomPage(s *session.Session) {
 
 		score.Increment(IndexGetScore)
 
-		return nil
+		return true
 	})
-	if err != nil {
+	if !ok {
 		return
 	}
 
-	err = loadImages(s, images)
-	if err != nil {
+	ok = loadImages(s, images)
+	if !ok {
 		return
 	}
 
 	roomURL := rooms[rand.Intn(len(rooms))]
 
-	_ = s.Get(roomURL, func(body io.Reader, l *fails.Logger) error {
+	_ = s.Get(roomURL, func(body io.Reader, l *fails.Logger) bool {
 
 		// TODO: polylineのidを上で開いたSVGと比較するか？
 
 		score.Increment(RoomGetScore)
-		return nil
+		return true
 	})
 }
 
@@ -170,44 +167,44 @@ func LoadRoomPage(s *session.Session) {
 func CheckCSRFTokenRefreshed(s *session.Session) {
 	var token string
 
-	err := s.Get("/", func(body io.Reader, l *fails.Logger) error {
+	ok := s.Get("/", func(body io.Reader, l *fails.Logger) bool {
 		doc, err := goquery.NewDocumentFromReader(body)
 		if err != nil {
 			l.Add("ページのHTMLがパースできませんでした", err)
-			return err
+			return false
 		}
 
 		token = extractCsrfToken(doc)
 
 		if token == "" {
 			l.Add("csrf_tokenが取得できませんでした", nil)
-			return errors.New("could not get csrf_token")
+			return false
 		}
 
 		score.Increment(IndexGetScore)
 
-		return nil
+		return true
 	})
-	if err != nil {
+	if !ok {
 		return
 	}
 
-	_ = s.Get("/", func(body io.Reader, l *fails.Logger) error {
+	_ = s.Get("/", func(body io.Reader, l *fails.Logger) bool {
 		doc, err := goquery.NewDocumentFromReader(body)
 		if err != nil {
 			l.Add("ページのHTMLがパースできませんでした", err)
-			return err
+			return false
 		}
 
 		newToken := extractCsrfToken(doc)
 
 		if newToken == token {
 			l.Critical("csrf_tokenが使いまわされています", nil)
-			return errors.New("bad csrf_token")
+			return false
 		}
 
 		score.Increment(IndexGetScore)
 
-		return nil
+		return true
 	})
 }

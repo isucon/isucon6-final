@@ -3,17 +3,17 @@ package session
 import (
 	"bytes"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/url"
 	"time"
 
+	"strconv"
+
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/http"
 	"github.com/catatsuy/isucon6-final/bench/http/cookiejar"
-	"strconv"
 )
 
 const DefaultTimeout = time.Duration(10) * time.Second
@@ -26,7 +26,7 @@ type Session struct {
 	Transport *http.Transport
 }
 
-type CheckFunc func(body io.Reader, l *fails.Logger) error
+type CheckFunc func(body io.Reader, l *fails.Logger) bool
 
 func New(baseURL string) *Session {
 	s := &Session{}
@@ -61,12 +61,12 @@ func New(baseURL string) *Session {
 	return s
 }
 
-func (s *Session) request(method, path string, body io.Reader, headers map[string]string, checkFunc CheckFunc) error {
-	l := &fails.Logger{Prefix : "["+ method + " " + path + "] "}
+func (s *Session) request(method, path string, body io.Reader, headers map[string]string, checkFunc CheckFunc) bool {
+	l := &fails.Logger{Prefix: "[" + method + " " + path + "] "}
 
 	u, err := url.Parse(path)
 	if err != nil {
-		return err
+		return false
 	}
 	u.Scheme = s.Scheme
 	u.Host = s.Host
@@ -74,7 +74,7 @@ func (s *Session) request(method, path string, body io.Reader, headers map[strin
 	req, err := http.NewRequest(method, u.String(), body)
 	if err != nil {
 		l.Critical("予期せぬ失敗です (主催者に連絡してください)", err)
-		return err
+		return false
 	}
 
 	req.Header.Set("User-Agent", s.UserAgent)
@@ -89,29 +89,25 @@ func (s *Session) request(method, path string, body io.Reader, headers map[strin
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
 			l.Add("リクエストがタイムアウトしました", err)
-			return err
+			return false
 		}
 		l.Add("リクエストが失敗しました", err)
-		return err
+		return false
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != 200 {
-		l.Add("ステータスが200ではありません: " + strconv.Itoa(res.StatusCode), nil)
-		return errors.New("bad status")
+		l.Add("ステータスが200ではありません: "+strconv.Itoa(res.StatusCode), nil)
+		return false
 	}
 
-	err = checkFunc(res.Body, l)
-	if err != nil {
-		return err
-	}
-	return nil
+	return checkFunc(res.Body, l)
 }
 
-func (s *Session) Get(path string, checkFunc CheckFunc) error {
+func (s *Session) Get(path string, checkFunc CheckFunc) bool {
 	return s.request("GET", path, nil, nil, checkFunc)
 }
 
-func (s *Session) Post(path string, body []byte, headers map[string]string, checkFunc CheckFunc) error {
+func (s *Session) Post(path string, body []byte, headers map[string]string, checkFunc CheckFunc) bool {
 	return s.request("POST", path, bytes.NewBuffer(body), headers, checkFunc)
 }

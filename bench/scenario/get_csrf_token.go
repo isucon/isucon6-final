@@ -1,35 +1,34 @@
 package scenario
 
 import (
-	"errors"
 	"io"
 
-	"github.com/catatsuy/isucon6-final/bench/session"
-	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/PuerkitoBio/goquery"
+	"github.com/catatsuy/isucon6-final/bench/fails"
+	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
-func GetCSRFToken(s *session.Session, path string) (string, error) {
+func GetCSRFToken(s *session.Session, path string) (string, bool) {
 	var token string
 
-	err := s.Get(path, func(body io.Reader, l *fails.Logger) error {
+	ok := s.Get(path, func(body io.Reader, l *fails.Logger) bool {
 		doc, err := goquery.NewDocumentFromReader(body)
 		if err != nil {
 			l.Add("ページのHTMLがパースできませんでした", err)
-			return err
+			return false
 		}
 
 		token = extractCsrfToken(doc)
 
 		if token == "" {
 			l.Add("トークンが取得できませんでした", nil)
-			return errors.New("bad csrf_token")
+			return false
 		}
 
-		return nil
+		return true
 	})
-	if err != nil {
-		return "", err
+	if !ok {
+		return "", false
 	}
-	return token, nil
+	return token, true
 }
