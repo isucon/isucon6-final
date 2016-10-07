@@ -2,8 +2,8 @@ FROM perl:5.24.0
 
 RUN cpanm Carton
 
-COPY ./local /root
-RUN carton install
+COPY cpanfile cpanfile.snapshot ./local /root/
+RUN carton install --deployment
 
 COPY . /root
 
