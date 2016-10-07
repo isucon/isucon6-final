@@ -2,10 +2,11 @@ package Isuketch::Web;
 use 5.014;
 use strict;
 use warnings;
+use utf8;
 use Kossy;
 use DBIx::Sunny;
 use Time::HiRes qw(usleep);
-use JSON qw(encode_json);
+use JSON qw(encode_json decode_json);
 
 sub config {
     state $conf = {
@@ -158,7 +159,7 @@ post '/api/csrf_token' => sub {
         WHERE `id` = ?
     ], $id);
 
-    $c->render_json({
+    return $c->render_json({
         token => $token->{csrf_token}
     });
 };
@@ -180,7 +181,7 @@ get '/api/rooms' => sub {
         push @rooms, $room;
     }
 
-    $c->render_json({
+    return $c->render_json({
         rooms => [
             map { to_room_json($_) } @rooms
         ]
@@ -194,10 +195,9 @@ post '/api/rooms' => sub {
     };
     if ($@) {
         $c->res->code(400);
-        $c->render_json({
+        return $c->render_json({
             error => 'トークンエラー。ページを再読み込みしてください。'
         });
-        return;
     }
 
     # TODO(php): getParsedBody
@@ -205,10 +205,9 @@ post '/api/rooms' => sub {
     my $posted_room = $c->req->parameters;
     if (!length($posted_room->{name}) || !length($posted_room->{canvas_width}) || !length($posted_room->{canvas_height})) {
         $c->res->code(400);
-        $c->render_json({
+        return $c->render_json({
             error => 'リクエストが正しくありません。'
         });
-        return;
     }
 
     my $txn = $self->dbh->txn_scope;
@@ -235,14 +234,13 @@ post '/api/rooms' => sub {
         $txn->rollback;
         warn $e;
         $c->res->code(500);
-        $c->render_json({
+        return $c->render_json({
             error => 'エラーが発生しました。'
         });
-        return;
     }
 
     my $room = get_room($self->dbh, $room_id);
-    $c->render_json({
+    return $c->render_json({
         room => to_room_json($room),
     });
 };
@@ -252,7 +250,7 @@ get '/api/rooms/:id' => sub {
     my $room = get_room($self->dbh, $c->args->{id});
     unless ($room) {
         $c->res->code(404);
-        $c->render_json({
+        return $c->render_json({
             error => 'この部屋は存在しません。'
         })
     }
@@ -263,7 +261,7 @@ get '/api/rooms/:id' => sub {
     }
     $room->{strokes} = $strokes;
     $room->{watcher_count} = get_watcher_count($self->dbh, $room->{id});
-    $c->render_json({
+    return $c->render_json({
         room => to_room_json($room),
     });
 };
@@ -351,16 +349,15 @@ post '/api/strokes/rooms/:id' => sub {
     };
     if ($@) {
         $c->res->code(400);
-        $c->render_json({
+        return $c->render_json({
             error => 'トークンエラー。ページを再読み込みしてください。'
         });
-        return;
     }
 
     my $room = get_room($self->dbh, $c->args->{id});
     unless ($room) {
         $c->res->code(404);
-        $c->render_json({
+        return $c->render_json({
             error => 'この部屋は存在しません。'
         })
     }
@@ -368,19 +365,17 @@ post '/api/strokes/rooms/:id' => sub {
     my $posted_stroke = $c->req->parameters;
     if (!length($posted_stroke->{width}) || !length($posted_stroke->{points})) {
         $c->res->code(400);
-        $c->render_json({
+        return $c->render_json({
             error => 'リクエストが正しくありません。'
         });
-        return;
     }
 
     my $stroke_count = scalar @{ get_strokes($self->dbh, $room->{id}, 0) };
     if ($stroke_count > 1000) {
         $c->res->code(400);
-        $c->render_json({
+        return $c->render_json({
             error => '1000画を超えました。これ以上描くことはできません。'
         });
-        return;
     }
     if ($stroke_count == 0) {
         my $count = $self->dbh->select_one(q[
@@ -390,10 +385,9 @@ post '/api/strokes/rooms/:id' => sub {
         ], $room->{id}, $token->{id});
         if ($count == 0) {
             $c->res->code(400);
-            $c->render_json({
+            return $c->render_json({
                 error => '他人の作成した部屋に1画目を描くことはできません'
             });
-            return;
         }
     }
 
@@ -421,10 +415,9 @@ post '/api/strokes/rooms/:id' => sub {
         $txn->rollback;
         warn $e;
         $c->res->code(500);
-        $c->render_json({
+        return $c->render_json({
             error => 'エラーが発生しました。'
         });
-        return;
     }
 
     my $stroke = $self->dbh->select_row(q[
@@ -434,7 +427,7 @@ post '/api/strokes/rooms/:id' => sub {
     ], $stroke_id);
     $stroke->{points} = get_stroke_points($self->dbh, $stroke_id);
 
-    $c->render_json({
+    return $c->render_json({
         stroke => to_stroke_json($stroke),
     });
 };
