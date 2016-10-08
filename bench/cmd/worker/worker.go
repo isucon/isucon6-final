@@ -50,7 +50,7 @@ func (cli *CLI) Run(args []string) int {
 	defaultBenchPath := filepath.Join(h, "isucon6f", "isucon6f-bench")
 	fs := flag.NewFlagSet("isu6q bench worker", flag.ContinueOnError)
 	fs.SetOutput(cli.errStream)
-	fs.StringVar(&portalHost, "portal", "isucon6q:phushohwaighai3fuphahchi@isucon6q.songmu.org", "portal Host")
+	fs.StringVar(&portalHost, "portal", "isucon6f:rxmtquuhmrqwdygxzdakhnznuzghsrdz@isucon6q.songmu.org", "portal Host")
 	fs.StringVar(&benchPath, "bench", defaultBenchPath, "benchmark path")
 
 	if err := fs.Parse(args); err != nil {
