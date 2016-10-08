@@ -72,11 +72,11 @@ type portal struct {
 }
 
 func (ptl *portal) newJobURL() string {
-	return fmt.Sprintf("http://%s/top4aew4fe9yeehu/job/new", ptl.host)
+	return fmt.Sprintf("http://%s/mBGWHqBVEjUSKpBF/job/new", ptl.host)
 }
 
 func (ptl *portal) resultURL() string {
-	return fmt.Sprintf("http://%s/top4aew4fe9yeehu/job/result", ptl.host)
+	return fmt.Sprintf("http://%s/mBGWHqBVEjUSKpBF/job/result", ptl.host)
 }
 
 var sigReceived bool

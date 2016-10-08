@@ -29,7 +29,7 @@ var (
 )
 
 const (
-	pathPrefixInternal = "top4aew4fe9yeehu/"
+	pathPrefixInternal = "mBGWHqBVEjUSKpBF/"
 )
 
 type handler func(http.ResponseWriter, *http.Request) error

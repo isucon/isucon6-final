@@ -78,7 +78,7 @@ func readAll(r io.Reader) string {
 }
 
 func benchGetJob(bench *testHTTPClient) *job.Job {
-	resp := bench.Must(bench.Post(s.URL+"/top4aew4fe9yeehu/job/new", "", nil))
+	resp := bench.Must(bench.Post(s.URL+"/mBGWHqBVEjUSKpBF/job/new", "", nil))
 	if !assert.Equal(bench.T, http.StatusOK, resp.StatusCode) {
 		return nil
 	}
@@ -100,7 +100,7 @@ func benchPostResult(bench *testHTTPClient, j *job.Job, output *score.Output) {
 	resultJSON, err := json.Marshal(result)
 	require.NoError(bench.T, err)
 
-	resp := bench.Must(bench.Post(s.URL+"/top4aew4fe9yeehu/job/result", "application/json", bytes.NewBuffer(resultJSON)))
+	resp := bench.Must(bench.Post(s.URL+"/mBGWHqBVEjUSKpBF/job/result", "application/json", bytes.NewBuffer(resultJSON)))
 	require.Equal(bench.T, http.StatusOK, resp.StatusCode)
 }
 
@@ -131,7 +131,7 @@ func TestPostJob(t *testing.T) {
 	require.Equal(t, "/", resp.Request.URL.Path)
 
 	// bench: ジョブ取る
-	resp = bench.Must(bench.Post(s.URL+"/top4aew4fe9yeehu/job/new", "", nil))
+	resp = bench.Must(bench.Post(s.URL+"/mBGWHqBVEjUSKpBF/job/new", "", nil))
 	require.Equal(t, http.StatusNoContent, resp.StatusCode)
 
 	// cli: ジョブいれる
