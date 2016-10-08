@@ -1,11 +1,16 @@
-FROM python
+FROM python:alpine
 
 WORKDIR /var/www
 
 # キャッシュ効率を上げるためにrequirements.txtだけ先にcopyしてインストールする
 COPY ./requirements.txt /var/www
 
-RUN pip install -r requirements.txt
+RUN \
+  apk update && \
+  apk add mariadb-client-libs && \
+  apk add --virtual=build-dependencies gcc mariadb-dev musl-dev && \
+  pip install -r requirements.txt && \
+  apk del build-dependencies
 
 COPY . /var/www
 
