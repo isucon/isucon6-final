@@ -18,14 +18,12 @@ import (
 )
 
 var BenchmarkTimeout int
-var Audience1 string
 
 func main() {
 
 	var urls string
 
 	flag.StringVar(&urls, "urls", "", "ベンチマーク対象のURL（scheme, host, portまで。カンマ区切りで複数可。例： https://xxx.xxx.xxx.xxx,https://xxx.xxx.xxx.xxx:1443）")
-	flag.StringVar(&Audience1, "audience1", "", "オーディエンスAPIのURLその1 (http://xxx.xxx.xxx.xxx/)")
 	flag.IntVar(&BenchmarkTimeout, "timeout", 60, "ソフトタイムアウト")
 
 	flag.Parse()
@@ -97,7 +95,7 @@ L:
 			}()
 		case <-matsuriCh:
 			go func() {
-				scenario.Matsuri(origins, Audience1, matsuriTimeoutCh)
+				scenario.Matsuri(origins, matsuriTimeoutCh)
 				//matsuriRoomCh <- struct{}{} // Never again.
 				matsuriEndCh <- struct{}{}
 			}()

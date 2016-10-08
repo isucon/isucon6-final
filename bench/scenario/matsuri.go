@@ -4,18 +4,25 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
-	"net/http"
-	"net/url"
 	"strconv"
 	"time"
+
+	"fmt"
+
+	"math/rand"
 
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/seed"
 )
 
+const (
+	initialWatcherNum       = 5
+	watcherIncreaseInterval = 5
+)
+
 // 一人がroomを作る→大勢がそのroomをwatchする
-func Matsuri(origins []string, aud string, timeoutCh chan struct{}) {
+func Matsuri(origins []string, timeoutCh chan struct{}) {
 	s := newSession(origins)
 
 	var token string
@@ -128,34 +135,76 @@ func Matsuri(origins []string, aud string, timeoutCh chan struct{}) {
 			}
 		}
 	}()
+	/*
+		v := url.Values{}
+		v.Set("scheme", s.Scheme)
+		v.Set("host", s.Host)
+		v.Set("room", strconv.FormatInt(RoomID, 10))
 
-	v := url.Values{}
-	v.Set("scheme", s.Scheme)
-	v.Set("host", s.Host)
-	v.Set("room", strconv.FormatInt(RoomID, 10))
+		resp, err := http.Get(aud + "?" + v.Encode())
+		if err != nil {
+			fails.Add("予期せぬエラー (主催者に連絡してください)", err)
+			return
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			_, err := ioutil.ReadAll(resp.Body)
+			fails.Add("予期せぬエラー (主催者に連絡してください)", err)
+			return
+		}
 
-	resp, err := http.Get(aud + "?" + v.Encode())
-	if err != nil {
-		fails.Add("予期せぬエラー (主催者に連絡してください)", err)
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		_, err := ioutil.ReadAll(resp.Body)
-		fails.Add("予期せぬエラー (主催者に連絡してください)", err)
-		return
+		var audRes AudienceResponse
+		err = json.NewDecoder(resp.Body).Decode(&audRes)
+		if err != nil {
+			fails.Add("予期せぬエラー (主催者に連絡してください)", err)
+			return
+		}
+		for _, msg := range audRes.Errors {
+			fails.Add(msg, nil)
+		}*/
+	watchers := make([]*RoomWatcher, 0)
+
+	// まず最初にinitialWatcherNum人が入室する
+	for i := 0; i < initialWatcherNum; i++ {
+		fmt.Println("watcher", len(watchers)+1)
+		watchers = append(watchers, NewRoomWatcher(origins[rand.Intn(len(origins))], RoomID))
 	}
 
-	var audRes AudienceResponse
-	err = json.NewDecoder(resp.Body).Decode(&audRes)
-	if err != nil {
-		fails.Add("予期せぬエラー (主催者に連絡してください)", err)
-		return
+	numToIncreaseWatcher := (55 - watcherIncreaseInterval) / watcherIncreaseInterval // TODO: マジックナンバー
+	for k := 0; k < numToIncreaseWatcher; k++ {
+		// watcherIncreaseIntervalごとにその時点でまだ退室していない参加人数の数と同じ人数が入ってくる
+		time.Sleep(time.Duration(watcherIncreaseInterval) * time.Second)
+
+		for _, w := range watchers {
+			if len(w.EndCh) == 0 {
+				fmt.Println("watcher", len(watchers)+1)
+				watchers = append(watchers, NewRoomWatcher(origins[rand.Intn(len(origins))], RoomID))
+			}
+		}
 	}
-	for _, msg := range audRes.Errors {
-		fails.Add(msg, nil)
+
+	time.Sleep(time.Duration(watcherIncreaseInterval) * time.Second)
+
+	// ここまでで合計 timeout 秒かかり、
+	// 最大で initialWatcherNum * 2 ^ numToIncreaseWatcher 人が入室してる
+
+	fmt.Println("stop")
+
+	for _, w := range watchers {
+		w.Leave()
 	}
-	for _, strokeLog := range audRes.StrokeLogs {
+	fmt.Println("wait")
+	for _, w := range watchers {
+		<-w.EndCh
+	}
+	fmt.Println("done")
+
+	StrokeLogs := []StrokeLog{}
+	for _, w := range watchers {
+		StrokeLogs = append(StrokeLogs, w.Logs...)
+	}
+
+	for _, strokeLog := range StrokeLogs {
 		postTime := postTimes[strokeLog.StrokeID]
 		timeTaken := strokeLog.ReceivedTime.Sub(postTime).Seconds()
 		if timeTaken < 1 { // TODO: この時間は要調整
