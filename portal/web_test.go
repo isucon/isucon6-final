@@ -281,6 +281,6 @@ func TestUpdateProxies(t *testing.T) {
 	// bench: ジョブ取る
 	j := benchGetJob(bench)
 	require.Equal(t, 1012, j.TeamID)
-	assert.Contains(t, j.URLs, `192.168.0.11`, "proxy-1のIP")
-	assert.Contains(t, j.URLs, `192.168.0.12`, "proxy-2のIP")
+	assert.Contains(t, j.URLs, `https://192.168.0.11:11012`, "proxy-1のIP")
+	assert.Contains(t, j.URLs, `https://192.168.0.12:11012`, "proxy-2のIP")
 }
