@@ -29,22 +29,22 @@ def execute(db, sql, params={}):
     return cursor.lastrowid
 
 
-def selectOne(db, sql, params={}):
+def select_one(db, sql, params={}):
     cursor = db.cursor()
     cursor.execute(sql, params)
     return cursor.fetchone()
 
 
-def selectAll(db, sql, params={}):
+def select_all(db, sql, params={}):
     cursor = db.cursor()
     cursor.execute(sql, params)
     return cursor.fetchall()
 
 
-def printAndFlush(content):
+def print_and_flush(content):
     return content
 
-def toRFC3339Micro(date):
+def to_RFC3339_micro(date):
     # RFC3339では+00:00のときはZにするという仕様だが、pythonは準拠していないため
     return date.replace(tzinfo=timezone.utc).isoformat().replace('+00:00', 'Z')
 
@@ -53,7 +53,7 @@ class CustomJSONEncoder(JSONEncoder):
     def default(self, obj):
         try:
             if isinstance(obj, datetime):
-                return toRFC3339Micro(obj)
+                return to_RFC3339_micro(obj)
             if isinstance(obj, decimal.Decimal):
                 return float(obj)
 
@@ -69,39 +69,39 @@ class TokenException(Exception):
     pass
 
 
-def checkToken(db, csrf_token):
+def check_token(db, csrf_token):
     sql = 'SELECT `id`, `csrf_token`, `created_at` FROM `tokens`'
     sql += ' WHERE `csrf_token` = %(csrf_token)s AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY'
-    token = selectOne(db, sql, {'csrf_token': csrf_token})
+    token = select_one(db, sql, {'csrf_token': csrf_token})
     if not token:
         raise TokenException()
     return token
 
 
-def getStrokePoints(db, stroke_id):
+def get_stroke_points(db, stroke_id):
     sql = 'SELECT `id`, `stroke_id`, `x`, `y` FROM `points` WHERE `stroke_id` = %(stroke_id)s ORDER BY `id` ASC'
-    return selectAll(db, sql, {'stroke_id': stroke_id})
+    return select_all(db, sql, {'stroke_id': stroke_id})
 
 
-def getStrokes(db, room_id, greater_than_id):
+def get_strokes(db, room_id, greater_than_id):
     sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`'
     sql += ' WHERE `room_id` = %(room_id)s AND `id` > %(greater_than_id)s ORDER BY `id` ASC'
-    return selectAll(db, sql, {'room_id': room_id, 'greater_than_id': greater_than_id})
+    return select_all(db, sql, {'room_id': room_id, 'greater_than_id': greater_than_id})
 
 
-def getRoom(db, room_id):
+def get_room(db, room_id):
     sql = 'SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at` FROM `rooms` WHERE `id` = %(room_id)s'
-    return selectOne(db, sql, {'room_id': room_id})
+    return select_one(db, sql, {'room_id': room_id})
 
 
-def getWatcherCount(db, room_id):
+def get_watcher_count(db, room_id):
     sql = 'SELECT COUNT(*) AS `watcher_count` FROM `room_watchers`'
     sql += ' WHERE `room_id` = %(room_id)s AND `updated_at` > CURRENT_TIMESTAMP(6) - INTERVAL 3 SECOND'
-    result = selectOne(db, sql, {'room_id': room_id})
+    result = select_one(db, sql, {'room_id': room_id})
     return result['watcher_count']
 
 
-def updateRoomWatcher(db, room_id, token_id):
+def update_room_watcher(db, room_id, token_id):
     sql = 'INSERT INTO `room_watchers` (`room_id`, `token_id`) VALUES (%(room_id)s, %(token_id)s)'
     sql += ' ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP(6)'
     return execute(db, sql, {'room_id': room_id, 'token_id': token_id})
@@ -115,7 +115,7 @@ app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
 
 @app.route('/api/csrf_token', methods=['POST'])
-def csrf_token():
+def post_api_csrf_token():
     db = get_db()
 
     sql = 'INSERT INTO `tokens` (`csrf_token`) VALUES'
@@ -124,24 +124,24 @@ def csrf_token():
     id = execute(db, sql)
 
     sql = 'SELECT `id`, `csrf_token`, `created_at` FROM `tokens` WHERE id = %(id)s'
-    token = selectOne(db, sql, {'id': id})
+    token = select_one(db, sql, {'id': id})
 
     return jsonify({'token': token['csrf_token']})
 
 
 @app.route('/api/rooms', methods=['GET'])
-def get_rooms():
+def get_api_rooms():
 
     db = get_db()
 
     sql = 'SELECT `room_id`, MAX(`id`) AS `max_id` FROM `strokes`'
     sql += ' GROUP BY `room_id` ORDER BY `max_id` DESC LIMIT 100'
-    results = selectAll(db, sql)
+    results = select_all(db, sql)
 
     rooms = []
     for result in results:
-        room = getRoom(db, result['room_id'])
-        strokes = getStrokes(db, room['id'], 0)
+        room = get_room(db, result['room_id'])
+        strokes = get_strokes(db, room['id'], 0)
         room['stroke_count'] = len(strokes)
         rooms.append(room)
 
@@ -149,10 +149,10 @@ def get_rooms():
 
 
 @app.route('/api/rooms', methods=['POST'])
-def post_rooms():
+def post_api_rooms():
     db = get_db()
     try:
-        token = checkToken(db, request.headers.get('x-csrf-token'))
+        token = check_token(db, request.headers.get('x-csrf-token'))
     except TokenException:
         res = jsonify({'error': 'トークンエラー。ページを再読み込みしてください。'})
         res.status_code = 400
@@ -187,47 +187,47 @@ def post_rooms():
         res.status_code = 500
         return res
 
-    room = getRoom(db, room_id)
+    room = get_room(db, room_id)
     return jsonify({'room': room})
 
 
 @app.route('/api/rooms/<id>')
-def rooms(id):
+def get_api_rooms_id(id):
     db = get_db()
-    room = getRoom(db, id)
+    room = get_room(db, id)
 
     if room is None:
         res = jsonify({'error': 'この部屋は存在しません。'})
         res.status__code = 500
         return res
 
-    strokes = getStrokes(db, room['id'], 0)
+    strokes = get_strokes(db, room['id'], 0)
 
     for i, stroke in enumerate(strokes):
-        strokes[i]['points'] = getStrokePoints(db, stroke['id'])
+        strokes[i]['points'] = get_stroke_points(db, stroke['id'])
 
     room['strokes'] = strokes
-    room['watcher_count'] = getWatcherCount(db, room['id'])
+    room['watcher_count'] = get_watcher_count(db, room['id'])
 
     return jsonify({'room': room})
 
 
 @app.route('/api/stream/rooms/<id>')
-def stream_rooms(id):
+def get_api_stream_rooms_id(id):
     db = get_db()
 
     try:
-        token = checkToken(db, request.args.get('csrf_token'))
+        token = check_token(db, request.args.get('csrf_token'))
     except TokenException:
-        return printAndFlush(
+        return print_and_flush(
             'event:bad_request\n' +
             'data:トークンエラー。ページを再読み込みしてください。\n\n'
         ), 200, {'Content-Type': 'text/event-stream'}
 
-    room = getRoom(db, id)
+    room = get_room(db, id)
 
     if room is None:
-        return printAndFlush(
+        return print_and_flush(
             'event:bad_request\n' +
             'data:この部屋は存在しません\n\n'
         ), 200, {'Content-Type': 'text/event-stream'}
@@ -238,10 +238,10 @@ def stream_rooms(id):
 
     def gen(db, room, token, last_stroke_id):
 
-        updateRoomWatcher(db, room['id'], token['id'])
-        watcher_count = getWatcherCount(db, room['id'])
+        update_room_watcher(db, room['id'], token['id'])
+        watcher_count = get_watcher_count(db, room['id'])
 
-        yield printAndFlush(
+        yield print_and_flush(
             'retry:500\n\n' +
             'event:watcher_count\n' +
             'data:%d\n\n' % (watcher_count)
@@ -250,22 +250,22 @@ def stream_rooms(id):
         for loop in range(6):
             time.sleep(0.5)  # 500ms
 
-            strokes = getStrokes(db, room['id'], last_stroke_id)
+            strokes = get_strokes(db, room['id'], last_stroke_id)
             # app.logger.info(strokes)
 
             for stroke in strokes:
-                stroke['points'] = getStrokePoints(db, stroke['id'])
-                yield printAndFlush(
+                stroke['points'] = get_stroke_points(db, stroke['id'])
+                yield print_and_flush(
                     'id:' + str(stroke['id']) + '\n\n' +
                     'event:stroke\n' +
                     'data:' + json.dumps(stroke, cls=CustomJSONEncoder) + '\n\n'
                 )
                 last_stroke_id = stroke['id']
 
-            updateRoomWatcher(db, room['id'], token['id'])
-            new_watcher_count = getWatcherCount(db, room['id'])
+            update_room_watcher(db, room['id'], token['id'])
+            new_watcher_count = get_watcher_count(db, room['id'])
             if new_watcher_count != watcher_count:
-                yield printAndFlush(
+                yield print_and_flush(
                     'event:watcher_count\n' +
                     'data:%d\n\n' % (watcher_count)
                 )
@@ -275,37 +275,37 @@ def stream_rooms(id):
 
 
 @app.route('/api/strokes/rooms/<id>', methods=['POST'])
-def post_strokes_rooms(id):
+def post_api_strokes_rooms_id(id):
     db = get_db()
 
     try:
-        token = checkToken(db, request.headers.get('x-csrf-token'))
+        token = check_token(db, request.headers.get('x-csrf-token'))
     except TokenException:
         res = jsonify({'error': 'トークンエラー。ページを再読み込みしてください。'})
         res.status_code = 400
         return res
 
-    room = getRoom(db, id)
+    room = get_room(db, id)
 
     if room is None:
         res = jsonify({'error': 'この部屋は存在しません。'})
         res.status_code = 404
         return res
 
-    postedStroke = request.get_json()
-    if 'width' not in postedStroke or 'points' not in postedStroke:
+    posted_stroke = request.get_json()
+    if 'width' not in posted_stroke or 'points' not in posted_stroke:
         res = jsonify({'error': 'リクエストが正しくありません。'})
         res.status_code = 400
         return res
 
-    stroke_count = len(getStrokes(db, room['id'], 0))
+    stroke_count = len(get_strokes(db, room['id'], 0))
     if stroke_count > 1000:
         res = jsonify({'error': '1000画を超えました。これ以上描くことはできません。'})
         res.status_code = 400
         return res
     if stroke_count == 0:
         sql = 'SELECT COUNT(*) AS cnt FROM `room_owners` WHERE `room_id` = %(room_id)s AND `token_id` = %(token_id)s'
-        result = selectOne(db, sql, {'room_id': room['id'], 'token_id': token['id']})
+        result = select_one(db, sql, {'room_id': room['id'], 'token_id': token['id']})
         if result['cnt'] == 0:
             res = jsonify({'error': '他人の作成した部屋に1画目を描くことはできません'})
             res.status_code = 400
@@ -317,16 +317,16 @@ def post_strokes_rooms(id):
         sql += ' VALUES(%(room_id)s, %(width)s, %(red)s, %(green)s, %(blue)s, %(alpha)s)'
         cursor.execute(sql, {
             'room_id': room['id'],
-            'width': postedStroke.get('width'),
-            'red': postedStroke.get('red'),
-            'green': postedStroke.get('green'),
-            'blue': postedStroke.get('blue'),
-            'alpha': postedStroke.get('alpha'),
+            'width': posted_stroke.get('width'),
+            'red': posted_stroke.get('red'),
+            'green': posted_stroke.get('green'),
+            'blue': posted_stroke.get('blue'),
+            'alpha': posted_stroke.get('alpha'),
         })
         stroke_id = cursor.lastrowid
 
         sql = 'INSERT INTO `points` (`stroke_id`, `x`, `y`) VALUES (%(stroke_id)s, %(x)s, %(y)s)'
-        for point in postedStroke.get('points'):
+        for point in posted_stroke.get('points'):
             cursor.execute(sql, {
                 'stroke_id': stroke_id,
                 'x': point['x'],
@@ -341,15 +341,15 @@ def post_strokes_rooms(id):
 
     sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`'
     sql += ' WHERE `id` = %(stroke_id)s'
-    stroke = selectOne(db, sql, {'stroke_id': stroke_id})
+    stroke = select_one(db, sql, {'stroke_id': stroke_id})
 
-    stroke['points'] = getStrokePoints(db, stroke_id)
+    stroke['points'] = get_stroke_points(db, stroke_id)
 
     return jsonify({'stroke': stroke})
 
 
 @app.route('/api/initialize')
-def initialize():
+def get_api_initialize():
     db = get_db()
 
     sqls = [
