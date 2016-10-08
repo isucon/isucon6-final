@@ -627,15 +627,22 @@ func serveDebugLeaderboard(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
+	plotData, err := buildPlotData(ranking)
+	if err != nil {
+		return err
+	}
+
 	type viewParamsDebugLeaderboard struct {
 		viewParamsLayout
-		Ranking []*Score
+		Ranking  []*Score
+		PlotData []PlotLine
 	}
 
 	return templates["debug-leaderboard.tmpl"].Execute(
 		w, viewParamsDebugLeaderboard{
 			viewParamsLayout{nil, day},
 			ranking,
+			plotData,
 		},
 	)
 }
