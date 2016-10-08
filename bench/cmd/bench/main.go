@@ -71,7 +71,6 @@ func benchmark(origins []string) {
 	checkCSRFTokenRefreshedCh := makeChan(1)
 	matsuriCh := makeChan(1)
 	matsuriEndCh := make(chan struct{})
-	matsuriTimeoutCh := make(chan struct{}, 2) // http://mattn.kaoriya.net/software/lang/go/20160706165757.htm
 
 	timeoutCh := time.After(time.Duration(BenchmarkTimeout) * time.Second)
 
@@ -95,7 +94,7 @@ L:
 			}()
 		case <-matsuriCh:
 			go func() {
-				scenario.Matsuri(origins, matsuriTimeoutCh)
+				scenario.Matsuri(origins, BenchmarkTimeout)
 				//matsuriRoomCh <- struct{}{} // Never again.
 				matsuriEndCh <- struct{}{}
 			}()
@@ -103,7 +102,6 @@ L:
 			break L
 		}
 	}
-	matsuriTimeoutCh <- struct{}{}
 	<-matsuriEndCh
 }
 

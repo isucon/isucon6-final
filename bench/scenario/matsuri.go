@@ -20,7 +20,7 @@ const (
 )
 
 // 一人がroomを作る→大勢がそのroomをwatchする
-func Matsuri(origins []string, timeoutCh chan struct{}) {
+func Matsuri(origins []string, timeout int) {
 	s := newSession(origins)
 
 	token, ok := fetchCSRFToken(s, "/")
@@ -59,7 +59,7 @@ func Matsuri(origins []string, timeoutCh chan struct{}) {
 		watchers = append(watchers, NewRoomWatcher(origins[rand.Intn(len(origins))], roomID))
 	}
 
-	numToIncreaseWatcher := (55 - watcherIncreaseInterval) / watcherIncreaseInterval // TODO: マジックナンバー
+	numToIncreaseWatcher := (timeout - watcherIncreaseInterval) / watcherIncreaseInterval
 	for k := 0; k < numToIncreaseWatcher; k++ {
 		// watcherIncreaseIntervalごとにその時点でまだ退室していない参加人数の数と同じ人数が入ってくる
 		time.Sleep(time.Duration(watcherIncreaseInterval) * time.Second)
