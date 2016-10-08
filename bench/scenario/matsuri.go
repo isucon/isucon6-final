@@ -14,6 +14,7 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/seed"
+	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
 const (
@@ -30,44 +31,7 @@ func Matsuri(origins []string, timeoutCh chan struct{}) {
 		return
 	}
 
-	postBody, _ := json.Marshal(struct {
-		Name         string `json:"name"`
-		CanvasWidth  int    `json:"canvas_width"`
-		CanvasHeight int    `json:"canvas_height"`
-	}{
-		Name:         "ひたすら椅子を描く部屋",
-		CanvasWidth:  1024,
-		CanvasHeight: 768,
-	})
-
-	headers := map[string]string{
-		"Content-Type": "application/json",
-		"x-csrf-token": token,
-	}
-
-	var RoomID int64
-
-	ok = s.Post("/api/rooms", postBody, headers, func(body io.Reader, l *fails.Logger) bool {
-		b, err := ioutil.ReadAll(body)
-		if err != nil {
-			l.Add("レスポンス内容が読み込めませんでした", err)
-			return false
-		}
-		var res Response
-		err = json.Unmarshal(b, &res)
-		if err != nil {
-			l.Add("レスポンス内容が正しくありません"+string(b[:20]), err)
-			return false
-		}
-		if res.Room == nil || res.Room.ID <= 0 {
-			l.Add("レスポンス内容が正しくありません"+string(b[:20]), nil)
-			return false
-		}
-		RoomID = res.Room.ID
-
-		return true
-	})
-
+	roomID, ok := makeRoom(s, token)
 	if !ok {
 		return
 	}
@@ -81,43 +45,13 @@ func Matsuri(origins []string, timeoutCh chan struct{}) {
 	go func() {
 		for {
 			for _, stroke := range seedStroke {
-				postBody, _ := json.Marshal(struct {
-					RoomID int64 `json:"room_id"`
-					seed.Stroke
-				}{
-					RoomID: RoomID,
-					Stroke: stroke,
-				})
-
 				postTime := time.Now()
 
-				u := "/api/strokes/rooms/" + strconv.FormatInt(RoomID, 10)
-				ok := s.Post(u, postBody, headers, func(body io.Reader, l *fails.Logger) bool {
-
-					b, err := ioutil.ReadAll(body)
-					if err != nil {
-						l.Add("レスポンス内容が読み込めませんでした", err)
-						return false
-					}
-
-					var res Response
-					err = json.Unmarshal(b, &res)
-					if err != nil {
-						l.Add("レスポンス内容が正しくありません"+string(b[:20]), err)
-						return false
-					}
-					if res.Stroke == nil || res.Stroke.ID <= 0 {
-						l.Add("レスポンス内容が正しくありません"+string(b[:20]), nil)
-						return false
-					}
-
-					postTimes[res.Stroke.ID] = postTime
-
-					return true
-				})
-				if !ok || len(timeoutCh) > 0 {
+				strokeID, ok := drawStroke(s, token, roomID, stroke)
+				if !ok || len(timeoutCh) > 0 { // TODO: 1回ぐらい失敗しても続けるべきな気がしてきた
 					end <- struct{}{}
 				}
+				postTimes[strokeID] = postTime
 			}
 		}
 	}()
@@ -127,7 +61,7 @@ func Matsuri(origins []string, timeoutCh chan struct{}) {
 	// まず最初にinitialWatcherNum人が入室する
 	for i := 0; i < initialWatcherNum; i++ {
 		fmt.Println("watcher", len(watchers)+1)
-		watchers = append(watchers, NewRoomWatcher(origins[rand.Intn(len(origins))], RoomID))
+		watchers = append(watchers, NewRoomWatcher(origins[rand.Intn(len(origins))], roomID))
 	}
 
 	numToIncreaseWatcher := (55 - watcherIncreaseInterval) / watcherIncreaseInterval // TODO: マジックナンバー
@@ -138,7 +72,7 @@ func Matsuri(origins []string, timeoutCh chan struct{}) {
 		for _, w := range watchers {
 			if len(w.EndCh) == 0 {
 				fmt.Println("watcher", len(watchers)+1)
-				watchers = append(watchers, NewRoomWatcher(origins[rand.Intn(len(origins))], RoomID))
+				watchers = append(watchers, NewRoomWatcher(origins[rand.Intn(len(origins))], roomID))
 			}
 		}
 	}
@@ -175,4 +109,90 @@ func Matsuri(origins []string, timeoutCh chan struct{}) {
 	}
 
 	<-end
+}
+
+func makeRoom(s *session.Session, token string) (int64, bool) {
+	postBody, _ := json.Marshal(struct {
+		Name         string `json:"name"`
+		CanvasWidth  int    `json:"canvas_width"`
+		CanvasHeight int    `json:"canvas_height"`
+	}{
+		Name:         "ひたすら椅子を描く部屋",
+		CanvasWidth:  1024,
+		CanvasHeight: 768,
+	})
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+		"x-csrf-token": token,
+	}
+
+	var roomID int64
+
+	ok := s.Post("/api/rooms", postBody, headers, func(body io.Reader, l *fails.Logger) bool {
+		b, err := ioutil.ReadAll(body)
+		if err != nil {
+			l.Add("レスポンス内容が読み込めませんでした", err)
+			return false
+		}
+		var res Response
+		err = json.Unmarshal(b, &res)
+		if err != nil {
+			l.Add("レスポンス内容が正しくありません"+string(b[:20]), err)
+			return false
+		}
+		if res.Room == nil || res.Room.ID <= 0 {
+			l.Add("レスポンス内容が正しくありません"+string(b[:20]), nil)
+			return false
+		}
+		roomID = res.Room.ID
+
+		return true
+	})
+
+	return roomID, ok
+}
+
+func drawStroke(s *session.Session, token string, roomID int64, stroke seed.Stroke) (int64, bool) {
+	postBody, _ := json.Marshal(struct {
+		RoomID int64 `json:"room_id"`
+		seed.Stroke
+	}{
+		RoomID: roomID,
+		Stroke: stroke,
+	})
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+		"x-csrf-token": token,
+	}
+
+	var strokeID int64
+
+	u := "/api/strokes/rooms/" + strconv.FormatInt(roomID, 10)
+	ok := s.Post(u, postBody, headers, func(body io.Reader, l *fails.Logger) bool {
+
+		b, err := ioutil.ReadAll(body)
+		if err != nil {
+			l.Add("レスポンス内容が読み込めませんでした", err)
+			return false
+		}
+
+		var res Response
+		err = json.Unmarshal(b, &res)
+		if err != nil {
+			l.Add("レスポンス内容が正しくありません"+string(b[:20]), err)
+			return false
+		}
+		if res.Stroke == nil || res.Stroke.ID <= 0 {
+			l.Add("レスポンス内容が正しくありません"+string(b[:20]), nil)
+			return false
+		}
+
+		strokeID = res.Stroke.ID
+
+		return true
+	})
+
+	return strokeID, ok
 }
