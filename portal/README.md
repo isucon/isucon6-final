@@ -7,7 +7,7 @@ ISUCON6 予選ポータルサイトです。
 どの日も同じアカウントで入れます。
 
 - ID: 9999
-- PASS: `eimae5eebocheim4Kool`
+- PASS: `FCedmJpLcF7DByju`
 
 他のチームと同様の扱いでログインできます。
 

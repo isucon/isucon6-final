@@ -23,7 +23,7 @@ var (
 
 const (
 	operatorTeamID   = 9999
-	operatorPassword = "eimae5eebocheim4Kool"
+	operatorPassword = "FCedmJpLcF7DByju"
 )
 
 func main() {
