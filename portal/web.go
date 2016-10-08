@@ -70,7 +70,7 @@ func initWeb() error {
 	const templatesRoot = "views/"
 
 	for _, file := range []string{
-		"index.tmpl", "login.tmpl", "debug-queue.tmpl", "debug-leaderboard.tmpl", "debug-proxies.tmpl", "debug-messages.tmpl",
+		"index.tmpl", "login.tmpl", "debug-queue.tmpl", "debug-leaderboard.tmpl", "debug-proxies.tmpl", "messages.tmpl",
 	} {
 		t := template.New(file).Funcs(template.FuncMap{
 			"contestEnded": func() bool {
