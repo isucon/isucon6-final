@@ -77,8 +77,11 @@ func serveNewJob(w http.ResponseWriter, req *http.Request) error {
 		w.WriteHeader(http.StatusNoContent)
 		return nil
 	}
-	// TODO: j.URLs にproxyのURL一覧をセットする。 j.URLs = "https://192.168.0.10:10000,https://192.168.0.11:10000,..." 等
-	j.URLs = "https://127.0.0.1:443"
+	j.URLs, err = getProxyURLs(j.TeamID)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return nil
+	}
 	w.Header().Set("Content-Type", "application/json")
 	b, _ := json.Marshal(j)
 	w.Write(b)

@@ -118,6 +118,8 @@ func buildMux() *http.ServeMux {
 	mux.Handle("/queue", handler(serveQueueJob))
 	mux.Handle("/team", handler(serveUpdateTeam))
 
+	mux.Handle("/"+pathPrefixInternal+"proxy/update", handler(serveProxyUpdate))
+	mux.Handle("/"+pathPrefixInternal+"proxy/nginx.conf", handler(serveProxyNginxConf))
 	mux.Handle("/"+pathPrefixInternal+"job/new", handler(serveNewJob))
 	mux.Handle("/"+pathPrefixInternal+"job/result", handler(servePostResult))
 	mux.Handle("/"+pathPrefixInternal+"debug/vars", handler(expvarHandler))

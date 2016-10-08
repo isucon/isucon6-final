@@ -49,3 +49,8 @@ CREATE TABLE IF NOT EXISTS queues (
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY queues_team_status_idx (team_id, status)
 ) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS proxies (
+    host VARCHAR(128) NOT NULL,
+    PRIMARY KEY (host)
+)
