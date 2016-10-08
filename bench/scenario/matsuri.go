@@ -25,21 +25,7 @@ const (
 func Matsuri(origins []string, timeoutCh chan struct{}) {
 	s := newSession(origins)
 
-	var token string
-
-	ok := s.Get("/", func(body io.Reader, l *fails.Logger) bool {
-		doc, ok := makeDocument(body, l)
-		if !ok {
-			return false
-		}
-
-		token, ok = extractCsrfToken(doc, l)
-		if !ok {
-			return false
-		}
-
-		return true
-	})
+	token, ok := fetchCSRFToken(s, "/")
 	if !ok {
 		return
 	}
