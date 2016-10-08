@@ -97,7 +97,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 			w.es.Close()
 			return
 		}
-		fmt.Println(err)
+		//fmt.Println(err)
 		w.addError(path + " 予期せぬエラー")
 	})
 	w.es.OnEnd(func() {

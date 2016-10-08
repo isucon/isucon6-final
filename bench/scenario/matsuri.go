@@ -4,12 +4,9 @@ import (
 	"encoding/json"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"strconv"
 	"time"
-
-	"fmt"
-
-	"math/rand"
 
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/score"
@@ -60,7 +57,7 @@ func Matsuri(origins []string, timeoutCh chan struct{}) {
 
 	// まず最初にinitialWatcherNum人が入室する
 	for i := 0; i < initialWatcherNum; i++ {
-		fmt.Println("watcher", len(watchers)+1)
+		//fmt.Println("watcher", len(watchers)+1)
 		watchers = append(watchers, NewRoomWatcher(origins[rand.Intn(len(origins))], roomID))
 	}
 
@@ -71,7 +68,7 @@ func Matsuri(origins []string, timeoutCh chan struct{}) {
 
 		for _, w := range watchers {
 			if len(w.EndCh) == 0 {
-				fmt.Println("watcher", len(watchers)+1)
+				//fmt.Println("watcher", len(watchers)+1)
 				watchers = append(watchers, NewRoomWatcher(origins[rand.Intn(len(origins))], roomID))
 			}
 		}
@@ -82,16 +79,16 @@ func Matsuri(origins []string, timeoutCh chan struct{}) {
 	// ここまでで合計 timeout 秒かかり、
 	// 最大で initialWatcherNum * 2 ^ numToIncreaseWatcher 人が入室してる
 
-	fmt.Println("stop")
+	//fmt.Println("stop")
 
 	for _, w := range watchers {
 		w.Leave()
 	}
-	fmt.Println("wait")
+	//fmt.Println("wait")
 	for _, w := range watchers {
 		<-w.EndCh
 	}
-	fmt.Println("done")
+	//fmt.Println("done")
 
 	StrokeLogs := []StrokeLog{}
 	for _, w := range watchers {
