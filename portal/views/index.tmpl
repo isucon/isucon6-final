@@ -84,7 +84,6 @@
         <th>Rank</th>
         <th>Team</th>
         <th>Score</th>
-        <th>Best</th>
         <th>Time</th>
       </tr>
     </thead>
@@ -94,8 +93,7 @@
           <tr {{if $.Team}}{{if (eq $score.Team.ID $.Team.ID)}}class="warning"{{end}}{{end}}>
             <td>{{plusOne $index}}</td>
             <td>{{$score.Team.Name}}</td>
-            <td style="color: #f00">{{$score.Latest}}</td>
-            <td style="color: #aaa">{{$score.Best}}</td>
+            <td>{{$score.Latest}}</td>
             <td>{{$score.At}}</td>
           </tr>
         {{end}}
