@@ -1,0 +1,18 @@
+{{define "content"}}
+<div class="row">
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>IP</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range $item := .Addrs}}
+      <tr>
+          <td>{{$item}}</td>
+        </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{end}}

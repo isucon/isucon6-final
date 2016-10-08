@@ -92,29 +92,29 @@ func teamIDToPortNum(teamID int) int {
 }
 
 func getProxyAddrs() ([]string, error) {
-	hosts := make([]string, 0)
+	addrs := make([]string, 0)
 
 	rows, err := db.Query(`
       SELECT ip_address FROM proxies ORDER BY ip_address ASC`)
 	if err != nil {
-		return hosts, err
+		return addrs, err
 	}
 
 	defer rows.Close()
 
 	for rows.Next() {
-		var Host string
-		err := rows.Scan(&Host)
+		var Addr string
+		err := rows.Scan(&Addr)
 		if err != nil {
-			return hosts, err
+			return addrs, err
 		}
-		hosts = append(hosts, Host)
+		addrs = append(addrs, Addr)
 	}
 	if err := rows.Err(); err != nil {
-		return hosts, err
+		return addrs, err
 	}
 
-	return hosts, nil
+	return addrs, nil
 }
 
 func getProxyURLs(teamID int) (string, error) {

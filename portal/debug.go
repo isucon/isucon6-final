@@ -98,3 +98,17 @@ func serveDebugQueue(w http.ResponseWriter, req *http.Request) error {
 
 	return templates["debug-queue.tmpl"].Execute(w, viewParamsDebugQueue{viewParamsLayout{nil, day}, items})
 }
+
+func serveDebugProxies(w http.ResponseWriter, req *http.Request) error {
+	addrs, err := getProxyAddrs()
+	if err != nil {
+		return err
+	}
+
+	type viewParamsDebugProxies struct {
+		viewParamsLayout
+		Addrs []string
+	}
+
+	return templates["debug-proxies.tmpl"].Execute(w, viewParamsDebugProxies{viewParamsLayout{nil, day}, addrs})
+}
