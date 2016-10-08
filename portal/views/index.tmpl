@@ -63,10 +63,6 @@
 <div class="row">
   <h2>リーダーボード</h2>
 
-  {{if .RankingIsFixed}}
-    <p class="alert alert-warning">競技残り1時間を切りました。自チームを除き、スコアの表示は固定されています</p>
-  {{end}}
-
   <div id="plot" style="height: 300px;"></div>
   <script>
     Highcharts.setOptions({useUTC: false});
