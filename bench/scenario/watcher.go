@@ -6,14 +6,14 @@ import (
 
 	"encoding/json"
 
+	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/session"
 	"github.com/catatsuy/isucon6-final/bench/sse"
 )
 
 type RoomWatcher struct {
-	EndCh  chan struct{}
-	Logs   []StrokeLog
-	Errors []string
+	EndCh chan struct{}
+	Logs  []StrokeLog
 
 	es     *sse.EventSource
 	isLeft bool
@@ -23,7 +23,6 @@ func NewRoomWatcher(target string, roomID int64) *RoomWatcher {
 	w := &RoomWatcher{
 		EndCh:  make(chan struct{}, 1),
 		Logs:   make([]StrokeLog, 0),
-		Errors: make([]string, 0),
 		isLeft: false,
 	}
 
@@ -42,6 +41,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 	s.Client.Timeout = 3 * time.Second
 
 	path := fmt.Sprintf("/rooms/%d", roomID)
+	l := &fails.Logger{Prefix: "[" + path + "] "}
 
 	token, ok := fetchCSRFToken(s, path)
 	if !ok {
@@ -63,14 +63,13 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 		var stroke Stroke
 		err := json.Unmarshal([]byte(data), &stroke)
 		if err != nil {
-			fmt.Println(err)
-			w.addError(path + ", jsonのデコードに失敗しました")
+			l.Add("jsonのデコードに失敗しました", err)
 			w.es.Close()
 		}
 		now := time.Now()
 		// strokes APIには最初はLast-Event-IDをつけずに送るので、これまでに描かれたstrokeが全部降ってくるが、それは無視する。
 		if stroke.CreatedAt.After(startTime) && now.Sub(stroke.CreatedAt) > thresholdResponseTime {
-			fmt.Println("response too late")
+			l.Add("strokeが届くまでに時間がかかりすぎています", nil)
 			w.es.Close()
 		}
 		w.Logs = append(w.Logs, StrokeLog{
@@ -80,7 +79,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 		})
 	})
 	w.es.On("bad_request", func(data string) {
-		w.addError(path + " bad_request: " + data)
+		l.Add("bad_request: "+data, nil)
 		w.es.Close()
 	})
 	//w.es.On("watcher_count", func(data string) {
@@ -89,26 +88,21 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 	//})
 	w.es.OnError(func(err error) {
 		if e, ok := err.(*sse.BadContentType); ok {
-			w.addError(path + " Content-Typeが正しくありません: " + e.ContentType)
+			l.Add(path+" Content-Typeが正しくありません: "+e.ContentType, err)
 			return
 		}
 		if e, ok := err.(*sse.BadStatusCode); ok {
-			w.addError(fmt.Sprintf("%s ステータスコードが正しくありません: %d\n", path, e.StatusCode))
+			l.Add(fmt.Sprintf("ステータスコードが正しくありません: %d", e.StatusCode), err)
 			w.es.Close()
 			return
 		}
-		//fmt.Println(err)
-		w.addError(path + " 予期せぬエラー")
+		l.Add("予期せぬエラー（主催者に連絡してください）", err)
 	})
 	w.es.OnEnd(func() {
 		w.EndCh <- struct{}{}
 	})
 
 	w.es.Start()
-}
-
-func (w *RoomWatcher) addError(msg string) {
-	w.Errors = append(w.Errors, msg)
 }
 
 func (w *RoomWatcher) Leave() {
