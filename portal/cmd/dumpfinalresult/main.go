@@ -74,7 +74,7 @@ func (ss byScore) Swap(i, j int) { ss[i], ss[j] = ss[j], ss[i] }
 
 func main() {
 	flag.Parse()
-	db, err := sql.Open("mysql", *dsn+fmt.Sprintf("/isu6qportal_day%d", *day)+"?parseTime=true&loc=Asia%2FTokyo&time_zone='Asia%2FTokyo'")
+	db, err := sql.Open("mysql", *dsn+fmt.Sprintf("/isu6fportal_day%d", *day)+"?parseTime=true&loc=Asia%2FTokyo&time_zone='Asia%2FTokyo'")
 	if err != nil {
 		log.Fatal(err)
 	}
