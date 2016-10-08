@@ -69,7 +69,7 @@ func initWeb() error {
 	const templatesRoot = "views/"
 
 	for _, file := range []string{
-		"index.tmpl", "login.tmpl", "debug-queue.tmpl", "debug-leaderboard.tmpl", "debug-proxies.tmpl",
+		"index.tmpl", "login.tmpl", "debug-queue.tmpl", "debug-leaderboard.tmpl", "debug-proxies.tmpl", "debug-messages.tmpl",
 	} {
 		t := template.New(file).Funcs(template.FuncMap{
 			"contestEnded": func() bool {
@@ -212,7 +212,7 @@ type viewParamsIndex struct {
 	PlotData       []PlotLine
 	Jobs           []queuedJob
 	LatestResult   latestResult
-	Message        string
+	Messages       []Message
 }
 
 type viewParamsLogin struct {
@@ -478,6 +478,14 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 		return err
 	}
 
+	messages, err := getMessages()
+	if err != nil {
+		return err
+	}
+	if message != "" {
+		messages = append(messages, Message{Message: message, Kind: "danger"})
+	}
+
 	return templates["index.tmpl"].Execute(
 		w, viewParamsIndex{
 			viewParamsLayout{team, day},
@@ -490,7 +498,7 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 				latestScoreAt,
 				myScore,
 			},
-			message,
+			messages,
 		},
 	)
 }

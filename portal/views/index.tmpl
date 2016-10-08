@@ -1,13 +1,10 @@
 {{define "content"}}
 
-{{if .Message}}
-<p class="alert alert-danger">{{.Message}}</p>
-{{end}}
-
-<p class="alert alert-info">
-  <strong>マニュアルはこちらです:</strong>
-  <a href="https://gist.github.com/Songmu/ceeca3657dae1af5fb741ba7b81837b5">https://gist.github.com/Songmu/ceeca3657dae1af5fb741ba7b81837b5</a>
-</p>
+<div class="row">
+  {{range $item := .Messages}}
+    <p class="alert alert-{{$item.Kind}}">{{if $item.MessageHTML}}{{$item.MessageHTML}}{{else}}{{$item.Message}}{{end}}</p>
+  {{end}}
+</div>
 
 {{if .Team}}
 <div class="row">

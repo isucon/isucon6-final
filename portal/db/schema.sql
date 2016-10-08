@@ -53,4 +53,11 @@ CREATE TABLE IF NOT EXISTS queues (
 CREATE TABLE IF NOT EXISTS proxies (
     ip_address VARCHAR(128) NOT NULL,
     PRIMARY KEY (ip_address)
-)
+) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS messages (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    message VARCHAR(255) NOT NULL,
+    kind ENUM('danger', 'warning', 'info', 'success') NOT NULL,
+    PRIMARY KEY (id)
+) DEFAULT CHARSET=utf8mb4;

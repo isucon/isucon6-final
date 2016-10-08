@@ -1,0 +1,25 @@
+{{define "content"}}
+<div class="row">
+  <h1>現在のメッセージ</h1>
+  {{range $item := .Messages}}
+    <p class="alert alert-{{$item.Kind}}">{{if $item.MessageHTML}}{{$item.MessageHTML}}{{else}}{{$item.Message}}{{end}}</p>
+  {{end}}
+  <form method="post">
+    <h2>投稿</h2>
+    <p>HTMLも投稿できます。</p>
+    <p>メッセージを削除するときは内容を空にします。</p>
+    {{range $item := .Messages}}
+      <div class="form-inline">
+        <select name="kind" class="form-control">
+          <option value="danger" {{if (eq $item.Kind "danger")}}selected{{end}}>danger</option>
+          <option value="warning" {{if (eq $item.Kind "warning")}}selected{{end}}>warning</option>
+          <option value="info" {{if (eq $item.Kind "info")}}selected{{end}}>info</option>
+          <option value="success" {{if (eq $item.Kind "success")}}selected{{end}}>success</option>
+        </select>
+        <input type="text" name="message" value="{{$item.Message}}" class="form-control" style="width:800px"></input>
+      </div>
+    {{end}}
+    <button class="btn btn-primary" type="submit">Submit</button>
+  </form>
+</div>
+{{end}}
