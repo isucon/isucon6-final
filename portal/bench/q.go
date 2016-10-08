@@ -14,8 +14,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/catatsuy/isucon6-final/portal/score"
 	"github.com/catatsuy/isucon6-final/portal/job"
+	"github.com/catatsuy/isucon6-final/portal/score"
 )
 
 func queueJob(teamID int) error {
