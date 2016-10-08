@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"net"
 	"net/http"
 	"sort"
 	"strconv"
@@ -526,13 +527,12 @@ func serveUpdateTeam(w http.ResponseWriter, req *http.Request) error {
 	instanceName := req.FormValue("instance_name")
 	ipAddress := req.FormValue("ip_address")
 
-	// TODO: なぜかテストがこけるのでコメントアウト
-	//if ipAddress != "" {
-	//	ip := net.ParseIP(ipAddress)
-	//	if ip == nil || len(ip) != net.IPv4len {
-	//		return errHTTP(http.StatusBadRequest)
-	//	}
-	//}
+	if ipAddress != "" {
+		ip := net.ParseIP(ipAddress)
+		if ip == nil || ip.To4() == nil {
+			return errHTTP(http.StatusBadRequest)
+		}
+	}
 
 	// TODO: proxyにチームのIPアドレスを通知する
 
