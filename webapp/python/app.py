@@ -158,8 +158,7 @@ def post_rooms():
         res.status_code = 400
         return res
 
-    posted_room = request.form
-
+    posted_room = request.get_json()
     if 'name' not in posted_room or 'canvas_width' not in posted_room or 'canvas_height' not in posted_room:
         res = jsonify({'error': 'リクエストが正しくありません。'})
         res.status_code = 400
