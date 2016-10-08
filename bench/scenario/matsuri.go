@@ -2,11 +2,9 @@ package scenario
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"io/ioutil"
-	"net/http"
-	"net/url"
+	"math/rand"
 	"strconv"
 	"time"
 
@@ -14,38 +12,97 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/seed"
 	"github.com/catatsuy/isucon6-final/bench/session"
-	"github.com/catatsuy/isucon6-final/bench/stderr"
+)
+
+const (
+	initialWatcherNum       = 5
+	watcherIncreaseInterval = 5
 )
 
 // 一人がroomを作る→大勢がそのroomをwatchする
-func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
-	var token string
+func Matsuri(origins []string, timeout int) {
+	s := newSession(origins)
 
-	err := s.Get("/", func(status int, body io.Reader) error {
-		if status != 200 {
-			fails.Critical()
-			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-		}
-		doc, err := makeDocument(body)
-		if err != nil {
-			return err
-		}
-
-		token = extractCsrfToken(doc)
-
-		if token == "" {
-			fails.Critical()
-			return errors.New("csrf_tokenが取得できませんでした")
-		}
-
-		score.Increment(IndexGetScore)
-
-		return nil
-	})
-	if err != nil {
+	token, ok := fetchCSRFToken(s, "/")
+	if !ok {
 		return
 	}
 
+	roomID, ok := makeRoom(s, token)
+	if !ok {
+		return
+	}
+
+	seedStroke := seed.GetStroke("main001")
+
+	postTimes := make(map[int64]time.Time)
+
+	go func() {
+		for {
+			for _, stroke := range seedStroke {
+				postTime := time.Now()
+
+				strokeID, _ := drawStroke(s, token, roomID, stroke)
+				// 特に止める必要もない
+				postTimes[strokeID] = postTime
+			}
+		}
+	}()
+
+	watchers := make([]*RoomWatcher, 0)
+
+	// まず最初にinitialWatcherNum人が入室する
+	for i := 0; i < initialWatcherNum; i++ {
+		//fmt.Println("watcher", len(watchers)+1)
+		watchers = append(watchers, NewRoomWatcher(origins[rand.Intn(len(origins))], roomID))
+	}
+
+	numToIncreaseWatcher := (timeout - watcherIncreaseInterval) / watcherIncreaseInterval
+	for k := 0; k < numToIncreaseWatcher; k++ {
+		// watcherIncreaseIntervalごとにその時点でまだ退室していない参加人数の数と同じ人数が入ってくる
+		time.Sleep(time.Duration(watcherIncreaseInterval) * time.Second)
+
+		for _, w := range watchers {
+			if len(w.EndCh) == 0 {
+				//fmt.Println("watcher", len(watchers)+1)
+				watchers = append(watchers, NewRoomWatcher(origins[rand.Intn(len(origins))], roomID))
+			}
+		}
+	}
+
+	time.Sleep(time.Duration(watcherIncreaseInterval) * time.Second)
+
+	// ここまでで合計 timeout 秒かかり、
+	// 最大で initialWatcherNum * 2 ^ numToIncreaseWatcher 人が入室してる
+
+	//fmt.Println("stop")
+
+	for _, w := range watchers {
+		w.Leave()
+	}
+	//fmt.Println("wait")
+	for _, w := range watchers {
+		<-w.EndCh
+	}
+	//fmt.Println("done")
+
+	StrokeLogs := []StrokeLog{}
+	for _, w := range watchers {
+		StrokeLogs = append(StrokeLogs, w.Logs...)
+	}
+
+	for _, strokeLog := range StrokeLogs {
+		postTime := postTimes[strokeLog.StrokeID]
+		timeTaken := strokeLog.ReceivedTime.Sub(postTime).Seconds()
+		if timeTaken < 1 { // TODO: この時間は要調整
+			score.Increment(StrokeReceiveScore * 2)
+		} else if timeTaken < 3 {
+			score.Increment(StrokeReceiveScore)
+		}
+	}
+}
+
+func makeRoom(s *session.Session, token string) (int64, bool) {
 	postBody, _ := json.Marshal(struct {
 		Name         string `json:"name"`
 		CanvasWidth  int    `json:"canvas_width"`
@@ -61,135 +118,72 @@ func Matsuri(s *session.Session, aud string, timeoutCh chan struct{}) {
 		"x-csrf-token": token,
 	}
 
-	var RoomID int64
+	var roomID int64
 
-	err = s.Post("/api/rooms", postBody, headers, func(status int, body io.Reader) error {
-		if status != 200 {
-			fails.Critical()
-			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
+	ok := s.Post("/api/rooms", postBody, headers, func(body io.Reader, l *fails.Logger) bool {
+		b, err := ioutil.ReadAll(body)
+		if err != nil {
+			l.Add("レスポンス内容が読み込めませんでした", err)
+			return false
+		}
+		var res Response
+		err = json.Unmarshal(b, &res)
+		if err != nil {
+			l.Add("レスポンス内容が正しくありません"+string(b[:20]), err)
+			return false
+		}
+		if res.Room == nil || res.Room.ID <= 0 {
+			l.Add("レスポンス内容が正しくありません"+string(b[:20]), nil)
+			return false
+		}
+		roomID = res.Room.ID
+
+		return true
+	})
+
+	return roomID, ok
+}
+
+func drawStroke(s *session.Session, token string, roomID int64, stroke seed.Stroke) (int64, bool) {
+	postBody, _ := json.Marshal(struct {
+		RoomID int64 `json:"room_id"`
+		seed.Stroke
+	}{
+		RoomID: roomID,
+		Stroke: stroke,
+	})
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+		"x-csrf-token": token,
+	}
+
+	var strokeID int64
+
+	u := "/api/strokes/rooms/" + strconv.FormatInt(roomID, 10)
+	ok := s.Post(u, postBody, headers, func(body io.Reader, l *fails.Logger) bool {
+
+		b, err := ioutil.ReadAll(body)
+		if err != nil {
+			l.Add("レスポンス内容が読み込めませんでした", err)
+			return false
 		}
 
 		var res Response
-		err := json.NewDecoder(body).Decode(&res)
+		err = json.Unmarshal(b, &res)
 		if err != nil {
-			fails.Critical()
-			stderr.Log.Println(err.Error())
-			return errors.New("レスポンス内容が正しくありません")
+			l.Add("レスポンス内容が正しくありません"+string(b[:20]), err)
+			return false
 		}
-		if res.Room == nil || res.Room.ID <= 0 {
-			fails.Critical()
-			return errors.New("レスポンス内容が正しくありません")
+		if res.Stroke == nil || res.Stroke.ID <= 0 {
+			l.Add("レスポンス内容が正しくありません"+string(b[:20]), nil)
+			return false
 		}
-		RoomID = res.Room.ID
 
-		score.Increment(CreateRoomScore)
+		strokeID = res.Stroke.ID
 
-		return nil
+		return true
 	})
 
-	if err != nil {
-		return
-	}
-
-	seedStroke := seed.GetStroke("main001")
-
-	postTimes := make(map[int64]time.Time)
-
-	end := make(chan struct{})
-
-	go func() {
-		for {
-			for _, stroke := range seedStroke {
-				postBody, _ := json.Marshal(struct {
-					RoomID int64 `json:"room_id"`
-					seed.Stroke
-				}{
-					RoomID: RoomID,
-					Stroke: stroke,
-				})
-
-				postTime := time.Now()
-
-				err := s.Post("/api/strokes/rooms/"+strconv.FormatInt(RoomID, 10), postBody, headers, func(status int, body io.Reader) error {
-					responseTime := time.Now()
-
-					if status != 200 {
-						fails.Critical()
-						return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-					}
-
-					var res Response
-					err = json.NewDecoder(body).Decode(&res)
-					if err != nil {
-						fails.Critical()
-						stderr.Log.Println(err.Error())
-						return errors.New("レスポンス内容が正しくありません")
-					}
-					if res.Stroke == nil || res.Stroke.ID <= 0 {
-						fails.Critical()
-						return errors.New("レスポンス内容が正しくありません")
-					}
-
-					timeTaken := responseTime.Sub(postTime).Seconds()
-					if timeTaken < 1 { // TODO: この時間は要調整
-						score.Increment(CreateStrokeScore * 2)
-					} else if timeTaken < 3 {
-						score.Increment(CreateStrokeScore)
-					}
-
-					postTimes[res.Stroke.ID] = postTime
-
-					return nil
-				})
-				if err != nil || len(timeoutCh) > 0 {
-					end <- struct{}{}
-				}
-			}
-		}
-	}()
-
-	v := url.Values{}
-	v.Set("scheme", s.Scheme)
-	v.Set("host", s.Host)
-	v.Set("room", strconv.FormatInt(RoomID, 10))
-
-	resp, err := http.Get(aud + "?" + v.Encode())
-	if err != nil {
-		stderr.Log.Println("failed to call audience " + aud + " :" + err.Error())
-		fails.Add("予期せぬエラー (主催者に連絡してください)")
-		return
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			stderr.Log.Println("failed to call audience " + aud)
-		} else {
-			stderr.Log.Println("failed to call audience " + aud + " :" + string(body))
-		}
-		fails.Add("予期せぬエラー (主催者に連絡してください)")
-		return
-	}
-
-	var audRes AudienceResponse
-	err = json.NewDecoder(resp.Body).Decode(&audRes)
-	if err != nil {
-		stderr.Log.Println("failed to decode json from audience: " + err.Error())
-		fails.Add("予期せぬエラー (主催者に連絡してください)")
-		return
-	}
-	for _, msg := range audRes.Errors {
-		fails.Add(msg)
-	}
-	for _, strokeLog := range audRes.StrokeLogs {
-		postTime := postTimes[strokeLog.StrokeID]
-		timeTaken := strokeLog.ReceivedTime.Sub(postTime).Seconds()
-		if timeTaken < 1 { // TODO: この時間は要調整
-			score.Increment(StrokeReceiveScore * 2)
-		} else if timeTaken < 3 {
-			score.Increment(StrokeReceiveScore)
-		}
-	}
-
-	<-end
+	return strokeID, ok
 }

@@ -3,20 +3,25 @@ package session
 import (
 	"bytes"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/url"
 	"time"
 
+	"strconv"
+
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/http"
 	"github.com/catatsuy/isucon6-final/bench/http/cookiejar"
-	"github.com/catatsuy/isucon6-final/bench/stderr"
+	"github.com/catatsuy/isucon6-final/bench/score"
 )
 
-const DefaultTimeout = time.Duration(10) * time.Second
+const (
+	DefaultTimeout = time.Duration(10) * time.Second
+	GetScore       = 1
+	PostScore      = 20
+)
 
 type Session struct {
 	Scheme    string
@@ -26,7 +31,7 @@ type Session struct {
 	Transport *http.Transport
 }
 
-type CheckFunc func(status int, body io.Reader) error // TODO: Headerも受け取る？
+type CheckFunc func(body io.Reader, l *fails.Logger) bool
 
 func New(baseURL string) *Session {
 	s := &Session{}
@@ -61,74 +66,61 @@ func New(baseURL string) *Session {
 	return s
 }
 
-func (s *Session) NewRequest(method, path string, body io.Reader) (*http.Request, error) {
+func (s *Session) request(method, path string, body io.Reader, headers map[string]string, checkFunc CheckFunc) bool {
+	l := &fails.Logger{Prefix: "[" + method + " " + path + "] "}
+
 	u, err := url.Parse(path)
 	if err != nil {
-		return nil, err
+		return false
 	}
 	u.Scheme = s.Scheme
 	u.Host = s.Host
-	return http.NewRequest(method, u.String(), body)
-}
 
-func (s *Session) Get(path string, checkFunc CheckFunc) error {
-	errPrefix := "GET " + path + ", "
-
-	req, err := s.NewRequest("GET", path, nil)
+	req, err := http.NewRequest(method, u.String(), body)
 	if err != nil {
-		stderr.Log.Println(errPrefix + "error: " + err.Error())
-		return errors.New(fails.Add(errPrefix + "予期せぬ失敗です (主催者に連絡してください)"))
+		l.Critical("予期せぬ失敗です (主催者に連絡してください)", err)
+		return false
 	}
 
 	req.Header.Set("User-Agent", s.UserAgent)
-
-	res, err := s.Client.Do(req)
-
-	if err != nil {
-		if err, ok := err.(net.Error); ok && err.Timeout() {
-			return errors.New(fails.Add(errPrefix + "リクエストがタイムアウトしました"))
+	if headers != nil {
+		for key, val := range headers {
+			req.Header.Set(key, val)
 		}
-		stderr.Log.Println(errPrefix + "error: " + err.Error())
-		fails.Add(errPrefix + "リクエストに失敗しました")
-		return err
-	}
-	defer res.Body.Close()
-
-	err = checkFunc(res.StatusCode, res.Body)
-	if err != nil {
-		return errors.New(fails.Add(errPrefix + err.Error()))
-	}
-	return nil
-}
-
-func (s *Session) Post(path string, body []byte, headers map[string]string, checkFunc CheckFunc) error {
-	errPrefix := "POST " + path + ", "
-
-	req, err := s.NewRequest("POST", path, bytes.NewBuffer(body))
-	if err != nil {
-		stderr.Log.Println(errPrefix + "error: " + err.Error())
-		return errors.New(fails.Add(errPrefix + "予期せぬ失敗です (主催者に連絡してください)"))
-	}
-
-	req.Header.Set("User-Agent", s.UserAgent)
-	for key, val := range headers {
-		req.Header.Set(key, val)
 	}
 
 	res, err := s.Client.Do(req)
 
 	if err != nil {
 		if err, ok := err.(net.Error); ok && err.Timeout() {
-			return errors.New(fails.Add(errPrefix + "リクエストがタイムアウトしました"))
+			l.Add("リクエストがタイムアウトしました", err)
+			return false
 		}
-		stderr.Log.Println(errPrefix + "error: " + err.Error())
-		return errors.New(fails.Add(errPrefix + "リクエストに失敗しました"))
+		l.Add("リクエストが失敗しました", err)
+		return false
 	}
 	defer res.Body.Close()
 
-	err = checkFunc(res.StatusCode, res.Body)
-	if err != nil {
-		return errors.New(fails.Add(errPrefix + err.Error()))
+	if res.StatusCode != 200 {
+		l.Add("ステータスが200ではありません: "+strconv.Itoa(res.StatusCode), nil)
+		return false
 	}
-	return nil
+
+	return checkFunc(res.Body, l)
+}
+
+func (s *Session) Get(path string, checkFunc CheckFunc) bool {
+	ok := s.request("GET", path, nil, nil, checkFunc)
+	if ok {
+		score.Increment(GetScore)
+	}
+	return ok
+}
+
+func (s *Session) Post(path string, body []byte, headers map[string]string, checkFunc CheckFunc) bool {
+	ok := s.request("POST", path, bytes.NewBuffer(body), headers, checkFunc)
+	if ok {
+		score.Increment(PostScore)
+	}
+	return ok
 }

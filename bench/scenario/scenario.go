@@ -1,74 +1,29 @@
 package scenario
 
 import (
-	"errors"
 	"io"
 	"math/rand"
-	"strconv"
-
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/catatsuy/isucon6-final/bench/score"
+	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
 var (
-	IndexGetScore      int64 = 1
-	RoomGetScore       int64 = 1
-	SVGGetScore        int64 = 1
-	CreateRoomScore    int64 = 20
-	CreateStrokeScore  int64 = 20
 	StrokeReceiveScore int64 = 1
 )
 
-func makeDocument(r io.Reader) (*goquery.Document, error) {
-	doc, err := goquery.NewDocumentFromReader(r)
-	if err != nil {
-		return nil, errors.New("ページのHTMLがパースできませんでした")
-	}
-	return doc, nil
-}
-
-func extractImages(doc *goquery.Document) []string {
-	imageUrls := []string{}
-
-	doc.Find("img").Each(func(_ int, selection *goquery.Selection) {
-		if url, ok := selection.Attr("src"); ok {
-			imageUrls = append(imageUrls, url)
-		}
-	})
-
-	return imageUrls
-}
-
-func extractCsrfToken(doc *goquery.Document) string {
-	var token string
-
-	doc.Find("html").Each(func(_ int, selection *goquery.Selection) {
-		if t, ok := selection.Attr("data-csrf-token"); ok {
-			token = t
-		}
-	})
-
-	return token
-}
-
-func loadImages(s *session.Session, images []string) error {
-	var lastErr error
+// TODO: ステータスコード以外にもチェックしたい
+func loadImages(s *session.Session, images []string) bool {
+	status := true
 	for _, image := range images {
-		err := s.Get(image, func(status int, body io.Reader) error {
-			if status != 200 {
-				return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-			}
-			score.Increment(SVGGetScore)
-			return nil
+		ok := s.Get(image, func(body io.Reader, l *fails.Logger) bool {
+			return false
 		})
-		if err != nil {
-			lastErr = err
-		}
+		status = status && ok
 	}
-	return lastErr
+	return status
 
 	// TODO: 画像を並列リクエストするようにしてみたが、 connection reset by peer というエラーが出るので直列に戻した
 	// もしかすると s.Transport.MaxIdleConnsPerHost ずつ処理するといけるのかも
@@ -79,7 +34,6 @@ func loadImages(s *session.Session, images []string) error {
 	//			if status != 200 {
 	//				return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
 	//			}
-	//			score.Increment(SVGGetScore)
 	//			return nil
 	//		})
 	//		errs <- err
@@ -96,56 +50,49 @@ func loadImages(s *session.Session, images []string) error {
 }
 
 // トップページと画像に負荷をかける
-func LoadIndexPage(s *session.Session) {
+func LoadIndexPage(origins []string) {
+	s := newSession(origins)
+
 	var token string
 	var images []string
 
-	err := s.Get("/", func(status int, body io.Reader) error {
-		if status != 200 {
-			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-		}
-		doc, err := makeDocument(body)
-		if err != nil {
-			return err
+	ok := s.Get("/", func(body io.Reader, l *fails.Logger) bool {
+		doc, ok := makeDocument(body, l)
+		if !ok {
+			return false
 		}
 
-		token = extractCsrfToken(doc)
-
-		if token == "" {
-			return errors.New("csrf_tokenが取得できませんでした")
+		token, ok = extractCsrfToken(doc, l)
+		if !ok {
+			return false
 		}
 
 		images = extractImages(doc)
 		if len(images) < 100 {
-			return errors.New("画像の枚数が少なすぎます")
+			l.Critical("画像の枚数が少なすぎます", nil)
+			return false
 		}
 
-		score.Increment(IndexGetScore)
-
-		return nil
+		return true
 	})
-	if err != nil {
+	if !ok {
 		return
 	}
 
-	err = loadImages(s, images)
-	if err != nil {
-		return
-	}
+	loadImages(s, images)
 }
 
 // トップページを開いて適当な部屋を開く（Ajaxじゃないのは「別タブで」開いたということにでもしておく）
-func LoadRoomPage(s *session.Session) {
+func LoadRoomPage(origins []string) {
+	s := newSession(origins)
+
 	var images []string
 	var rooms []string
 
-	err := s.Get("/", func(status int, body io.Reader) error {
-		if status != 200 {
-			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-		}
-		doc, err := makeDocument(body)
-		if err != nil {
-			return err
+	ok := s.Get("/", func(body io.Reader, l *fails.Logger) bool {
+		doc, ok := makeDocument(body, l)
+		if !ok {
+			return false
 		}
 
 		images = extractImages(doc)
@@ -158,80 +105,42 @@ func LoadRoomPage(s *session.Session) {
 			}
 		})
 
-		score.Increment(IndexGetScore)
-
-		return nil
+		return true
 	})
-	if err != nil {
+	if !ok {
 		return
 	}
 
-	err = loadImages(s, images)
-	if err != nil {
+	ok = loadImages(s, images)
+	if !ok {
 		return
 	}
 
 	roomURL := rooms[rand.Intn(len(rooms))]
 
-	_ = s.Get(roomURL, func(status int, body io.Reader) error {
-		if status != 200 {
-			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-		}
+	_ = s.Get(roomURL, func(body io.Reader, l *fails.Logger) bool {
 
 		// TODO: polylineのidを上で開いたSVGと比較するか？
 
-		score.Increment(RoomGetScore)
-		return nil
+		return true
 	})
-	if err != nil {
-		return
-	}
 }
 
 // ページ内のCSRFトークンが毎回変わっていることをチェック
-func CheckCSRFTokenRefreshed(s *session.Session) {
-	var token string
+func CheckCSRFTokenRefreshed(origins []string) {
+	s := newSession(origins)
 
-	err := s.Get("/", func(status int, body io.Reader) error {
-		if status != 200 {
-			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-		}
-		doc, err := makeDocument(body)
-		if err != nil {
-			return err
-		}
-
-		token = extractCsrfToken(doc)
-
-		if token == "" {
-			return errors.New("csrf_tokenが取得できませんでした")
-		}
-
-		score.Increment(IndexGetScore)
-
-		return nil
-	})
-	if err != nil {
+	token1, ok := fetchCSRFToken(s, "/")
+	if !ok {
 		return
 	}
 
-	_ = s.Get("/", func(status int, body io.Reader) error {
-		if status != 200 {
-			return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
-		}
-		doc, err := makeDocument(body)
-		if err != nil {
-			return err
-		}
+	token2, ok := fetchCSRFToken(s, "/")
+	if !ok {
+		return
+	}
 
-		t := extractCsrfToken(doc)
-
-		if t == token {
-			return errors.New("csrf_tokenが使いまわされています")
-		}
-
-		score.Increment(IndexGetScore)
-
-		return nil
-	})
+	if token1 != token2 {
+		fails.Critical("csrf_tokenが使いまわされています", nil)
+	}
 }

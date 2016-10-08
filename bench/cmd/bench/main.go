@@ -4,56 +4,73 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
-	"regexp"
 	"time"
+
+	"net/url"
+	"strings"
+
+	"errors"
+	"os"
 
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/scenario"
 	"github.com/catatsuy/isucon6-final/bench/score"
-	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
 var BenchmarkTimeout int
-var Audience1 string
 
 func main() {
 
-	host := ""
+	var urls string
 
-	flag.StringVar(&host, "host", "", "ベンチマーク対象のIPアドレス")
-	flag.StringVar(&Audience1, "audience1", "", "オーディエンスAPIのURLその1 (http://xxx.xxx.xxx.xxx/)")
+	flag.StringVar(&urls, "urls", "", "ベンチマーク対象のURL（scheme, host, portまで。カンマ区切りで複数可。例： https://xxx.xxx.xxx.xxx,https://xxx.xxx.xxx.xxx:1443）")
 	flag.IntVar(&BenchmarkTimeout, "timeout", 60, "ソフトタイムアウト")
 
 	flag.Parse()
 
-	if !regexp.MustCompile(`\A[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\z`).MatchString(host) {
-		log.Fatal("hostの指定が間違っています（例: 127.0.0.1）")
+	origins, err := makeOrigins(urls)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, err.Error())
 	}
-	baseURL := "https://" + host
 
 	// 初期チェックで失敗したらそこで終了
-	initialCheck(baseURL)
+	initialCheck(origins)
 	if len(fails.Get()) > 0 {
 		output()
 		return
 	}
 
-	benchmark(baseURL)
+	benchmark(origins)
 	output()
 }
 
-func initialCheck(baseURL string) {
-	scenario.CheckCSRFTokenRefreshed(session.New(baseURL))
+func makeOrigins(urls string) ([]string, error) {
+	if urls == "" {
+		return nil, errors.New("urlsが指定されていません")
+	}
+	origins := strings.Split(urls, ",")
+	for _, origin := range origins {
+		u, err := url.Parse(origin)
+		if err != nil {
+			return nil, err
+		}
+		if u.Scheme != "https" || u.Host == "" {
+			return nil, errors.New("urlsの指定が間違っています")
+		}
+	}
+	return origins, nil
 }
 
-func benchmark(baseURL string) {
+func initialCheck(origins []string) {
+	scenario.CheckCSRFTokenRefreshed(origins)
+}
+
+func benchmark(origins []string) {
 	loadIndexPageCh := makeChan(2)
 	loadRoomPageCh := makeChan(2)
 	checkCSRFTokenRefreshedCh := makeChan(1)
 	matsuriCh := makeChan(1)
 	matsuriEndCh := make(chan struct{})
-	matsuriTimeoutCh := make(chan struct{}, 2) // http://mattn.kaoriya.net/software/lang/go/20160706165757.htm
 
 	timeoutCh := time.After(time.Duration(BenchmarkTimeout) * time.Second)
 
@@ -62,22 +79,22 @@ L:
 		select {
 		case <-loadIndexPageCh:
 			go func() {
-				scenario.LoadIndexPage(session.New(baseURL))
+				scenario.LoadIndexPage(origins)
 				loadIndexPageCh <- struct{}{}
 			}()
 		case <-loadRoomPageCh:
 			go func() {
-				scenario.LoadRoomPage(session.New(baseURL))
+				scenario.LoadRoomPage(origins)
 				loadRoomPageCh <- struct{}{}
 			}()
 		case <-checkCSRFTokenRefreshedCh:
 			go func() {
-				scenario.CheckCSRFTokenRefreshed(session.New(baseURL))
+				scenario.CheckCSRFTokenRefreshed(origins)
 				checkCSRFTokenRefreshedCh <- struct{}{}
 			}()
 		case <-matsuriCh:
 			go func() {
-				scenario.Matsuri(session.New(baseURL), Audience1, matsuriTimeoutCh)
+				scenario.Matsuri(origins, BenchmarkTimeout)
 				//matsuriRoomCh <- struct{}{} // Never again.
 				matsuriEndCh <- struct{}{}
 			}()
@@ -85,7 +102,6 @@ L:
 			break L
 		}
 	}
-	matsuriTimeoutCh <- struct{}{}
 	<-matsuriEndCh
 }
 
