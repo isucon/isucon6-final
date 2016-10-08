@@ -121,33 +121,7 @@ func Matsuri(origins []string, timeoutCh chan struct{}) {
 			}
 		}
 	}()
-	/*
-		v := url.Values{}
-		v.Set("scheme", s.Scheme)
-		v.Set("host", s.Host)
-		v.Set("room", strconv.FormatInt(RoomID, 10))
 
-		resp, err := http.Get(aud + "?" + v.Encode())
-		if err != nil {
-			fails.Add("予期せぬエラー (主催者に連絡してください)", err)
-			return
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			_, err := ioutil.ReadAll(resp.Body)
-			fails.Add("予期せぬエラー (主催者に連絡してください)", err)
-			return
-		}
-
-		var audRes AudienceResponse
-		err = json.NewDecoder(resp.Body).Decode(&audRes)
-		if err != nil {
-			fails.Add("予期せぬエラー (主催者に連絡してください)", err)
-			return
-		}
-		for _, msg := range audRes.Errors {
-			fails.Add(msg, nil)
-		}*/
 	watchers := make([]*RoomWatcher, 0)
 
 	// まず最初にinitialWatcherNum人が入室する
