@@ -95,7 +95,7 @@ func getProxyAddrs() ([]string, error) {
 	hosts := make([]string, 0)
 
 	rows, err := db.Query(`
-      SELECT ip_address FROM proxies`)
+      SELECT ip_address FROM proxies ORDER BY ip_address ASC`)
 	if err != nil {
 		return hosts, err
 	}
