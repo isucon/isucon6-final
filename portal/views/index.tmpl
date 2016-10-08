@@ -35,7 +35,6 @@
 {{if .LatestResult.Output}}
 <div class="row">
   <h2>自チームの最新結果</h2>
-  <div class="col-md-6">
   <table class="table">
     <tr>
       <th>Status</th><td>{{if .LatestResult.Output.Pass}}PASS{{else}}FAIL{{end}}</td>
@@ -61,7 +60,6 @@
       <td>{{.LatestResult.At}}</td>
     </tr>
   </table>
-  </div>
 </div>
 {{end}}
 
