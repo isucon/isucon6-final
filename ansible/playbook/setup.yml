@@ -1,9 +1,9 @@
 ---
 - hosts: "build_servers"
-  gather_facts: False
   become: yes
   roles:
-    - { role: base, tags: [base, app] }
+    - { role: base, tags: [base, app, proxy] }
     - { role: docker, tags: [ app ] }
     - { role: user, tags: [ app ] }
     - { role: app, tags: [ app ] }
+    - { role: proxy, tags: [ proxy ] }

@@ -1,0 +1,13 @@
+{
+  "data_dir": "/opt/consul/data",
+  "log_level": "INFO",
+  "bind_addr": "{{ ansible_eth0.ipv4.address }}",
+  "server": true,
+  "bootstrap_expect": 3,
+  "start_join": ["{{ portal_private_ip }}"],
+  "watches": [
+    "type": "event",
+    "name": "nginx_reload",
+    "handler": "sudo /usr/local/bin/nginx_reload"
+  ]
+}
