@@ -524,12 +524,16 @@ func serveUpdateTeam(w http.ResponseWriter, req *http.Request) error {
 	}
 
 	instanceName := req.FormValue("instance_name")
-	if instanceName != "" {
-		_, err := db.Exec("UPDATE teams SET instance_name = ? WHERE id = ?", instanceName, team.ID)
-		if err != nil {
-			return err
-		}
+	ipAddress := req.FormValue("ip_address")
+
+	// TODO: proxyにチームのIPアドレスを通知する
+
+	_, err = db.Exec("UPDATE teams SET instance_name = ?, ip_address = ? WHERE id = ?", instanceName, ipAddress, team.ID)
+	if err != nil {
+		return err
 	}
+
+	// TODO: IPアドレスの反映に時間がかかることを考えてこのへんで3秒程度待つか？
 
 	http.Redirect(w, req, "/", http.StatusFound)
 	return nil
