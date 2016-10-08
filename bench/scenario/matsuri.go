@@ -44,10 +44,8 @@ func Matsuri(origins []string, timeoutCh chan struct{}) {
 			for _, stroke := range seedStroke {
 				postTime := time.Now()
 
-				strokeID, ok := drawStroke(s, token, roomID, stroke)
-				if !ok || len(timeoutCh) > 0 { // TODO: 1回ぐらい失敗しても続けるべきな気がしてきた
-					end <- struct{}{}
-				}
+				strokeID, _ := drawStroke(s, token, roomID, stroke)
+				// 特に止める必要もない
 				postTimes[strokeID] = postTime
 			}
 		}
