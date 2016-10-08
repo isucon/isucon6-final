@@ -37,8 +37,6 @@ func Matsuri(origins []string, timeout int) {
 
 	postTimes := make(map[int64]time.Time)
 
-	end := make(chan struct{})
-
 	go func() {
 		for {
 			for _, stroke := range seedStroke {
@@ -102,8 +100,6 @@ func Matsuri(origins []string, timeout int) {
 			score.Increment(StrokeReceiveScore)
 		}
 	}
-
-	<-end
 }
 
 func makeRoom(s *session.Session, token string) (int64, bool) {
