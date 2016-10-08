@@ -313,10 +313,10 @@ func buildLeaderboardFromTable(team *Team, useSnapshot bool) ([]*Score, *Score, 
 
 	// 次に自チーム以外のスコアを追加
 	sort.Sort(byLatest(allScores))
-	for i, s := range allScores {
-		if i >= rankingPickLatest {
-			break
-		}
+	for _, s := range allScores {
+		//if i >= rankingPickLatest {
+		//	break
+		//}
 		if s.Team.ID != team.ID {
 			scoreByTeamID[s.Team.ID] = s
 		}
