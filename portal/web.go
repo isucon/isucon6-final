@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	databaseDSN = flag.String("database-dsn", "root:@/isu6qportal", "database `dsn`")
+	databaseDSN = flag.String("database-dsn", "root:@/isu6fportal_day0", "database `dsn`")
 	debugMode   = flag.Bool("debug", false, "enable debug mode")
 )
 

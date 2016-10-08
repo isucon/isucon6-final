@@ -67,7 +67,7 @@ func TestLogin(t *testing.T) {
 	jar, _ := cookiejar.New(nil)
 	cli := &http.Client{Jar: jar}
 
-	resp, err = cli.PostForm(s.URL+"/login", url.Values{"team_id": {"1200"}, "password": {"dummy-pass-%d200"}})
+	resp, err = cli.PostForm(s.URL+"/login", url.Values{"team_id": {"1026"}, "password": {"dummy-pass-26"}})
 	require.NoError(t, err)
 	require.Equal(t, "/", resp.Request.URL.Path)
 }
@@ -110,7 +110,7 @@ func cliLogin(cli *testHTTPClient, teamID int) {
 			s.URL+"/login",
 			url.Values{
 				"team_id":  {fmt.Sprint(teamID)},
-				"password": {fmt.Sprint("dummy-pass-%d", teamID-1000)},
+				"password": {fmt.Sprintf("dummy-pass-%d", teamID-1000)},
 			},
 		),
 	)
@@ -127,7 +127,7 @@ func TestPostJob(t *testing.T) {
 	var resp *http.Response
 
 	// cli: ログイン
-	resp = cli.Must(cli.PostForm(s.URL+"/login", url.Values{"team_id": {"1200"}, "password": {"dummy-pass-%d200"}}))
+	resp = cli.Must(cli.PostForm(s.URL+"/login", url.Values{"team_id": {"1026"}, "password": {"dummy-pass-26"}}))
 	require.Equal(t, "/", resp.Request.URL.Path)
 
 	// bench: ジョブ取る
@@ -136,12 +136,12 @@ func TestPostJob(t *testing.T) {
 
 	// cli: ジョブいれる
 	resp = cli.Must(cli.PostForm(s.URL+"/queue", url.Values{"ip_addr": {"127.0.0.1"}}))
-	assert.Contains(t, readAll(resp.Body), `<span class="label label-default">1200*</span>`, "ジョブ入った表示")
+	assert.Contains(t, readAll(resp.Body), `<span class="label label-default">1026*</span>`, "ジョブ入った表示")
 
 	// cli2: ログイン
-	resp = cli2.Must(cli2.PostForm(s.URL+"/login", url.Values{"team_id": {"1100"}, "password": {"dummy-pass-%d100"}}))
+	resp = cli2.Must(cli2.PostForm(s.URL+"/login", url.Values{"team_id": {"1005"}, "password": {"dummy-pass-5"}}))
 	require.Equal(t, "/", resp.Request.URL.Path)
-	assert.Contains(t, readAll(resp.Body), `<span class="label label-default">1200</span>`, "他人のジョブ入った表示")
+	assert.Contains(t, readAll(resp.Body), `<span class="label label-default">1026</span>`, "他人のジョブ入った表示")
 
 	// bench: ジョブ取る
 	j := benchGetJob(bench)
@@ -160,7 +160,7 @@ func TestPostJob(t *testing.T) {
 
 	// cli: トップリロード
 	resp = cli.Must(cli.Get(s.URL + "/"))
-	assert.Contains(t, readAll(resp.Body), `<span class="label label-success">1200*</span>`, "ジョブ実行中の表示")
+	assert.Contains(t, readAll(resp.Body), `<span class="label label-success">1026*</span>`, "ジョブ実行中の表示")
 
 	// bench: 結果入れる
 	benchPostResult(bench, j, &score.Output{Pass: false, Score: 5000})
@@ -188,8 +188,8 @@ func TestPostJob(t *testing.T) {
 	require.Contains(t, body, `<th>Status</th><td>PASS</td>`)
 	require.Contains(t, body, `<th>Score</th><td>3000</td>`)
 	require.Contains(t, body, `<th>Best</th><td>3000</td>`)
-	require.Regexp(t, `<td>ダミーチーム200</td>\s*<td>3000</td>`, body)
-	require.NotContains(t, body, "ダミーチーム100")
+	require.Regexp(t, `<td>ダミーチーム26</td>\s*<td>3000</td>`, body)
+	require.NotContains(t, body, "ダミーチーム5")
 
 	// bench: 結果入れる
 	benchPostResult(bench, j2, &score.Output{Pass: true, Score: 4500})
@@ -199,12 +199,12 @@ func TestPostJob(t *testing.T) {
 	require.Contains(t, body, `<th>Status</th><td>PASS</td>`)
 	require.Contains(t, body, `<th>Score</th><td>4500</td>`)
 	require.Contains(t, body, `<th>Best</th><td>4500</td>`)
-	require.Regexp(t, `<td>ダミーチーム100</td>\s*<td>4500</td>(?s:.*)<td>ダミーチーム200</td>\s*<td>3000</td>`, body)
+	require.Regexp(t, `<td>ダミーチーム5</td>\s*<td>4500</td>(?s:.*)<td>ダミーチーム26</td>\s*<td>3000</td>`, body)
 }
 
 func TestPostJobNotWithinContestTime(t *testing.T) {
 	cli := newTestClient(t)
-	cliLogin(cli, 1150)
+	cliLogin(cli, 1010)
 
 	var resp *http.Response
 
@@ -223,7 +223,7 @@ func TestPostJobNotWithinContestTime(t *testing.T) {
 
 func TestUpdateTeam(t *testing.T) {
 	cli := newTestClient(t)
-	cliLogin(cli, 1151)
+	cliLogin(cli, 1011)
 
 	resp := cli.Must(cli.PostForm(s.URL+"/team", url.Values{"instance_name": {"xxxxxx"}}))
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
