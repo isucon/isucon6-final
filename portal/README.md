@@ -63,3 +63,11 @@ mysql -uroot -Disu6fportal_day1 -e 'INSERT INTO setting (name, json) VALUES ("da
 make
 ./portal -database-dsn="root:@/isu6fportal_day0"
 ```
+
+テストは上記のコマンドでMySQLを初期化した後に、
+
+```
+go test
+```
+
+する。（テスト内で初期化してくれたりはしない）
