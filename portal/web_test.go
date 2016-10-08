@@ -222,13 +222,13 @@ func TestPostJobNotWithinContestTime(t *testing.T) {
 	var resp *http.Response
 
 	*startsAtHour = 24
-	resp = cli.Must(cli.PostForm(s.URL+"/queue", url.Values{"ip_addr": {"127.0.0.1"}}))
+	resp = cli.Must(cli.PostForm(s.URL+"/queue", nil))
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	assert.Equal(t, "Final has not started yet\n", readAll(resp.Body))
 	*startsAtHour = -1
 
 	*endsAtHour = 0
-	resp = cli.Must(cli.PostForm(s.URL+"/queue", url.Values{"ip_addr": {"127.0.0.1"}}))
+	resp = cli.Must(cli.PostForm(s.URL+"/queue", nil))
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 	assert.Equal(t, "Final has finished\n", readAll(resp.Body))
 	*endsAtHour = -1
@@ -236,12 +236,51 @@ func TestPostJobNotWithinContestTime(t *testing.T) {
 
 func TestUpdateTeam(t *testing.T) {
 	cli := newTestClient(t)
+	admin := newTestClient(t)
 	cliLogin(cli, 1011)
 
-	resp := cli.Must(cli.PostForm(s.URL+"/team", url.Values{"instance_name": {"xxxxxx"}}))
+	resp := cli.Must(cli.PostForm(s.URL+"/team", url.Values{"instance_name": {"xxxxxx"}, "ip_address": {"0.0.0.0"}}))
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	assert.Contains(t, readAll(resp.Body), `value="xxxxxx"`)
+	body := readAll(resp.Body)
+	assert.Contains(t, body, `value="xxxxxx"`)
+	assert.Contains(t, body, `value="0.0.0.0"`)
 
 	resp = cli.Must(cli.Get(s.URL + "/"))
-	assert.Contains(t, readAll(resp.Body), `value="xxxxxx"`)
+	body = readAll(resp.Body)
+	assert.Contains(t, body, `value="xxxxxx"`)
+	assert.Contains(t, body, `value="0.0.0.0"`)
+
+	resp = admin.Must(admin.Get(s.URL + "/mBGWHqBVEjUSKpBF/proxy/nginx.conf"))
+	require.Equal(t, http.StatusOK, resp.StatusCode)
+	body = readAll(resp.Body)
+	assert.Contains(t, body, `# team1011`)
+	assert.Contains(t, body, `listen 11011;`)
+	assert.Contains(t, body, `proxy_pass 0.0.0.0;`)
+}
+
+func TestUpdateProxies(t *testing.T) {
+	cli := newTestClient(t)
+	bench := newTestClient(t)
+	admin := newTestClient(t)
+	cliLogin(cli, 1012)
+
+	// proxyのIP一覧を入れる
+	nodes := `[{"Name":"portal","Addr":"192.168.0.10"},{"Name":"isu-proxy-1","Addr":"192.168.0.11"},{"Name":"isu-proxy-2","Addr":"192.168.0.12"}]`
+	resp := admin.Must(admin.Post(s.URL+"/mBGWHqBVEjUSKpBF/proxy/update", "application/json", bytes.NewBuffer([]byte(nodes))))
+	body := readAll(resp.Body)
+	assert.NotContains(t, body, `192.168.0.10`, "portalのIP")
+	assert.Contains(t, body, `192.168.0.11`, "proxy-1のIP")
+	assert.Contains(t, body, `192.168.0.12`, "proxy-2のIP")
+
+	// cli: IP入れる
+	resp = cli.Must(cli.PostForm(s.URL+"/team", url.Values{"ip_address": {"127.0.0.1"}, "instance_name": {""}}))
+
+	// cli: ジョブ入れる
+	resp = cli.Must(cli.PostForm(s.URL+"/queue", nil))
+
+	// bench: ジョブ取る
+	j := benchGetJob(bench)
+	require.Equal(t, 1012, j.TeamID)
+	assert.Contains(t, j.URLs, `192.168.0.11`, "proxy-1のIP")
+	assert.Contains(t, j.URLs, `192.168.0.12`, "proxy-2のIP")
 }

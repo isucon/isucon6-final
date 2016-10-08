@@ -51,6 +51,6 @@ CREATE TABLE IF NOT EXISTS queues (
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS proxies (
-    host VARCHAR(128) NOT NULL,
-    PRIMARY KEY (host)
+    ip_address VARCHAR(128) NOT NULL,
+    PRIMARY KEY (ip_address)
 )
