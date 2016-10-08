@@ -35,7 +35,6 @@
 {{if .LatestResult.Output}}
 <div class="row">
   <h2>自チームの最新結果</h2>
-  <div class="col-md-6">
   <table class="table">
     <tr>
       <th>Status</th><td>{{if .LatestResult.Output.Pass}}PASS{{else}}FAIL{{end}}</td>
@@ -61,7 +60,6 @@
       <td>{{.LatestResult.At}}</td>
     </tr>
   </table>
-  </div>
 </div>
 {{end}}
 
@@ -72,18 +70,26 @@
     <p class="alert alert-warning">競技残り1時間を切りました。自チームを除き、スコアの表示は固定されています</p>
   {{end}}
 
+  <div id="plot" style="height: 300px;"></div>
+  <script>
+    Highcharts.setOptions({useUTC: false});
+    new Chartkick.LineChart("plot", {{.PlotData}}, {min: 0});
+  </script>
+
   <table class="table table-striped">
     <thead>
       <tr>
+        <th>Rank</th>
         <th>Team</th>
         <th>Score</th>
         <th>Time</th>
       </tr>
     </thead>
     <tbody>
-      {{range $score := .Ranking}}
+      {{range $index, $score := .Ranking}}
         {{if (ne $score.Team.ID 9999) }}
           <tr {{if $.Team}}{{if (eq $score.Team.ID $.Team.ID)}}class="warning"{{end}}{{end}}>
+            <td>{{plusOne $index}}</td>
             <td>{{$score.Team.Name}}</td>
             <td>{{$score.Latest}}</td>
             <td>{{$score.At}}</td>
