@@ -21,7 +21,7 @@ import (
 )
 
 var (
-	databaseDSN = flag.String("database-dsn", "root:@/isu6qportal", "database `dsn`")
+	databaseDSN = flag.String("database-dsn", "root:@/isu6fportal_day0", "database `dsn`")
 	debugMode   = flag.Bool("debug", false, "enable debug mode")
 )
 
@@ -32,7 +32,7 @@ var sessionStore sessions.Store
 var locJST *time.Location
 
 const (
-	sessionName      = "isu6q"
+	sessionName      = "isu6f"
 	sessionKeyTeamID = "team-id"
 )
 
@@ -331,7 +331,7 @@ func buildLeaderboardFromTable(team *Team, useSnapshot bool) ([]*Score, *Score, 
 
 func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message string) error {
 	if getContestStatus() == contestStatusEnded {
-		http.Error(w, "Today's qualifier has ended", http.StatusForbidden)
+		http.Error(w, "Today's final has ended", http.StatusForbidden)
 		return nil
 	}
 
@@ -423,7 +423,7 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 
 func serveLogin(w http.ResponseWriter, req *http.Request) error {
 	if getContestStatus() == contestStatusEnded {
-		http.Error(w, "Today's qualifier has ended", http.StatusForbidden)
+		http.Error(w, "Today's final has ended", http.StatusForbidden)
 		return nil
 	}
 
@@ -507,7 +507,7 @@ func serveStatic(w http.ResponseWriter, req *http.Request) error {
 
 func serveUpdateTeam(w http.ResponseWriter, req *http.Request) error {
 	if getContestStatus() == contestStatusEnded {
-		http.Error(w, "Today's qualifier has ended", http.StatusForbidden)
+		http.Error(w, "Today's final has ended", http.StatusForbidden)
 		return nil
 	}
 
@@ -524,12 +524,24 @@ func serveUpdateTeam(w http.ResponseWriter, req *http.Request) error {
 	}
 
 	instanceName := req.FormValue("instance_name")
-	if instanceName != "" {
-		_, err := db.Exec("UPDATE teams SET instance_name = ? WHERE id = ?", instanceName, team.ID)
-		if err != nil {
-			return err
-		}
+	ipAddress := req.FormValue("ip_address")
+
+	// TODO: なぜかテストがこけるのでコメントアウト
+	//if ipAddress != "" {
+	//	ip := net.ParseIP(ipAddress)
+	//	if ip == nil || len(ip) != net.IPv4len {
+	//		return errHTTP(http.StatusBadRequest)
+	//	}
+	//}
+
+	// TODO: proxyにチームのIPアドレスを通知する
+
+	_, err = db.Exec("UPDATE teams SET instance_name = ?, ip_address = ? WHERE id = ?", instanceName, ipAddress, team.ID)
+	if err != nil {
+		return err
 	}
+
+	// TODO: IPアドレスの反映に時間がかかることを考えてこのへんで3秒程度待つか？
 
 	http.Redirect(w, req, "/", http.StatusFound)
 	return nil

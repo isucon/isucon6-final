@@ -16,7 +16,7 @@ func (n errAlreadyQueued) Error() string {
 	return fmt.Sprintf("job already queued (teamID=%d)", n)
 }
 
-func enqueueJob(teamID int, ipAddr string) error {
+func enqueueJob(teamID int) error {
 	var id int
 	err := db.QueryRow(`
       SELECT id FROM queues
@@ -33,7 +33,7 @@ func enqueueJob(teamID int, ipAddr string) error {
 
 	// XXX: ここですり抜けて二重で入る可能性がある
 	_, err = db.Exec(`
-      INSERT INTO queues (team_id, ip_address) VALUES (?, ?)`, teamID, ipAddr)
+      INSERT INTO queues (team_id) VALUES (?)`, teamID)
 	if err != nil {
 		return errors.Wrap(err, "enqueue job failed")
 	}
@@ -43,8 +43,8 @@ func enqueueJob(teamID int, ipAddr string) error {
 func dequeueJob(benchNode string) (*job.Job, error) {
 	var j job.Job
 	err := db.QueryRow(`
-    SELECT id, team_id, ip_address FROM queues
-      WHERE status = 'waiting' ORDER BY id LIMIT 1`).Scan(&j.ID, &j.TeamID, &j.IPAddr)
+    SELECT id, team_id FROM queues
+      WHERE status = 'waiting' ORDER BY id LIMIT 1`).Scan(&j.ID, &j.TeamID)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, nil
@@ -94,15 +94,14 @@ func doneJob(res *job.Result) error {
 		return errors.Wrap(err, "doneJob failed when beginning tx")
 	}
 	ret, err := tx.Exec(`
-    UPDATE queues SET status = 'done', result_json = ?
+    UPDATE queues SET status = 'done', result_json = ?, stderr = ?
     WHERE
       id = ?         AND
-      team_id = ?    AND
-      ip_address = ? AND status = 'running'`,
+      team_id = ?    AND status = 'running'`,
 		resultJSON,
+		res.Stderr,
 		res.Job.ID,
 		res.Job.TeamID,
-		res.Job.IPAddr,
 	)
 	if err != nil {
 		tx.Rollback()

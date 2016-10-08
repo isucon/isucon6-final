@@ -34,7 +34,7 @@ func queueJob(teamID int) error {
 }
 
 func dequeueJob() error {
-	req, err := http.NewRequest("POST", "http://localhost:8000/top4aew4fe9yeehu/job/new", nil)
+	req, err := http.NewRequest("POST", "http://localhost:8000/mBGWHqBVEjUSKpBF/job/new", nil)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func dequeueJob() error {
 	if err != nil {
 		return err
 	}
-	req, err = http.NewRequest("POST", "http://localhost:8000/top4aew4fe9yeehu/job/result", bytes.NewBuffer(b))
+	req, err = http.NewRequest("POST", "http://localhost:8000/mBGWHqBVEjUSKpBF/job/result", bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}

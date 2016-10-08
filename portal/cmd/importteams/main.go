@@ -15,15 +15,14 @@ import (
 )
 
 var (
-	dsnBase    = flag.String("dsn-base", "", "`dsn` base address (w/o database name) for isu6qportal")
-	dbNameDay0 = flag.String("db-day0", "isu6qportal_day0", "`database` name for day 0")
-	dbNameDay1 = flag.String("db-day1", "isu6qportal_day1", "`database` name for day 1")
-	dbNameDay2 = flag.String("db-day2", "isu6qportal_day2", "`database` name for day 2")
+	dsnBase    = flag.String("dsn-base", "", "`dsn` base address (w/o database name) for isu6fportal")
+	dbNameDay0 = flag.String("db-day0", "isu6fportal_day0", "`database` name for day 0")
+	dbNameDay1 = flag.String("db-day1", "isu6fportal_day1", "`database` name for day 1")
 )
 
 const (
 	operatorTeamID   = 9999
-	operatorPassword = "eimae5eebocheim4Kool"
+	operatorPassword = "FCedmJpLcF7DByju"
 )
 
 func main() {
@@ -37,19 +36,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	db2, err := sql.Open("mysql", *dsnBase+"/"+*dbNameDay2)
-	if err != nil {
-		log.Fatal(err)
-	}
 
-	for _, db := range []*sql.DB{db1, db2} {
+	for _, db := range []*sql.DB{db1} {
 		_, err = db.Exec("SET SESSION sql_mode='TRADITIONAL,NO_AUTO_VALUE_ON_ZERO,ONLY_FULL_GROUP_BY'")
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
-	var count1, count2 int
+	var count1 int
 
 	s := bufio.NewScanner(os.Stdin)
 	s.Scan() // drop first line
@@ -69,12 +64,9 @@ func main() {
 
 		var db *sql.DB
 		switch parts[5] {
-		case "9月17日(土)":
+		case "10月22日(土)":
 			db = db1
 			count1++
-		case "9月18日(日)":
-			db = db2
-			count2++
 		default:
 			log.Fatalf("unknown day: %q", parts[5])
 		}
@@ -98,21 +90,21 @@ func main() {
 	}
 
 	// day0 はダミーデータで埋める
-	for n := 1; n <= 200; n++ {
+	for n := 1; n <= 26; n++ {
 		var category string
 		if n%2 == 0 {
 			category = "general"
 		} else {
 			category = "students"
 		}
-		_, err := db0.Exec("REPLACE INTO teams (id, name, password, category, azure_resource_group) VALUES (?, ?, ?, ?, ?)", 1000+n, fmt.Sprintf("ダミーチーム%d", n), fmt.Sprint("dummy-pass-%d", n), category, fmt.Sprintf("dummy-isucon6q-%04d", 1000+n))
+		_, err := db0.Exec("REPLACE INTO teams (id, name, password, category, azure_resource_group) VALUES (?, ?, ?, ?, ?)", 1000+n, fmt.Sprintf("ダミーチーム%d", n), fmt.Sprintf("dummy-pass-%d", n), category, fmt.Sprintf("dummy-isucon6f-%04d", 1000+n))
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
 	// 運営アカウントいれる
-	for _, db := range []*sql.DB{db0, db1, db2} {
+	for _, db := range []*sql.DB{db0, db1} {
 		_, err := db.Exec("REPLACE INTO teams (id, name, password, category, azure_resource_group) VALUES (?, ?, ?, ?, ?)", operatorTeamID, "運営", operatorPassword, "general", "")
 		if err != nil {
 			log.Fatal(err)
@@ -124,7 +116,7 @@ func main() {
 		day   int
 		db    *sql.DB
 		count int
-	}{{1, db1, count1}, {2, db2, count2}} {
+	}{{0, db0, 26}, {1, db1, count1}} {
 		var c int
 		err := p.db.QueryRow("SELECT COUNT(*) FROM teams").Scan(&c)
 		if err != nil {

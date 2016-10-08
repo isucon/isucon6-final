@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/catatsuy/isucon6-final/portal/job"
 )
 
@@ -30,9 +28,9 @@ func serveQueueJob(w http.ResponseWriter, req *http.Request) error {
 	// 18時になったらコンテスト終了なのでジョブを挿入させない
 	switch getContestStatus() {
 	case contestStatusNotStarted:
-		return errHTTPMessage{http.StatusForbidden, "Qualifier has not started yet"}
+		return errHTTPMessage{http.StatusForbidden, "Final has not started yet"}
 	case contestStatusEnded:
-		return errHTTPMessage{http.StatusForbidden, "Qualifier has finished"}
+		return errHTTPMessage{http.StatusForbidden, "Final has finished"}
 	}
 
 	team, err := loadTeamFromSession(req)
@@ -43,17 +41,11 @@ func serveQueueJob(w http.ResponseWriter, req *http.Request) error {
 		return errHTTP(http.StatusForbidden)
 	}
 
-	ipAddr := req.FormValue("ip_addr")
-	if ipAddr == "" {
+	if team.IPAddr == "" {
 		return errHTTP(http.StatusBadRequest)
 	}
 
-	err = updateTeamIPAddr(team, ipAddr)
-	if err != nil {
-		return errors.Wrapf(err, "updateTeamIPAddr(team=%#v, ipAddr=%#v)", team, ipAddr)
-	}
-
-	err = enqueueJob(team.ID, ipAddr)
+	err = enqueueJob(team.ID)
 	if err != nil {
 		if _, ok := err.(errAlreadyQueued); ok {
 			// ユーザに教えてあげる
@@ -67,28 +59,6 @@ func serveQueueJob(w http.ResponseWriter, req *http.Request) error {
 	http.Redirect(w, req, "/", http.StatusFound)
 
 	return nil
-}
-
-func updateTeamIPAddr(team *Team, ipAddr string) error {
-	tx, err := db.Begin()
-	if err != nil {
-		return err
-	}
-
-	res, err := tx.Exec("UPDATE teams SET ip_address = ? WHERE id = ?", ipAddr, team.ID)
-	if err == nil {
-		var nRows int64
-		nRows, err = res.RowsAffected()
-		if err == nil && nRows > 1 {
-			err = fmt.Errorf("RowsAffected was %#v (> 1)", nRows)
-		}
-	}
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	return tx.Commit()
 }
 
 // 新しいジョブを取り出す。ジョブが無い場合は 204 を返す
@@ -105,6 +75,11 @@ func serveNewJob(w http.ResponseWriter, req *http.Request) error {
 	}
 	if j == nil {
 		w.WriteHeader(http.StatusNoContent)
+		return nil
+	}
+	j.URLs, err = getProxyURLs(j.TeamID)
+	if err != nil {
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		return nil
 	}
 	w.Header().Set("Content-Type", "application/json")

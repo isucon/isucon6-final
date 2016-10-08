@@ -29,7 +29,7 @@ var (
 )
 
 const (
-	pathPrefixInternal = "top4aew4fe9yeehu/"
+	pathPrefixInternal = "mBGWHqBVEjUSKpBF/"
 )
 
 type handler func(http.ResponseWriter, *http.Request) error
@@ -61,13 +61,13 @@ func (fn handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}()
 
 	if getContestStatus() == contestStatusNotStarted && !strings.HasPrefix(req.URL.Path, "/"+pathPrefixInternal) {
-		http.Error(w, "Qualifier has not started yet", http.StatusForbidden)
+		http.Error(w, "Final has not started yet", http.StatusForbidden)
 		return
 	}
 
 	err := fn(&rw, req)
 	if err == nil {
-		rb.Header().Set("X-Isu6QPortal-Version", appVersion)
+		rb.Header().Set("X-Isu6FPortal-Version", appVersion)
 		rb.WriteTo(w)
 	} else {
 		if he, ok := err.(httpError); ok {
@@ -118,6 +118,8 @@ func buildMux() *http.ServeMux {
 	mux.Handle("/queue", handler(serveQueueJob))
 	mux.Handle("/team", handler(serveUpdateTeam))
 
+	mux.Handle("/"+pathPrefixInternal+"proxy/update", handler(serveProxyUpdate))
+	mux.Handle("/"+pathPrefixInternal+"proxy/nginx.conf", handler(serveProxyNginxConf))
 	mux.Handle("/"+pathPrefixInternal+"job/new", handler(serveNewJob))
 	mux.Handle("/"+pathPrefixInternal+"job/result", handler(servePostResult))
 	mux.Handle("/"+pathPrefixInternal+"debug/vars", handler(expvarHandler))
@@ -129,7 +131,7 @@ func buildMux() *http.ServeMux {
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
-	log.SetPrefix("[isucon6q-portal] ")
+	log.SetPrefix("[isucon6f-portal] ")
 
 	flag.Parse()
 	if *addr == "" {

@@ -18,13 +18,16 @@
   {{end}}
   </p>
   <form action="/queue" method="POST">
-    <div class="form-group">
-      <label>IP Address</label>
-      <input class="form-control" type="text" name="ip_addr" value="{{.Team.IPAddr}}">
-    </div>
-    <div class="form-group">
-      <input class="btn btn-primary" type="submit" value="Enqueue">
-    </div>
+    {{if .Team.IPAddr}}
+      <div class="form-group">
+        <input class="btn btn-primary" type="submit" value="Enqueue">
+      </div>
+    {{else}}
+      <p class="alert alert-warning">ページ下部の「運営向け情報」からIPアドレスを登録してください。</p>
+      <div class="form-group">
+        <input class="btn btn-primary" type="submit" value="Enqueue" disabled>
+      </div>
+    {{end}}
   </form>
 </div>
 {{end}}
@@ -95,7 +98,11 @@
   <h2>運営向け情報</h2>
   <form action="/team" method="POST">
     <div class="form-group">
-      <label>インスタンス名</label>
+      <label>グローバルIPv4アドレス</label>
+      <input class="form-control" type="text" name="ip_address" value="{{.Team.IPAddr}}" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>競技に使用したインスタンス名（スペース区切りで4個まで）</label>
       <input class="form-control" type="text" name="instance_name" value="{{.Team.InstanceName}}" autocomplete="off">
     </div>
     <div class="form-group">

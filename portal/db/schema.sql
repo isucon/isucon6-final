@@ -42,10 +42,15 @@ CREATE TABLE IF NOT EXISTS queues (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     team_id INT NOT NULL,
     status ENUM('waiting', 'running', 'done', 'aborted') NOT NULL DEFAULT 'waiting',
-    ip_address VARCHAR(32) NOT NULL,
     bench_node VARCHAR(64) DEFAULT NULL,
-    result_json TEXT,
+    result_json MEDIUMTEXT,
+    stderr MEDIUMTEXT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     KEY queues_team_status_idx (team_id, status)
 ) DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS proxies (
+    ip_address VARCHAR(128) NOT NULL,
+    PRIMARY KEY (ip_address)
+)

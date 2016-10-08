@@ -50,7 +50,7 @@ func (cli *CLI) Run(args []string) int {
 	defaultBenchPath := filepath.Join(h, "isucon6f", "isucon6f-bench")
 	fs := flag.NewFlagSet("isu6q bench worker", flag.ContinueOnError)
 	fs.SetOutput(cli.errStream)
-	fs.StringVar(&portalHost, "portal", "isucon6q:phushohwaighai3fuphahchi@isucon6q.songmu.org", "portal Host")
+	fs.StringVar(&portalHost, "portal", "isucon6f:rxmtquuhmrqwdygxzdakhnznuzghsrdz@isucon6q.catatsuy.org", "portal Host")
 	fs.StringVar(&benchPath, "bench", defaultBenchPath, "benchmark path")
 
 	if err := fs.Parse(args); err != nil {
@@ -72,11 +72,11 @@ type portal struct {
 }
 
 func (ptl *portal) newJobURL() string {
-	return fmt.Sprintf("http://%s/top4aew4fe9yeehu/job/new", ptl.host)
+	return fmt.Sprintf("http://%s/mBGWHqBVEjUSKpBF/job/new", ptl.host)
 }
 
 func (ptl *portal) resultURL() string {
-	return fmt.Sprintf("http://%s/top4aew4fe9yeehu/job/result", ptl.host)
+	return fmt.Sprintf("http://%s/mBGWHqBVEjUSKpBF/job/result", ptl.host)
 }
 
 var sigReceived bool
@@ -155,7 +155,7 @@ func (cli *CLI) start(portalHost, benchPath string) int {
 			continue
 		}
 		log.Printf("received job: %#v\n", j)
-		tio := buildBenchCmd(benchPath, j.IPAddr)
+		tio := buildBenchCmd(benchPath, j.URLs)
 		_, out, stderr, err := tio.Run()
 		if err != nil {
 			log.Println(err)
@@ -172,6 +172,7 @@ func (cli *CLI) start(portalHost, benchPath string) int {
 		res := &job.Result{
 			Job:    j,
 			Output: &o,
+			Stderr: stderr,
 		}
 		err = ptl.postResult(res)
 		if err != nil {
@@ -181,8 +182,8 @@ func (cli *CLI) start(portalHost, benchPath string) int {
 	return exitCodeOK
 }
 
-func buildBenchCmd(benchPath, ipAddr string) *timeout.Timeout {
-	cmd := exec.Command(benchPath, "-host", ipAddr, "-timeout", "30")
+func buildBenchCmd(benchPath, urls string) *timeout.Timeout {
+	cmd := exec.Command(benchPath, "-urls", urls, "-timeout", "30")
 	cmd.Dir = filepath.Dir(benchPath)
 	return &timeout.Timeout{
 		Cmd:       cmd,
