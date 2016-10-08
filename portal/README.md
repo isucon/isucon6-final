@@ -1,6 +1,6 @@
-# isucon6q-portal
+# isucon6f-portal
 
-ISUCON6 予選ポータルサイトです。
+ISUCON6 本選ポータルサイトです。
 
 ## 運営アカウント
 
@@ -21,7 +21,7 @@ Host isucon6f-portal
 
 で
 
-    make deploy TARGET=isucon6q-portal ANSIBLE_ARGS=-vv
+    make deploy TARGET=isucon6f-portal ANSIBLE_ARGS=-vv
 
 ## 起動オプション
 

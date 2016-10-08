@@ -32,7 +32,7 @@ var sessionStore sessions.Store
 var locJST *time.Location
 
 const (
-	sessionName      = "isu6q"
+	sessionName      = "isu6f"
 	sessionKeyTeamID = "team-id"
 )
 

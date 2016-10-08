@@ -97,7 +97,7 @@ func main() {
 		} else {
 			category = "students"
 		}
-		_, err := db0.Exec("REPLACE INTO teams (id, name, password, category, azure_resource_group) VALUES (?, ?, ?, ?, ?)", 1000+n, fmt.Sprintf("ダミーチーム%d", n), fmt.Sprintf("dummy-pass-%d", n), category, fmt.Sprintf("dummy-isucon6q-%04d", 1000+n))
+		_, err := db0.Exec("REPLACE INTO teams (id, name, password, category, azure_resource_group) VALUES (?, ?, ?, ?, ?)", 1000+n, fmt.Sprintf("ダミーチーム%d", n), fmt.Sprintf("dummy-pass-%d", n), category, fmt.Sprintf("dummy-isucon6f-%04d", 1000+n))
 		if err != nil {
 			log.Fatal(err)
 		}

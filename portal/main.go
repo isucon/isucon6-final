@@ -67,7 +67,7 @@ func (fn handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	err := fn(&rw, req)
 	if err == nil {
-		rb.Header().Set("X-Isu6QPortal-Version", appVersion)
+		rb.Header().Set("X-Isu6FPortal-Version", appVersion)
 		rb.WriteTo(w)
 	} else {
 		if he, ok := err.(httpError); ok {
@@ -129,7 +129,7 @@ func buildMux() *http.ServeMux {
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
-	log.SetPrefix("[isucon6q-portal] ")
+	log.SetPrefix("[isucon6f-portal] ")
 
 	flag.Parse()
 	if *addr == "" {
