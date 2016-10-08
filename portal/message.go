@@ -50,6 +50,31 @@ func serveMessages(w http.ResponseWriter, req *http.Request) error {
 	return templates["messages.tmpl"].Execute(w, viewParamsDebugMessages{viewParamsLayout{nil, day}, msgs})
 }
 
+func serveFixRanking(w http.ResponseWriter, req *http.Request) error {
+	if req.Method != http.MethodPost {
+		return errHTTP(http.StatusMethodNotAllowed)
+	}
+	msgs, err := getMessages()
+	if err != nil {
+		return err
+	}
+	msgs = append(msgs, Message{Kind: "danger", Message: "競技残り1時間を切りました。自チームを除き、スコアの表示は固定されています"})
+
+	err = updateMessages(msgs)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec("INSERT INTO setting (name, json) VALUES('is_ranking_fixed', '1')")
+	if err != nil {
+		return err
+	}
+
+	http.Redirect(w, req, "./messages", http.StatusFound)
+
+	return nil
+}
+
 func getMessages() ([]Message, error) {
 	msgs := make([]Message, 0)
 

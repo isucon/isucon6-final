@@ -127,6 +127,7 @@ func buildMux() *http.ServeMux {
 	mux.Handle("/"+pathPrefixInternal+"debug/leaderboard", handler(serveDebugLeaderboard))
 	mux.Handle("/"+pathPrefixInternal+"debug/proxies", handler(serveDebugProxies))
 	mux.Handle("/"+pathPrefixInternal+"messages", handler(serveMessages))
+	mux.Handle("/"+pathPrefixInternal+"fixranking", handler(serveFixRanking))
 
 	return mux
 }

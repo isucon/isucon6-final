@@ -11,15 +11,25 @@
     {{range $item := .Messages}}
       <div class="form-inline">
         <select name="kind" class="form-control">
-          <option value="danger" {{if (eq $item.Kind "danger")}}selected{{end}}>danger</option>
-          <option value="warning" {{if (eq $item.Kind "warning")}}selected{{end}}>warning</option>
           <option value="info" {{if (eq $item.Kind "info")}}selected{{end}}>info</option>
           <option value="success" {{if (eq $item.Kind "success")}}selected{{end}}>success</option>
+          <option value="warning" {{if (eq $item.Kind "warning")}}selected{{end}}>warning</option>
+          <option value="danger" {{if (eq $item.Kind "danger")}}selected{{end}}>danger</option>
         </select>
         <input type="text" name="message" value="{{$item.Message}}" class="form-control" style="width:800px"></input>
       </div>
     {{end}}
     <button class="btn btn-primary" type="submit">Submit</button>
+  </form>
+</div>
+
+<div class="row">
+  <form method="post" action="./fixranking">
+    <h2>ランキングを固定する</h2>
+    <p>残り1時間になったら押して下さい。</p>
+    <p>このボタンを押すと、settingsテーブルにis_ranking_fixedが追加され、messagesテーブルに「自分以外のランキングは更新されません」のようなメッセージが挿入されます。</p>
+    <p>誤って押してしまった場合は両方のテーブルから値を消しましょう。</p>
+    <button class="btn btn-danger" type="submit">固定する</button>
   </form>
 </div>
 {{end}}
