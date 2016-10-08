@@ -1,0 +1,4 @@
+#!/bin/bash
+
+curl -o /etc/nginx/nginx.conf http://{{ portal_private_ip }}:8080/nginx.conf
+sudo systemctl reload nginx

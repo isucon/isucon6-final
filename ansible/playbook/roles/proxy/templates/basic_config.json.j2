@@ -6,8 +6,10 @@
   "bootstrap_expect": 3,
   "start_join": ["{{ portal_private_ip }}"],
   "watches": [
-    "type": "event",
-    "name": "nginx_reload",
-    "handler": "sudo /usr/local/bin/nginx_reload"
+    {
+      "type": "event",
+      "name": "nginx_reload",
+      "handler": "sudo /usr/local/bin/nginx_reload"
+    }
   ]
 }

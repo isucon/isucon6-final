@@ -18,6 +18,17 @@
   notify: restart nginx
 - name: nginx service enabled
   service: name=nginx state=started enabled=yes
+- name: place reload script
+  template:
+    src=templates/nginx_reload.j2
+    dest=/usr/local/bin/nginx_reload
+    owner=root
+    group=root
+    mode=755
+- name: install unzip
+  apt: name={{ item }}
+  with_items:
+    - unzip
 - name: download consul
   get_url:
     url=https://releases.hashicorp.com/consul/0.7.0/consul_0.7.0_linux_amd64.zip
@@ -32,6 +43,13 @@
     path=/usr/local/bin/consul
     owner=root
     mode=755
+- name: make directory of consul config
+  file:
+    path=/etc/systemd/system/consul.d/
+    state=directory
+    owner=root
+    group=root
+    mode=0755
 - name: consul config
   template:
     src=templates/basic_config.json.j2
