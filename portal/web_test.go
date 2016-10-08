@@ -211,13 +211,13 @@ func TestPostJobNotWithinContestTime(t *testing.T) {
 	*startsAtHour = 24
 	resp = cli.Must(cli.PostForm(s.URL+"/queue", url.Values{"ip_addr": {"127.0.0.1"}}))
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
-	assert.Equal(t, "Qualifier has not started yet\n", readAll(resp.Body))
+	assert.Equal(t, "Final has not started yet\n", readAll(resp.Body))
 	*startsAtHour = -1
 
 	*endsAtHour = 0
 	resp = cli.Must(cli.PostForm(s.URL+"/queue", url.Values{"ip_addr": {"127.0.0.1"}}))
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
-	assert.Equal(t, "Qualifier has finished\n", readAll(resp.Body))
+	assert.Equal(t, "Final has finished\n", readAll(resp.Body))
 	*endsAtHour = -1
 }
 

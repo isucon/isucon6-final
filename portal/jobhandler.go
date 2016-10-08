@@ -30,9 +30,9 @@ func serveQueueJob(w http.ResponseWriter, req *http.Request) error {
 	// 18時になったらコンテスト終了なのでジョブを挿入させない
 	switch getContestStatus() {
 	case contestStatusNotStarted:
-		return errHTTPMessage{http.StatusForbidden, "Qualifier has not started yet"}
+		return errHTTPMessage{http.StatusForbidden, "Final has not started yet"}
 	case contestStatusEnded:
-		return errHTTPMessage{http.StatusForbidden, "Qualifier has finished"}
+		return errHTTPMessage{http.StatusForbidden, "Final has finished"}
 	}
 
 	team, err := loadTeamFromSession(req)

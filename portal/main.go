@@ -61,7 +61,7 @@ func (fn handler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}()
 
 	if getContestStatus() == contestStatusNotStarted && !strings.HasPrefix(req.URL.Path, "/"+pathPrefixInternal) {
-		http.Error(w, "Qualifier has not started yet", http.StatusForbidden)
+		http.Error(w, "Final has not started yet", http.StatusForbidden)
 		return
 	}
 

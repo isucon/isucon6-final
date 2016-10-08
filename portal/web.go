@@ -331,7 +331,7 @@ func buildLeaderboardFromTable(team *Team, useSnapshot bool) ([]*Score, *Score, 
 
 func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message string) error {
 	if getContestStatus() == contestStatusEnded {
-		http.Error(w, "Today's qualifier has ended", http.StatusForbidden)
+		http.Error(w, "Today's final has ended", http.StatusForbidden)
 		return nil
 	}
 
@@ -423,7 +423,7 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 
 func serveLogin(w http.ResponseWriter, req *http.Request) error {
 	if getContestStatus() == contestStatusEnded {
-		http.Error(w, "Today's qualifier has ended", http.StatusForbidden)
+		http.Error(w, "Today's final has ended", http.StatusForbidden)
 		return nil
 	}
 
@@ -507,7 +507,7 @@ func serveStatic(w http.ResponseWriter, req *http.Request) error {
 
 func serveUpdateTeam(w http.ResponseWriter, req *http.Request) error {
 	if getContestStatus() == contestStatusEnded {
-		http.Error(w, "Today's qualifier has ended", http.StatusForbidden)
+		http.Error(w, "Today's final has ended", http.StatusForbidden)
 		return nil
 	}
 
