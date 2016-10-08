@@ -1,0 +1,12 @@
+FROM python
+
+WORKDIR /var/www
+
+# キャッシュ効率を上げるためにrequirements.txtだけ先にcopyしてインストールする
+COPY ./requirements.txt /var/www
+
+RUN pip install -r requirements.txt
+
+COPY . /var/www
+
+CMD ["python", "app.py"]
