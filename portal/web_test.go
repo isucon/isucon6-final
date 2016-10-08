@@ -19,8 +19,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/catatsuy/isucon6-final/portal/score"
 	"github.com/catatsuy/isucon6-final/portal/job"
+	"github.com/catatsuy/isucon6-final/portal/score"
 )
 
 var s *httptest.Server
@@ -96,6 +96,7 @@ func benchPostResult(bench *testHTTPClient, j *job.Job, output *score.Output) {
 	result := job.Result{
 		Job:    j,
 		Output: output,
+		Stderr: "",
 	}
 	resultJSON, err := json.Marshal(result)
 	require.NoError(bench.T, err)
@@ -134,8 +135,16 @@ func TestPostJob(t *testing.T) {
 	resp = bench.Must(bench.Post(s.URL+"/mBGWHqBVEjUSKpBF/job/new", "", nil))
 	require.Equal(t, http.StatusNoContent, resp.StatusCode)
 
-	// cli: ジョブいれる
-	resp = cli.Must(cli.PostForm(s.URL+"/queue", url.Values{"ip_addr": {"127.0.0.1"}}))
+	// cli: ジョブいれる→まだIP入れてないのでエラー
+	resp = cli.Must(cli.PostForm(s.URL+"/queue", nil))
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+
+	// cli: IP入れる
+	resp = cli.Must(cli.PostForm(s.URL+"/team", url.Values{"ip_address": {"127.0.0.1"}, "instance_name": {""}}))
+	assert.Contains(t, readAll(resp.Body), `<input class="form-control" type="text" name="ip_address" value="127.0.0.1" autocomplete="off">`, "IP入った表示")
+
+	// cli: ジョブ入れる
+	resp = cli.Must(cli.PostForm(s.URL+"/queue", nil))
 	assert.Contains(t, readAll(resp.Body), `<span class="label label-default">1026*</span>`, "ジョブ入った表示")
 
 	// cli2: ログイン
@@ -147,12 +156,16 @@ func TestPostJob(t *testing.T) {
 	j := benchGetJob(bench)
 
 	// cli: ジョブいれる (2) → 入らない
-	resp = cli.Must(cli.PostForm(s.URL+"/queue", url.Values{"ip_addr": {"127.0.0.1"}}))
+	resp = cli.Must(cli.PostForm(s.URL+"/queue", nil))
 	assert.Contains(t, readAll(resp.Body), `Job already queued`)
 
+	// cli2: IP入れる
+	resp = cli2.Must(cli2.PostForm(s.URL+"/team", url.Values{"ip_address": {"127.0.0.2"}, "instance_name": {""}}))
+	assert.Contains(t, readAll(resp.Body), `<input class="form-control" type="text" name="ip_address" value="127.0.0.2" autocomplete="off">`, "IP入った表示")
+
 	// cli2: ジョブ入れる → 入る
-	resp = cli2.Must(cli2.PostForm(s.URL+"/queue", url.Values{"ip_addr": {"127.0.0.2"}}))
-	assert.NotContains(t, readAll(resp.Body), `Job already queued`)
+	resp = cli2.Must(cli2.PostForm(s.URL+"/queue", nil))
+	assert.Contains(t, readAll(resp.Body), `<span class="label label-default">1005*</span>`, "ジョブ入った表示")
 
 	// bench: ジョブ取る → 放置
 	j2 := benchGetJob(bench)

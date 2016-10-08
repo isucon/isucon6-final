@@ -4,8 +4,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/catatsuy/isucon6-final/portal/score"
 	"github.com/catatsuy/isucon6-final/portal/job"
+	"github.com/catatsuy/isucon6-final/portal/score"
 )
 
 func TestEnqueueJob(t *testing.T) {
@@ -15,19 +15,19 @@ func TestEnqueueJob(t *testing.T) {
 	initWeb()
 
 	// ジョブを積む
-	err = enqueueJob(11, "192.168.0.1")
+	err = enqueueJob(11)
 	if err != nil {
 		t.Errorf("failed to enqueue job: %s", err)
 	}
 
 	// 同じteamIDはもう積めない
-	err = enqueueJob(11, "192.168.0.2")
+	err = enqueueJob(11)
 	if err == nil || err.Error() != "job already queued (teamID=11)" {
 		t.Errorf("something went wrong: %v", err)
 	}
 
 	// 別のteamIDは積める
-	err = enqueueJob(12, "192.168.1.1")
+	err = enqueueJob(12)
 	if err != nil {
 		t.Errorf("failed to enqueue job: %s", err)
 	}
@@ -40,7 +40,6 @@ func TestEnqueueJob(t *testing.T) {
 	expect := &job.Job{
 		ID:     1,
 		TeamID: 11,
-		IPAddr: "192.168.0.1",
 	}
 	if !reflect.DeepEqual(j, expect) {
 		t.Errorf("something went wrong: %#v", j)
@@ -54,7 +53,6 @@ func TestEnqueueJob(t *testing.T) {
 	expect2 := &job.Job{
 		ID:     2,
 		TeamID: 12,
-		IPAddr: "192.168.1.1",
 	}
 	if !reflect.DeepEqual(j2, expect2) {
 		t.Errorf("something went wrong: %#v", j)
@@ -70,9 +68,9 @@ func TestEnqueueJob(t *testing.T) {
 	}
 
 	// ジョブ実行中もそのteamIDのジョブは積めない
-	err = enqueueJob(11, "192.168.0.3")
+	err = enqueueJob(11)
 	if err == nil || err.Error() != "job already queued (teamID=11)" {
-		t.Errorf("something went wrong")
+		t.Error("something went wrong")
 	}
 
 	// ジョブ終了
@@ -80,9 +78,9 @@ func TestEnqueueJob(t *testing.T) {
 		Job: &job.Job{
 			ID:     1,
 			TeamID: 11,
-			IPAddr: "192.168.0.1",
 		},
 		Output: &score.Output{},
+		Stderr: "",
 	}
 	err = doneJob(res)
 	if err != nil {
@@ -90,7 +88,7 @@ func TestEnqueueJob(t *testing.T) {
 	}
 
 	// 改めてジョブが積めるようになる
-	err = enqueueJob(11, "192.168.0.1")
+	err = enqueueJob(11)
 	if err != nil {
 		t.Errorf("failed to enqueue job: %s", err)
 	}
@@ -100,9 +98,9 @@ func TestEnqueueJob(t *testing.T) {
 		Job: &job.Job{
 			ID:     2,
 			TeamID: 12,
-			IPAddr: "192.168.1.1",
 		},
 		Output: &score.Output{},
+		Stderr: "",
 	}
 	err = doneJob(res)
 	if err != nil {
@@ -116,6 +114,7 @@ func TestEnqueueJob(t *testing.T) {
 	res = &job.Result{
 		Job:    j,
 		Output: &score.Output{},
+		Stderr: "",
 	}
 	err = doneJob(res)
 	if err != nil {
