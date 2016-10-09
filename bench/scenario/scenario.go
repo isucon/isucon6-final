@@ -140,7 +140,7 @@ func CheckCSRFTokenRefreshed(origins []string) {
 		return
 	}
 
-	if token1 != token2 {
+	if token1 == token2 {
 		fails.Critical("csrf_tokenが使いまわされています", nil)
 	}
 }
