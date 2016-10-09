@@ -329,10 +329,9 @@ sub get_api_stream_room {
           update_room_watcher($self->dbh, $room->{id}, $token->{id});
           my $new_watcher_count = get_watcher_count($self->dbh, $room->{id});
           if ($new_watcher_count != $watcher_count) {
-              # XXX $new_watcher_count?
               $writer->write(
                   "event:watcher_count\n" .
-                  "data:$watcher_count\n\n"
+                  "data:$new_watcher_count\n\n"
               );
               $watcher_count = $new_watcher_count;
           }
