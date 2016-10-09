@@ -2,9 +2,12 @@ FROM perl:5.24.0
 
 RUN cpanm Carton
 
-COPY cpanfile cpanfile.snapshot ./local /root/
+RUN mkdir /app
+WORKDIR /app
+
+COPY cpanfile cpanfile.snapshot /app/
 RUN carton install --deployment
 
-COPY . /root
+COPY . /app
 
 CMD carton exec -- plackup -s Starlet -E production

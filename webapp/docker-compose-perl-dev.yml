@@ -9,8 +9,8 @@ services:
       context: ./perl
       dockerfile: Dockerfile-dev
     volumes:
-      - ./perl:/root
-      - /root/local
+      - ./perl:/app
+      - /app/local
     depends_on:
       - mysql
     links:
