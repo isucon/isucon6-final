@@ -165,6 +165,7 @@ def post_api_rooms():
         return res
 
     cursor = db.cursor()
+    cursor.connection.autocommit(False)
     try:
         sql = 'INSERT INTO `rooms` (`name`, `canvas_width`, `canvas_height`)'
         sql += ' VALUES (%(name)s, %(canvas_width)s, %(canvas_height)s)'
@@ -180,12 +181,15 @@ def post_api_rooms():
             'room_id': room_id,
             'token_id': token['id'],
         })
+        cursor.connection.commit()
     except Exception as e:
-        db.rollback()
+        cursor.connection.rollback()
         app.logger.error(e)
         res = jsonify({'error': 'エラーが発生しました。'})
         res.status_code = 500
         return res
+    else:
+        cursor.connection.autocommit(True)
 
     room = get_room(db, room_id)
     return jsonify({'room': room})
@@ -312,6 +316,7 @@ def post_api_strokes_rooms_id(id):
             return res
 
     cursor = db.cursor()
+    cursor.connection.autocommit(False)
     try:
         sql = 'INSERT INTO `strokes` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)'
         sql += ' VALUES(%(room_id)s, %(width)s, %(red)s, %(green)s, %(blue)s, %(alpha)s)'
@@ -332,12 +337,15 @@ def post_api_strokes_rooms_id(id):
                 'x': point['x'],
                 'y': point['y']
             })
+        cursor.connection.commit()
     except Exception as e:
-        db.rollback()
+        cursor.connection.rollback()
         app.logger.error(e)
         res = jsonify({'error': 'エラーが発生しました。'})
         res.status_code = 500
         return res
+    else:
+        cursor.connection.autocommit(True)
 
     sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`'
     sql += ' WHERE `id` = %(stroke_id)s'
