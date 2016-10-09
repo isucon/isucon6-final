@@ -16,6 +16,7 @@ type RoomWatcher struct {
 	EndCh chan struct{}
 	Logs  []StrokeLog
 
+	s      *session.Session
 	es     *sse.EventSource
 	isLeft bool
 }
@@ -25,9 +26,10 @@ func NewRoomWatcher(target string, roomID int64) *RoomWatcher {
 		EndCh:  make(chan struct{}, 1),
 		Logs:   make([]StrokeLog, 0),
 		isLeft: false,
+		s:      session.New(target),
 	}
 
-	go w.watch(target, roomID)
+	go w.watch(roomID)
 
 	return w
 }
@@ -35,33 +37,22 @@ func NewRoomWatcher(target string, roomID int64) *RoomWatcher {
 // 描いたstrokeがこの時間以上経ってから届いたら、ユーザーがストレスに感じてタブを閉じる、という設定にした。
 const thresholdResponseTime = 5 * time.Second
 
-func (w *RoomWatcher) watch(target string, roomID int64) {
-
-	s := session.New(target)
-	s.Client.Timeout = 3 * time.Second
+func (w *RoomWatcher) watch(roomID int64) {
 
 	path := fmt.Sprintf("/rooms/%d", roomID)
+	token, ok := fetchCSRFToken(w.s, path)
+	if !ok || w.isLeft {
+		w.finalize()
+		return
+	}
+
+	path = "/api/stream" + path
 	l := &fails.Logger{Prefix: "[" + path + "] "}
 
-	token, ok := fetchCSRFToken(s, path)
-	if !ok {
-		s.Bye()
-		w.EndCh <- struct{}{}
-		return
-	}
-
 	startTime := time.Now()
-	path = "/api/stream" + path
-
-	if w.isLeft {
-		s.Bye()
-		w.EndCh <- struct{}{}
-		return
-	}
-	w.es, ok = action.SSE(s, path+"?csrf_token="+token)
+	w.es, ok = action.SSE(w.s, path+"?csrf_token="+token)
 	if !ok {
-		s.Bye()
-		w.EndCh <- struct{}{}
+		w.finalize()
 		return
 	}
 
@@ -105,16 +96,21 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 		l.Add("予期せぬエラー（主催者に連絡してください）", err)
 	})
 	w.es.OnEnd(func() {
-		s.Bye()
-		w.EndCh <- struct{}{}
+		w.finalize()
 	})
 
 	w.es.Start()
 }
 
+// Watcherを部屋から退出させるために呼ぶ。Leaveを呼ばれたらWatcher内部でクリーンアップ処理などをし、EndChに通知が行く
 func (w *RoomWatcher) Leave() {
 	w.isLeft = true
 	if w.es != nil {
 		w.es.Close()
 	}
+}
+
+func (w *RoomWatcher) finalize() {
+	w.s.Bye()
+	w.EndCh <- struct{}{}
 }

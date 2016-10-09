@@ -8,6 +8,8 @@ import (
 
 	"fmt"
 
+	"errors"
+
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/http"
 	"github.com/catatsuy/isucon6-final/bench/score"
@@ -120,7 +122,8 @@ func Post(s *session.Session, path string, body []byte, headers map[string]strin
 func SSE(s *session.Session, path string) (*sse.EventSource, bool) {
 	u, err := url.Parse(path)
 	if err != nil {
-		fails.Critical("URLとして正しくありません: "+path, err)
+		fails.Add("予期せぬエラー（主催者に連絡してください）",
+			errors.New("URLのパースに失敗しました: "+path+", error: "+err.Error()))
 		return nil, false
 	}
 	u.Scheme = s.Scheme
