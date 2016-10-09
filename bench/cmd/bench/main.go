@@ -37,7 +37,7 @@ func main() {
 
 	// 初期チェックで失敗したらそこで終了
 	initialCheck(origins)
-	if len(fails.Get()) > 0 {
+	if fails.GetIsCritical() {
 		output()
 		return
 	}
