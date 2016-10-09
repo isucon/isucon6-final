@@ -66,7 +66,7 @@ sub to_point_json {
     };
 }
 
-sub to_rfc_3339_micro {
+sub to_rfc_3339 {
     my ($string) = @_;
     my $dt = DateTime::Format::MySQL->parse_datetime($string);
     $dt->set_time_zone('UTC');
@@ -84,7 +84,7 @@ sub to_stroke_json {
         blue       => int $data->{blue},
         alpha      => 0+$data->{alpha},
         points     => $data->{points} ? [ map { to_point_json($_) } @{ $data->{points} } ] : [],
-        created_at => $data->{created_at} ? to_rfc_3339_micro($data->{created_at}) : '',
+        created_at => $data->{created_at} ? to_rfc_3339($data->{created_at}) : '',
     };
 }
 
@@ -95,7 +95,7 @@ sub to_room_json {
         name          => $data->{name},
         canvas_width  => int $data->{canvas_width},
         canvas_height => int $data->{canvas_height},
-        created_at    => $data->{created_at} ? to_rfc_3339_micro($data->{created_at}) : '',
+        created_at    => $data->{created_at} ? to_rfc_3339($data->{created_at}) : '',
         strokes       => $data->{strokes} ? [ map { to_stroke_json($_) } @{ $data->{strokes} } ] : [],
         stroke_count  => int($data->{stroke_count} // 0),
         watcher_count => int($data->{watcher_count} // 0),
