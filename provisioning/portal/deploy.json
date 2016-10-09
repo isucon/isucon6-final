@@ -10,7 +10,7 @@
       }
     },
     "vmName": {
-      "defaultValue": "isucon6-portal",
+      "defaultValue": "i6fportal",
       "type": "String",
       "metadata": {
         "description": "vm instance name"
@@ -20,7 +20,7 @@
   "variables": {
     "adminUsername": "isucon",
     "location": "[resourceGroup().location]",
-    "commonName": "isucon6qualifier",
+    "commonName": "isucon6final",
     "storageAccountsName": "[concat(uniqueString(resourceGroup().id), 'storage')]"
   },
   "resources": [

@@ -1,0 +1,49 @@
+- hosts: all
+  become: yes
+  become_user: root
+  gather_facts: yes
+  tasks:
+    - name: install unzip
+      apt: name={{ item }}
+      with_items:
+        - unzip
+    - name: download consul
+      get_url:
+        url=https://releases.hashicorp.com/consul/0.7.0/consul_0.7.0_linux_amd64.zip
+        dest=/tmp/consul.zip
+    - name: unzip consul
+      unarchive:
+        src=/tmp/consul.zip
+        dest=/usr/local/bin/
+        copy=no
+    - name: install consul
+      file:
+        path=/usr/local/bin/consul
+        owner=root
+        mode=755
+    - name: make directory of consul config
+      file:
+        path=/etc/systemd/system/consul.d/
+        state=directory
+        owner=root
+        group=root
+        mode=0755
+    - name: consul config
+      template:
+        src=../templates/basic_config.json.j2
+        dest=/etc/systemd/system/consul.d/basic_config.json
+      notify: reload consul
+    - name: place the file of systemd
+      copy:
+        src=../files/consul.service
+        dest=/etc/systemd/system/consul.service
+        owner=root
+        mode=644
+      notify: reload systemctl
+    - name: running consul
+      service: name=consul state=restarted enabled=true
+  handlers:
+    - name: reload systemctl
+      command: systemctl daemon-reload
+    - name: reload consul
+      command: consul reload
