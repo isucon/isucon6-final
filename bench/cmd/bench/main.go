@@ -37,14 +37,12 @@ func main() {
 
 	// 初期チェックで失敗したらそこで終了
 	initialCheck(origins)
-	if fails.GetIsCritical() {
+	if fails.GetIsCritical() || !InitialCheckOnly {
 		output()
 		return
 	}
 
-	if !InitialCheckOnly {
-		benchmark(origins)
-	}
+	benchmark(origins)
 	output()
 }
 
