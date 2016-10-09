@@ -1,19 +1,4 @@
 ---
-- name: get webapp tarball
-  get_url:
-    url=https://@AZURE_STORAGE_ACCOUNT@.blob.core.windows.net/@CONTAINER_NAME@/webapp.tar.gz
-    dest=/tmp/webapp.tar.gz
-    remote_src=yes
-- name: unarchive webapp directory
-  become_user: isucon
-  unarchive:
-    src=/tmp/webapp.tar.gz
-    dest=/home/isucon/
-    remote_src=yes
-- name: remove webapp tarball
-  file:
-    path=/tmp/webapp.tar.gz
-    state=absent
 - name: symoblic link docker-compose.yml
   become_user: isucon
   file:
