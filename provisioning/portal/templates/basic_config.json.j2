@@ -3,5 +3,11 @@
   "log_level": "INFO",
   "bind_addr": "{{ ansible_eth0.ipv4.address }}",
   "server": true,
-  "bootstrap_expect": 3
+  "bootstrap_expect": 3,
+  "watches": [
+    {
+      "type": "nodes",
+      "handler": "sudo /usr/local/bin/update_members"
+    }
+  ]
 }

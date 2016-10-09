@@ -7,6 +7,13 @@
       apt: name={{ item }}
       with_items:
         - unzip
+    - name: place update_members scripts
+      copy:
+        src=../files/update_members
+        dest=/usr/local/bin/update_members
+        owner=root
+        group=root
+        mode=0755
     - name: download consul
       get_url:
         url=https://releases.hashicorp.com/consul/0.7.0/consul_0.7.0_linux_amd64.zip

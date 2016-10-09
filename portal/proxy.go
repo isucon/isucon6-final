@@ -16,7 +16,7 @@ type AgentMember struct {
 }
 
 // consulの/v1/agent/membersをそのままPOSTする用
-// curl -s '127.0.0.1:8500/v1/agent/members' | curl -XPOST -H "Content-Type: application/json" -d=@- http://127.0.0.1/mBGWHqBVEjUSKpBF/proxy/update
+// curl -s '127.0.0.1:8500/v1/agent/members' | curl -XPOST -d @- http://127.0.0.1/mBGWHqBVEjUSKpBF/proxy/update
 // https://github.com/catatsuy/isucon6-final/pull/121#issuecomment-252422888
 func serveProxyUpdate(w http.ResponseWriter, req *http.Request) error {
 	if req.Method != http.MethodPost {
