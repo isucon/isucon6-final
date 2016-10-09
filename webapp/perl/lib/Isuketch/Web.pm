@@ -7,6 +7,8 @@ use Kossy;
 use DBIx::Sunny;
 use Time::HiRes qw(usleep);
 use JSON qw(encode_json decode_json);
+use DateTime::Format::MySQL;
+use DateTime::Format::RFC3339;
 
 sub config {
     state $conf = {
@@ -35,6 +37,7 @@ sub dbh {
                 connected => sub {
                     my $dbh = shift;
                     $dbh->do('SET NAMES utf8mb4');
+                    $dbh->do('SET TIME_ZONE = "UTC"');
                     return;
                 },
             },
@@ -63,7 +66,12 @@ sub to_point_json {
     };
 }
 
-sub to_rfc_3339_micro { $_[0] }
+sub to_rfc_3339_micro {
+    my ($string) = @_;
+    my $dt = DateTime::Format::MySQL->parse_datetime($string);
+    $dt->set_time_zone('UTC');
+    return DateTime::Format::RFC3339->format_datetime($dt);
+}
 
 sub to_stroke_json {
     my ($data) = @_;
@@ -76,7 +84,6 @@ sub to_stroke_json {
         blue       => int $data->{blue},
         alpha      => 0+$data->{alpha},
         points     => $data->{points} ? [ map { to_point_json($_) } @{ $data->{points} } ] : [],
-        # TODO: DateTime::Format::MySQL?
         created_at => $data->{created_at} ? to_rfc_3339_micro($data->{created_at}) : '',
     };
 }

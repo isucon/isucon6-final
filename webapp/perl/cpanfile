@@ -3,3 +3,5 @@ requires 'DBD::mysql';
 requires 'Kossy';
 requires 'Plack';
 requires 'Starlet';
+requires 'DateTime::Format::MySQL';
+requires 'DateTime::Format::RFC3339';
