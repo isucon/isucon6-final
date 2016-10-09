@@ -183,7 +183,8 @@ func (cli *CLI) start(portalHost, benchPath string) int {
 }
 
 func buildBenchCmd(benchPath, urls string) *timeout.Timeout {
-	cmd := exec.Command(benchPath, "-urls", urls, "-timeout", "30")
+	log.Println(benchPath, "-urls", urls, "-timeout", "60")
+	cmd := exec.Command(benchPath, "-urls", urls, "-timeout", "60")
 	cmd.Dir = filepath.Dir(benchPath)
 	return &timeout.Timeout{
 		Cmd:       cmd,
