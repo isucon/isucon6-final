@@ -1,6 +1,7 @@
 package scenario
 
 import (
+	"encoding/json"
 	"io"
 	"math/rand"
 
@@ -131,4 +132,90 @@ func loadImages(s *session.Session, images []string) bool {
 		}(image)
 	}
 	return OK
+}
+
+func makeRoom(s *session.Session, token string) (int64, bool) {
+	postBody, _ := json.Marshal(struct {
+		Name         string `json:"name"`
+		CanvasWidth  int    `json:"canvas_width"`
+		CanvasHeight int    `json:"canvas_height"`
+	}{
+		Name:         "ひたすら椅子を描く部屋",
+		CanvasWidth:  1024,
+		CanvasHeight: 768,
+	})
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+		"x-csrf-token": token,
+	}
+
+	var roomID int64
+
+	ok := action.Post(s, "/api/rooms", postBody, headers, action.OK(func(body io.Reader, l *fails.Logger) bool {
+		b, err := ioutil.ReadAll(body)
+		if err != nil {
+			l.Critical("レスポンス内容が読み込めませんでした", err)
+			return false
+		}
+		var res Response
+		err = json.Unmarshal(b, &res)
+		if err != nil {
+			l.Critical("レスポンス内容が正しくありません"+string(b[:20]), err)
+			return false
+		}
+		if res.Room == nil || res.Room.ID <= 0 {
+			l.Critical("レスポンス内容が正しくありません"+string(b[:20]), nil)
+			return false
+		}
+		roomID = res.Room.ID
+
+		return true
+	}))
+
+	return roomID, ok
+}
+
+func drawStroke(s *session.Session, token string, roomID int64, stroke seed.Stroke) (int64, bool) {
+	postBody, _ := json.Marshal(struct {
+		RoomID int64 `json:"room_id"`
+		seed.Stroke
+	}{
+		RoomID: roomID,
+		Stroke: stroke,
+	})
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+		"x-csrf-token": token,
+	}
+
+	var strokeID int64
+
+	u := "/api/strokes/rooms/" + strconv.FormatInt(roomID, 10)
+	ok := action.Post(s, u, postBody, headers, action.OK(func(body io.Reader, l *fails.Logger) bool {
+
+		b, err := ioutil.ReadAll(body)
+		if err != nil {
+			l.Critical("レスポンス内容が読み込めませんでした", err)
+			return false
+		}
+
+		var res Response
+		err = json.Unmarshal(b, &res)
+		if err != nil {
+			l.Critical("レスポンス内容が正しくありません"+string(b[:20]), err)
+			return false
+		}
+		if res.Stroke == nil || res.Stroke.ID <= 0 {
+			l.Critical("レスポンス内容が正しくありません"+string(b[:20]), nil)
+			return false
+		}
+
+		strokeID = res.Stroke.ID
+
+		return true
+	}))
+
+	return strokeID, ok
 }
