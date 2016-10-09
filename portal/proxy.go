@@ -10,8 +10,9 @@ import (
 )
 
 type AgentMember struct {
-	Name string
-	Addr string
+	Name   string
+	Addr   string
+	Status int
 }
 
 // consulの/v1/agent/membersをそのままPOSTする用
@@ -30,11 +31,17 @@ func serveProxyUpdate(w http.ResponseWriter, req *http.Request) error {
 	if err != nil {
 		return err
 	}
+
 	proxyAddrs := make([]string, 0)
 	for _, m := range members {
-		if strings.Contains(m.Name, "proxy") { // FIXME: 決め打ちで良いか？
+		if m.Status == 1 && strings.Contains(m.Name, "proxy") { // FIXME: 決め打ちで良いか？
 			proxyAddrs = append(proxyAddrs, "('"+m.Addr+"')")
 		}
+	}
+
+	if len(proxyAddrs) == 0 {
+		w.Write([]byte(``))
+		return nil
 	}
 
 	tx, err := db.Begin()
