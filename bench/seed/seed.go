@@ -42,7 +42,7 @@ func FluctuateStroke(s Stroke) Stroke {
 		})
 	}
 	return Stroke{
-		Width:  cap(s.Width+rand.Intn(20)-10, 0, 127),
+		Width:  bounded(s.Width+rand.Intn(20)-10, 0, 127),
 		Red:    rand.Intn(100) + 100,
 		Green:  rand.Intn(100) + 100,
 		Blue:   rand.Intn(100) + 100,
@@ -51,7 +51,7 @@ func FluctuateStroke(s Stroke) Stroke {
 	}
 }
 
-func cap(i int, min int, max int) int {
+func bounded(i int, min int, max int) int {
 	if i < min {
 		return min
 	} else if i > max {
