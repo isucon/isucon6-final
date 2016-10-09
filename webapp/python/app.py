@@ -271,7 +271,7 @@ def get_api_stream_rooms_id(id):
             if new_watcher_count != watcher_count:
                 yield print_and_flush(
                     'event:watcher_count\n' +
-                    'data:%d\n\n' % (watcher_count)
+                    'data:%d\n\n' % (new_watcher_count)
                 )
                 watcher_count = new_watcher_count
 
