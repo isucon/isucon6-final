@@ -91,7 +91,7 @@ sub to_room_json {
         created_at    => $data->{created_at} ? to_rfc_3339_micro($data->{created_at}) : '',
         strokes       => $data->{strokes} ? [ map { to_stroke_json($_) } @{ $data->{strokes} } ] : [],
         stroke_count  => int($data->{stroke_count} // 0),
-        watcher_count => int $data->{watcher_count},
+        watcher_count => int($data->{watcher_count} // 0),
     };
 }
 
