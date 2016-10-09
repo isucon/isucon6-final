@@ -112,6 +112,7 @@ function createHtml(appHtml, scriptTag, csrfToken) {
 <html data-csrf-token="${escape(csrfToken)}">
   <head>
     <title>ISUketch</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <link rel="stylesheet" href="/css/rc-color-picker.css">
     <link rel="stylesheet" href="/css/sanitize.css">
     <script src="/bundle.js" async></script>
