@@ -12,6 +12,7 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/http"
 	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/session"
+	"github.com/catatsuy/isucon6-final/bench/sse"
 )
 
 const (
@@ -61,7 +62,7 @@ func request(s *session.Session, method, path string, body io.Reader, headers ma
 	l := &fails.Logger{Prefix: "[" + method + " " + path + "] "}
 
 	u, err := url.Parse(path)
-	if err != nil {
+	if err != nil { //TODO: メッセージ
 		return false
 	}
 	u.Scheme = s.Scheme
@@ -114,4 +115,18 @@ func Post(s *session.Session, path string, body []byte, headers map[string]strin
 		score.Increment(PostScore)
 	}
 	return ok
+}
+
+func SSE(s *session.Session, path string) (*sse.EventSource, bool) {
+	u, err := url.Parse(path)
+	if err != nil {
+		fails.Critical("URLとして正しくありません: "+path, err)
+		return nil, false
+	}
+	u.Scheme = s.Scheme
+	u.Host = s.Host
+
+	es := sse.NewEventSource(s.Client, u.String())
+	es.AddHeader("User-Agent", s.UserAgent)
+	return es, true
 }

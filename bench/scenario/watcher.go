@@ -6,6 +6,7 @@ import (
 
 	"encoding/json"
 
+	"github.com/catatsuy/isucon6-final/bench/action"
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/session"
 	"github.com/catatsuy/isucon6-final/bench/sse"
@@ -36,7 +37,6 @@ const thresholdResponseTime = 5 * time.Second
 
 func (w *RoomWatcher) watch(target string, roomID int64) {
 
-	// TODO:用途がだいぶ特殊なので普通のベンチマークと同じsessionを使うべきか悩ましい
 	s := session.New(target)
 	s.Client.Timeout = 3 * time.Second
 
@@ -58,8 +58,12 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 		w.EndCh <- struct{}{}
 		return
 	}
-	w.es = sse.NewEventSource(s.Client, target+path+"?csrf_token="+token)
-	w.es.AddHeader("User-Agent", s.UserAgent)
+	w.es, ok = action.SSE(s, path+"?csrf_token="+token)
+	if !ok {
+		s.Bye()
+		w.EndCh <- struct{}{}
+		return
+	}
 
 	w.es.On("stroke", func(data string) {
 		var stroke Stroke
