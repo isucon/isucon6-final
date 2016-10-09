@@ -114,3 +114,38 @@ func checkStrokeReflectedToSVG(s *session.Session, roomID int64, strokeID int64,
 		return false
 	})
 }
+
+// TODO: ステータスコード以外にもチェックしたい
+func loadImages(s *session.Session, images []string) bool {
+	status := true
+	for _, image := range images {
+		ok := action.Get(s, image, func(body io.Reader, l *fails.Logger) bool {
+			return false
+		})
+		status = status && ok
+	}
+	return status
+
+	// TODO: 画像を並列リクエストするようにしてみたが、 connection reset by peer というエラーが出るので直列に戻した
+	// もしかすると s.Transport.MaxIdleConnsPerHost ずつ処理するといけるのかも
+	//errs := make(chan error, len(images))
+	//for _, image := range images {
+	//	go func(image string) {
+	//		err := s.Get(image, func(status int, body io.Reader) error {
+	//			if status != 200 {
+	//				return errors.New("ステータスが200ではありません: " + strconv.Itoa(status))
+	//			}
+	//			return nil
+	//		})
+	//		errs <- err
+	//	}(image)
+	//}
+	//var lastErr error
+	//for i := 0; i < len(images); i++ {
+	//	err := <-errs
+	//	if err != nil {
+	//		lastErr = err
+	//	}
+	//}
+	//return lastErr
+}
