@@ -18,6 +18,7 @@ import (
 )
 
 var BenchmarkTimeout int
+var InitialCheckOnly bool
 
 func main() {
 
@@ -25,6 +26,7 @@ func main() {
 
 	flag.StringVar(&urls, "urls", "", "ベンチマーク対象のURL（scheme, host, portまで。カンマ区切りで複数可。例： https://xxx.xxx.xxx.xxx,https://xxx.xxx.xxx.xxx:1443）")
 	flag.IntVar(&BenchmarkTimeout, "timeout", 60, "ソフトタイムアウト")
+	flag.BoolVar(&InitialCheckOnly, "initialcheck", false, "初期チェックだけ行う")
 
 	flag.Parse()
 
@@ -40,7 +42,9 @@ func main() {
 		return
 	}
 
-	benchmark(origins)
+	if !InitialCheckOnly {
+		benchmark(origins)
+	}
 	output()
 }
 
