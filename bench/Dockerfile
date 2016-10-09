@@ -1,10 +1,7 @@
 FROM golang
 
-ENV GOPATH /opt/go
-ENV PATH ${GOPATH}/bin:${PATH}
 
 RUN \
-  mkdir -p ${GOPATH}/bin && \
   curl -sL https://glide.sh/get | sh
 
 WORKDIR ${GOPATH}/src/github.com/catatsuy/isucon6-final/bench
