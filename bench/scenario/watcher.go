@@ -45,6 +45,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 
 	token, ok := fetchCSRFToken(s, path)
 	if !ok {
+		s.Bye()
 		w.EndCh <- struct{}{}
 		return
 	}
@@ -53,6 +54,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 	path = "/api/stream" + path
 
 	if w.isLeft {
+		s.Bye()
 		w.EndCh <- struct{}{}
 		return
 	}
@@ -99,6 +101,7 @@ func (w *RoomWatcher) watch(target string, roomID int64) {
 		l.Add("予期せぬエラー（主催者に連絡してください）", err)
 	})
 	w.es.OnEnd(func() {
+		s.Bye()
 		w.EndCh <- struct{}{}
 	})
 

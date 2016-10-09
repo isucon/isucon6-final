@@ -13,6 +13,8 @@ import (
 func StrokeReflectedToTop(origins []string) {
 	s1 := newSession(origins)
 	s2 := newSession(origins)
+	defer s1.Bye()
+	defer s2.Bye()
 
 	token, ok := fetchCSRFToken(s1, "/")
 	if !ok {
@@ -57,6 +59,8 @@ func StrokeReflectedToTop(origins []string) {
 func RoomWithoutStrokeNotShownAtTop(origins []string) {
 	s1 := newSession(origins)
 	s2 := newSession(origins)
+	defer s1.Bye()
+	defer s2.Bye()
 
 	token, ok := fetchCSRFToken(s1, "/")
 	if !ok {
@@ -88,6 +92,7 @@ func RoomWithoutStrokeNotShownAtTop(origins []string) {
 // 線がSVGに反映される
 func StrokeReflectedToSVG(origins []string) {
 	s1 := newSession(origins)
+	defer s1.Bye()
 
 	token, ok := fetchCSRFToken(s1, "/")
 	if !ok {
@@ -108,7 +113,8 @@ func StrokeReflectedToSVG(origins []string) {
 		}
 
 		s2 := newSession(origins)
-		ok = checkStrokeReflectedToSVG(s2, roomID, strokeID, stroke2)
+		_ = checkStrokeReflectedToSVG(s2, roomID, strokeID, stroke2)
+		s2.Bye()
 	}
 }
 
@@ -116,6 +122,8 @@ func StrokeReflectedToSVG(origins []string) {
 func CSRFTokenRefreshed(origins []string) {
 	s1 := newSession(origins)
 	s2 := newSession(origins)
+	defer s1.Bye()
+	defer s2.Bye()
 
 	token1, ok := fetchCSRFToken(s1, "/")
 	if !ok {

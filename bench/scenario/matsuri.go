@@ -23,6 +23,7 @@ const (
 // 一人がroomを作る→大勢がそのroomをwatchする
 func Matsuri(origins []string, timeout int) {
 	s := newSession(origins)
+	defer s.Bye()
 
 	token, ok := fetchCSRFToken(s, "/")
 	if !ok {

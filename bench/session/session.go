@@ -55,3 +55,7 @@ func New(baseURL string) *Session {
 
 	return s
 }
+
+func (s *Session) Bye() {
+	s.Transport.CloseIdleConnections()
+}

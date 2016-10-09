@@ -17,6 +17,7 @@ var (
 // トップページと画像に負荷をかける
 func LoadIndexPage(origins []string) {
 	s := newSession(origins)
+	s.Bye()
 
 	var token string
 	var images []string
@@ -50,6 +51,7 @@ func LoadIndexPage(origins []string) {
 // トップページを開いて適当な部屋を開く（Ajaxじゃないのは「別タブで」開いたということにでもしておく）
 func LoadRoomPage(origins []string) {
 	s := newSession(origins)
+	s.Bye()
 
 	var images []string
 	var rooms []string
