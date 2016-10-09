@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	DefaultTimeout      = time.Duration(5) * time.Second
+	DefaultTimeout      = time.Duration(10) * time.Second
 	MaxIdleConnsPerHost = 6
 )
 
