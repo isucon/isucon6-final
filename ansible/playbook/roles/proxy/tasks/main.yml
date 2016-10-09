@@ -1,4 +1,14 @@
 ---
+- name: sysctl.conf
+  copy:
+    src=etc/sysctl.conf
+    dest=/etc/sysctl.conf
+    owner=root
+    group=root
+    mode=644
+- name: read sysctl.conf
+  become_user: root
+  command: sysctl -p
 - name: apt source for nginx
   copy:
     src=etc/apt/sources.list.d/nginx.list
@@ -13,7 +23,7 @@
     - nginx
 - name: download nginx settings
   get_url:
-    url=http://{{ portal_private_ip }}/mBGWHqBVEjUSKpBF/proxy/nginx.conf
+    url=http://{{ portal_private_ip }}:8080/mBGWHqBVEjUSKpBF/proxy/nginx.conf
     dest=/etc/nginx.conf
   notify: restart nginx
 - name: nginx service enabled
