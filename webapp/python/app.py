@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 import json
 import os
-from datetime import datetime, timezone
-import decimal
+from datetime import timezone
 import time
 
 import MySQLdb.cursors
 
 from flask import Flask, jsonify, request, Response
-from flask.json import JSONEncoder
 
 
 def get_db():
@@ -44,25 +42,46 @@ def select_all(db, sql, params={}):
 def print_and_flush(content):
     return content
 
+
+def type_cast_point_data(data):
+    return {
+        'id': int(data['id']),
+        'stroke_id': int(data['stroke_id']),
+        'x': float(data['x']),
+        'y': float(data['y']),
+    }
+
+
 def to_RFC3339_micro(date):
     # RFC3339では+00:00のときはZにするという仕様だが、pythonは準拠していないため
     return date.replace(tzinfo=timezone.utc).isoformat().replace('+00:00', 'Z')
 
 
-class CustomJSONEncoder(JSONEncoder):
-    def default(self, obj):
-        try:
-            if isinstance(obj, datetime):
-                return to_RFC3339_micro(obj)
-            if isinstance(obj, decimal.Decimal):
-                return float(obj)
+def type_cast_stroke_data(data):
+    return {
+        'id': int(data['id']),
+        'room_id': int(data['room_id']),
+        'width': int(data['width']),
+        'red': int(data['red']),
+        'green': int(data['green']),
+        'blue': int(data['blue']),
+        'alpha': float(data['alpha']),
+        'points': list(map(type_cast_point_data, data['points'])) if 'points' in data and data['points'] else [],
+        'created_at': to_RFC3339_micro(data['created_at']) if data['created_at'] else '',
+    }
 
-            iterable = iter(obj)
-        except TypeError:
-            pass
-        else:
-            return list(iterable)
-        return JSONEncoder.default(self, obj)
+
+def type_cast_room_data(data):
+    return {
+        'id': int(data['id']),
+        'name': data['name'],
+        'canvas_width': int(data['canvas_width']),
+        'canvas_height': int(data['canvas_height']),
+        'created_at': to_RFC3339_micro(data['created_at']) if data['created_at'] else '',
+        'strokes': list(map(type_cast_stroke_data, data['strokes'])) if 'strokes' in data and data['strokes'] else [],
+        'stroke_count': int(data.get('stroke_count', 0)),
+        'watcher_count': int(data.get('watcher_count', 0)),
+    }
 
 
 class TokenException(Exception):
@@ -108,7 +127,6 @@ def update_room_watcher(db, room_id, token_id):
 
 
 app = Flask(__name__)
-app.json_encoder = CustomJSONEncoder
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
 
 # Routes
@@ -145,7 +163,7 @@ def get_api_rooms():
         room['stroke_count'] = len(strokes)
         rooms.append(room)
 
-    return jsonify({'rooms': rooms})
+    return jsonify({'rooms': list(map(type_cast_room_data, rooms))})
 
 
 @app.route('/api/rooms', methods=['POST'])
@@ -192,7 +210,7 @@ def post_api_rooms():
         cursor.connection.autocommit(True)
 
     room = get_room(db, room_id)
-    return jsonify({'room': room})
+    return jsonify({'room': type_cast_room_data(room)})
 
 
 @app.route('/api/rooms/<id>')
@@ -213,7 +231,7 @@ def get_api_rooms_id(id):
     room['strokes'] = strokes
     room['watcher_count'] = get_watcher_count(db, room['id'])
 
-    return jsonify({'room': room})
+    return jsonify({'room': type_cast_room_data(room)})
 
 
 @app.route('/api/stream/rooms/<id>')
@@ -262,7 +280,7 @@ def get_api_stream_rooms_id(id):
                 yield print_and_flush(
                     'id:' + str(stroke['id']) + '\n\n' +
                     'event:stroke\n' +
-                    'data:' + json.dumps(stroke, cls=CustomJSONEncoder) + '\n\n'
+                    'data:' + json.dumps(type_cast_stroke_data(stroke)) + '\n\n'
                 )
                 last_stroke_id = stroke['id']
 
@@ -353,7 +371,7 @@ def post_api_strokes_rooms_id(id):
 
     stroke['points'] = get_stroke_points(db, stroke_id)
 
-    return jsonify({'stroke': stroke})
+    return jsonify({'stroke': type_cast_stroke_data(stroke)})
 
 
 @app.route('/api/initialize')
