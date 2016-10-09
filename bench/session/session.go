@@ -10,7 +10,10 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/http/cookiejar"
 )
 
-const DefaultTimeout = time.Duration(10) * time.Second
+const (
+	DefaultTimeout      = time.Duration(10) * time.Second
+	MaxIdleConnsPerHost = 6
+)
 
 type Session struct {
 	Scheme    string
@@ -27,7 +30,7 @@ func New(baseURL string) *Session {
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
 		},
-		MaxIdleConnsPerHost: 6,
+		MaxIdleConnsPerHost: MaxIdleConnsPerHost,
 	}
 
 	jar, _ := cookiejar.New(nil)
