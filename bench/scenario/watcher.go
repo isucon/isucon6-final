@@ -99,7 +99,7 @@ func (w *RoomWatcher) watch(roomID int64) {
 		w.finalize()
 	})
 
-	w.es.Start()
+	w.es.Open()
 }
 
 // Watcherを部屋から退出させるために呼ぶ。Leaveを呼ばれたらWatcher内部でクリーンアップ処理などをし、EndChに通知が行く

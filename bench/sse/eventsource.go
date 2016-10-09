@@ -112,7 +112,7 @@ func (s *EventSource) Close() {
 
 var defaultEvent = "message"
 
-func (s *EventSource) Start() {
+func (s *EventSource) Open() {
 	for {
 		s.request()
 		if !s.isClosed {
