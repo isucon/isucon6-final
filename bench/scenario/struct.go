@@ -44,3 +44,8 @@ type StrokeLog struct {
 	ReceivedTime time.Time
 	Stroke
 }
+
+type WatcherCountLog struct {
+	ReceivedTime time.Time
+	Count        int
+}

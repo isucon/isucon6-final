@@ -6,6 +6,8 @@ import (
 
 	"encoding/json"
 
+	"strconv"
+
 	"github.com/catatsuy/isucon6-final/bench/action"
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/session"
@@ -13,8 +15,9 @@ import (
 )
 
 type RoomWatcher struct {
-	EndCh      chan struct{}
-	StrokeLogs []StrokeLog
+	EndCh            chan struct{}
+	StrokeLogs       []StrokeLog
+	WatcherCountLogs []WatcherCountLog
 
 	s      *session.Session
 	es     *sse.EventSource
@@ -23,10 +26,11 @@ type RoomWatcher struct {
 
 func NewRoomWatcher(target string, roomID int64) *RoomWatcher {
 	w := &RoomWatcher{
-		EndCh:      make(chan struct{}, 1),
-		StrokeLogs: make([]StrokeLog, 0),
-		isLeft:     false,
-		s:          session.New(target),
+		EndCh:            make(chan struct{}, 1),
+		StrokeLogs:       make([]StrokeLog, 0),
+		WatcherCountLogs: make([]WatcherCountLog, 0),
+		isLeft:           false,
+		s:                session.New(target),
 	}
 
 	go w.watch(roomID)
@@ -57,13 +61,13 @@ func (w *RoomWatcher) watch(roomID int64) {
 	}
 
 	w.es.On("stroke", func(data string) {
+		now := time.Now()
 		var stroke Stroke
 		err := json.Unmarshal([]byte(data), &stroke)
 		if err != nil {
 			l.Add("jsonのデコードに失敗しました", err)
 			w.es.Close()
 		}
-		now := time.Now()
 		// strokes APIには最初はLast-Event-IDをつけずに送るので、これまでに描かれたstrokeが全部降ってくるが、それは無視する。
 		if stroke.CreatedAt.After(startTime) && now.Sub(stroke.CreatedAt) > thresholdResponseTime {
 			l.Add("strokeが届くまでに時間がかかりすぎています", nil)
@@ -78,10 +82,17 @@ func (w *RoomWatcher) watch(roomID int64) {
 		l.Add("bad_request: "+data, nil)
 		w.es.Close()
 	})
-	//w.es.On("watcher_count", func(data string) {
-	//	fmt.Println("watcher_count")
-	//	fmt.Println(data)
-	//})
+	w.es.On("watcher_count", func(data string) {
+		now := time.Now()
+		count, err := strconv.Atoi(data)
+		if err != nil {
+			l.Add("watcher_countがパースできませんでした "+data, err)
+		}
+		w.WatcherCountLogs = append(w.WatcherCountLogs, WatcherCountLog{
+			ReceivedTime: now,
+			Count:        count,
+		})
+	})
 	w.es.OnError(func(err error) {
 		if e, ok := err.(*sse.BadContentType); ok {
 			l.Add(path+" Content-Typeが正しくありません: "+e.ContentType, err)
