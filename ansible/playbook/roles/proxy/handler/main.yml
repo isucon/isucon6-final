@@ -1,0 +1,6 @@
+- name: reload systemctl
+  command: systemctl daemon-reload
+- name: reload consul
+  command: consul reload
+- name: restart nginx
+  command: systemctl restart nginx
