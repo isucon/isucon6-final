@@ -13,8 +13,8 @@ import (
 )
 
 type RoomWatcher struct {
-	EndCh chan struct{}
-	Logs  []StrokeLog
+	EndCh      chan struct{}
+	StrokeLogs []StrokeLog
 
 	s      *session.Session
 	es     *sse.EventSource
@@ -23,10 +23,10 @@ type RoomWatcher struct {
 
 func NewRoomWatcher(target string, roomID int64) *RoomWatcher {
 	w := &RoomWatcher{
-		EndCh:  make(chan struct{}, 1),
-		Logs:   make([]StrokeLog, 0),
-		isLeft: false,
-		s:      session.New(target),
+		EndCh:      make(chan struct{}, 1),
+		StrokeLogs: make([]StrokeLog, 0),
+		isLeft:     false,
+		s:          session.New(target),
 	}
 
 	go w.watch(roomID)
@@ -69,10 +69,9 @@ func (w *RoomWatcher) watch(roomID int64) {
 			l.Add("strokeが届くまでに時間がかかりすぎています", nil)
 			w.es.Close()
 		}
-		w.Logs = append(w.Logs, StrokeLog{
+		w.StrokeLogs = append(w.StrokeLogs, StrokeLog{
 			ReceivedTime: now,
-			RoomID:       roomID,
-			StrokeID:     stroke.ID,
+			Stroke:       stroke,
 		})
 	})
 	w.es.On("bad_request", func(data string) {

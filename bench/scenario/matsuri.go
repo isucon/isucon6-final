@@ -90,11 +90,11 @@ func Matsuri(origins []string, timeout int) {
 
 	StrokeLogs := []StrokeLog{}
 	for _, w := range watchers {
-		StrokeLogs = append(StrokeLogs, w.Logs...)
+		StrokeLogs = append(StrokeLogs, w.StrokeLogs...)
 	}
 
 	for _, strokeLog := range StrokeLogs {
-		postTime := postTimes[strokeLog.StrokeID]
+		postTime := postTimes[strokeLog.Stroke.ID]
 		timeTaken := strokeLog.ReceivedTime.Sub(postTime).Seconds()
 		if timeTaken < 1 { // TODO: この時間は要調整
 			score.Increment(StrokeReceiveScore * 2)

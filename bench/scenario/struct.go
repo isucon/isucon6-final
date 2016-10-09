@@ -41,7 +41,6 @@ type Room struct {
 }
 
 type StrokeLog struct {
-	ReceivedTime time.Time `json:"received_time"`
-	RoomID       int64     `json:"room_id"`
-	StrokeID     int64     `json:"stroke_id"`
+	ReceivedTime time.Time
+	Stroke
 }
