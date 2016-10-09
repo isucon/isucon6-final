@@ -1,7 +1,10 @@
 package seed
 
 // ベンチマーカーから参照される
-import "encoding/json"
+import (
+	"encoding/json"
+	"math/rand"
+)
 
 type Stroke struct {
 	Width  int     `json:"width"`
@@ -17,7 +20,7 @@ type Point struct {
 	Y float32 `json:"y"`
 }
 
-func GetStroke(name string) []Stroke {
+func GetStrokes(name string) []Stroke {
 	data, err := Asset("data/" + name + ".json")
 	if err != nil {
 		panic(err)
@@ -28,4 +31,31 @@ func GetStroke(name string) []Stroke {
 		panic(err)
 	}
 	return s
+}
+
+func FluctuateStroke(s Stroke) Stroke {
+	points := make([]Point, 0)
+	for _, p := range s.Points {
+		points = append(points, Point{
+			X: p.X + 3.0*rand.Float32() - 1.5,
+			Y: p.Y + 3.0*rand.Float32() - 1.5,
+		})
+	}
+	return Stroke{
+		Width:  cap(s.Width+rand.Intn(20)-10, 0, 127),
+		Red:    rand.Intn(100) + 100,
+		Green:  rand.Intn(100) + 100,
+		Blue:   rand.Intn(100) + 100,
+		Alpha:  s.Alpha,
+		Points: points,
+	}
+}
+
+func cap(i int, min int, max int) int {
+	if i < min {
+		return min
+	} else if i > max {
+		return max
+	}
+	return i
 }

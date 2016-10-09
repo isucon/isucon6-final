@@ -67,6 +67,9 @@ func makeOrigins(urls string) ([]string, error) {
 
 func initialCheck(origins []string) {
 	scenario.CheckCSRFTokenRefreshed(origins)
+	scenario.StrokeReflectedToTop(origins)
+	scenario.RoomWithoutStrokeNotShownAtTop(origins)
+	scenario.StrokeReflectedToSVG(origins)
 }
 
 func benchmark(origins []string) {
