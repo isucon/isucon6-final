@@ -90,7 +90,7 @@ sub to_room_json {
         canvas_height => int $data->{canvas_height},
         created_at    => $data->{created_at} ? to_rfc_3339_micro($data->{created_at}) : '',
         strokes       => $data->{strokes} ? [ map { to_stroke_json($_) } @{ $data->{strokes} } ] : [],
-        stroke_count  => int $data->{stroke_count},
+        stroke_count  => int($data->{stroke_count} // 0),
         watcher_count => int $data->{watcher_count},
     };
 }
@@ -258,7 +258,6 @@ get '/api/rooms/:id' => sub {
         $stroke->{points} = get_stroke_points($self->dbh, $stroke->{id});
     }
     $room->{strokes} = $strokes;
-    # XXX stroke_count?
     $room->{watcher_count} = get_watcher_count($self->dbh, $room->{id});
     return $c->render_json({
         room => to_room_json($room),
