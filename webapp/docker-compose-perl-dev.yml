@@ -10,6 +10,7 @@ services:
       dockerfile: Dockerfile-dev
     volumes:
       - ./perl:/root
+      - /root/local
     depends_on:
       - mysql
     links:
