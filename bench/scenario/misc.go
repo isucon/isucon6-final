@@ -24,7 +24,7 @@ func newSession(origins []string) *session.Session {
 func fetchCSRFToken(s *session.Session, path string) (string, bool) {
 	var token string
 
-	ok := action.Get(s, path, func(body io.Reader, l *fails.Logger) bool {
+	ok := action.Get(s, path, action.OK(func(body io.Reader, l *fails.Logger) bool {
 		doc, ok := makeDocument(body, l)
 		if !ok {
 			return false
@@ -33,7 +33,7 @@ func fetchCSRFToken(s *session.Session, path string) (string, bool) {
 		token, ok = extractCsrfToken(doc, l)
 
 		return ok
-	})
+	}))
 	if !ok {
 		return "", false
 	}
@@ -82,7 +82,7 @@ func extractImages(doc *goquery.Document) []string {
 func checkStrokeReflectedToSVG(s *session.Session, roomID int64, strokeID int64, stroke seed.Stroke) bool {
 	imageURL := "/img/" + strconv.FormatInt(roomID, 10)
 
-	return action.Get(s, imageURL, func(body io.Reader, l *fails.Logger) bool {
+	return action.Get(s, imageURL, action.OK(func(body io.Reader, l *fails.Logger) bool {
 		b, err := ioutil.ReadAll(body)
 		if err != nil {
 			l.Critical("内容が読み込めませんでした", err)
@@ -112,7 +112,7 @@ func checkStrokeReflectedToSVG(s *session.Session, roomID int64, strokeID int64,
 		// ここに来るのは、IDがstroke.IDと同じpolylineが一つも無かったとき
 		l.Critical("投稿が反映されていません", err)
 		return false
-	})
+	}))
 }
 
 func loadImages(s *session.Session, images []string) bool {
@@ -121,9 +121,9 @@ func loadImages(s *session.Session, images []string) bool {
 	for _, image := range images {
 		ch <- struct{}{}
 		go func(image string) {
-			ok := action.Get(s, image, func(body io.Reader, l *fails.Logger) bool {
+			ok := action.Get(s, image, action.OK(func(body io.Reader, l *fails.Logger) bool {
 				return true
-			})
+			}))
 			if !ok {
 				OK = false // ture -> false になるだけなのでmutexは不要と思われ
 			}

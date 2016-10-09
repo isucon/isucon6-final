@@ -5,7 +5,8 @@ import (
 	"io"
 	"net"
 	"net/url"
-	"strconv"
+
+	"fmt"
 
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/http"
@@ -18,9 +19,45 @@ const (
 	PostScore = 20
 )
 
+type Checker interface {
+	Check(body io.Reader, l *fails.Logger) bool
+	CheckStatus(status int, l *fails.Logger) bool
+}
+
 type CheckFunc func(body io.Reader, l *fails.Logger) bool
 
-func request(s *session.Session, method, path string, body io.Reader, headers map[string]string, checkFunc CheckFunc) bool {
+type StatusChecker struct {
+	ExpectedStatus int
+	CheckFunc      CheckFunc
+}
+
+func (sc StatusChecker) Check(body io.Reader, l *fails.Logger) bool {
+	return sc.CheckFunc(body, l)
+}
+
+func (sc StatusChecker) CheckStatus(status int, l *fails.Logger) bool {
+	if status != sc.ExpectedStatus {
+		l.Add(fmt.Sprintf("ステータスが%dではありません: %d", sc.ExpectedStatus, status), nil)
+		return false
+	}
+	return true
+}
+
+func OK(f CheckFunc) StatusChecker {
+	return StatusChecker{
+		ExpectedStatus: 200,
+		CheckFunc:      f,
+	}
+}
+
+func BadRequest(f CheckFunc) StatusChecker {
+	return StatusChecker{
+		ExpectedStatus: 400,
+		CheckFunc:      f,
+	}
+}
+
+func request(s *session.Session, method, path string, body io.Reader, headers map[string]string, c Checker) bool {
 	l := &fails.Logger{Prefix: "[" + method + " " + path + "] "}
 
 	u, err := url.Parse(path)
@@ -55,24 +92,24 @@ func request(s *session.Session, method, path string, body io.Reader, headers ma
 	}
 	defer res.Body.Close()
 
-	if res.StatusCode != 200 {
-		l.Add("ステータスが200ではありません: "+strconv.Itoa(res.StatusCode), nil)
+	ok := c.CheckStatus(res.StatusCode, l)
+	if !ok {
 		return false
 	}
 
-	return checkFunc(res.Body, l)
+	return c.Check(res.Body, l)
 }
 
-func Get(s *session.Session, path string, checkFunc CheckFunc) bool {
-	ok := request(s, "GET", path, nil, nil, checkFunc)
+func Get(s *session.Session, path string, c Checker) bool {
+	ok := request(s, "GET", path, nil, nil, c)
 	if ok {
 		score.Increment(GetScore)
 	}
 	return ok
 }
 
-func Post(s *session.Session, path string, body []byte, headers map[string]string, checkFunc CheckFunc) bool {
-	ok := request(s, "POST", path, bytes.NewBuffer(body), headers, checkFunc)
+func Post(s *session.Session, path string, body []byte, headers map[string]string, c Checker) bool {
+	ok := request(s, "POST", path, bytes.NewBuffer(body), headers, c)
 	if ok {
 		score.Increment(PostScore)
 	}

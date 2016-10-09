@@ -4,6 +4,8 @@ import (
 	"io"
 	"strconv"
 
+	"encoding/json"
+
 	"github.com/catatsuy/isucon6-final/bench/action"
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/seed"
@@ -34,7 +36,7 @@ func StrokeReflectedToTop(origins []string) {
 	}
 
 	// 描いた直後にトップページに表示される
-	_ = action.Get(s2, "/", func(body io.Reader, l *fails.Logger) bool {
+	_ = action.Get(s2, "/", action.OK(func(body io.Reader, l *fails.Logger) bool {
 		doc, ok := makeDocument(body, l)
 		if !ok {
 			return false
@@ -52,7 +54,7 @@ func StrokeReflectedToTop(origins []string) {
 			return false
 		}
 		return true
-	})
+	}))
 }
 
 // 線の描かれてない部屋はトップページに並ばない
@@ -72,7 +74,7 @@ func RoomWithoutStrokeNotShownAtTop(origins []string) {
 		return
 	}
 
-	_ = action.Get(s2, "/", func(body io.Reader, l *fails.Logger) bool {
+	_ = action.Get(s2, "/", action.OK(func(body io.Reader, l *fails.Logger) bool {
 		doc, ok := makeDocument(body, l)
 		if !ok {
 			return false
@@ -86,7 +88,7 @@ func RoomWithoutStrokeNotShownAtTop(origins []string) {
 			}
 		}
 		return true
-	})
+	}))
 }
 
 // 線がSVGに反映される
@@ -138,4 +140,49 @@ func CSRFTokenRefreshed(origins []string) {
 	if token1 == token2 {
 		fails.Critical("csrf_tokenが使いまわされています", nil)
 	}
+}
+
+// 他人の作った部屋に最初の線を描けない
+func CantDrawFirstStrokeOnSomeoneElsesRoom(origins []string) {
+	s1 := newSession(origins)
+	s2 := newSession(origins)
+	defer s1.Bye()
+	defer s2.Bye()
+
+	token1, ok := fetchCSRFToken(s1, "/")
+	if !ok {
+		return
+	}
+
+	roomID, ok := makeRoom(s1, token1)
+	if !ok {
+		return
+	}
+
+	token2, ok := fetchCSRFToken(s2, "/")
+	if !ok {
+		return
+	}
+
+	strokes := seed.GetStrokes("star")
+	stroke := seed.FluctuateStroke(strokes[0])
+
+	postBody, _ := json.Marshal(struct {
+		RoomID int64 `json:"room_id"`
+		seed.Stroke
+	}{
+		RoomID: roomID,
+		Stroke: stroke,
+	})
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+		"x-csrf-token": token2,
+	}
+
+	u := "/api/strokes/rooms/" + strconv.FormatInt(roomID, 10)
+	ok = action.Post(s2, u, postBody, headers, action.BadRequest(func(body io.Reader, l *fails.Logger) bool {
+		// JSONも検証する？
+		return true
+	}))
 }

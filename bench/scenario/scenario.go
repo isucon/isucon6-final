@@ -22,7 +22,7 @@ func LoadIndexPage(origins []string) {
 	var token string
 	var images []string
 
-	ok := action.Get(s, "/", func(body io.Reader, l *fails.Logger) bool {
+	ok := action.Get(s, "/", action.OK(func(body io.Reader, l *fails.Logger) bool {
 		doc, ok := makeDocument(body, l)
 		if !ok {
 			return false
@@ -40,7 +40,7 @@ func LoadIndexPage(origins []string) {
 		}
 
 		return true
-	})
+	}))
 	if !ok {
 		return
 	}
@@ -56,7 +56,7 @@ func LoadRoomPage(origins []string) {
 	var images []string
 	var rooms []string
 
-	ok := action.Get(s, "/", func(body io.Reader, l *fails.Logger) bool {
+	ok := action.Get(s, "/", action.OK(func(body io.Reader, l *fails.Logger) bool {
 		doc, ok := makeDocument(body, l)
 		if !ok {
 			return false
@@ -73,7 +73,7 @@ func LoadRoomPage(origins []string) {
 		})
 
 		return true
-	})
+	}))
 	if !ok {
 		return
 	}
@@ -85,10 +85,10 @@ func LoadRoomPage(origins []string) {
 
 	roomURL := rooms[rand.Intn(len(rooms))]
 
-	_ = action.Get(s, roomURL, func(body io.Reader, l *fails.Logger) bool {
+	_ = action.Get(s, roomURL, action.OK(func(body io.Reader, l *fails.Logger) bool {
 
 		// TODO: polylineのidを上で開いたSVGと比較するか？
 
 		return true
-	})
+	}))
 }
