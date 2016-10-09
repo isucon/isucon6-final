@@ -1,0 +1,30 @@
+version: '2'
+services:
+  mysql:
+    extends:
+      file: docker-compose-mysql.yml
+      service: mysql
+  python:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      ISUCON_ENV: production
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
+  react_python:
+    extends:
+      file: docker-compose-react.yml
+      service: react
+    depends_on:
+      - python
+    links:
+      - python
+    environment:
+      API: http://python:80
