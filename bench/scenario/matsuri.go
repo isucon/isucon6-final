@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/catatsuy/isucon6-final/bench/action"
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/seed"
@@ -120,7 +121,7 @@ func makeRoom(s *session.Session, token string) (int64, bool) {
 
 	var roomID int64
 
-	ok := s.Post("/api/rooms", postBody, headers, func(body io.Reader, l *fails.Logger) bool {
+	ok := action.Post(s, "/api/rooms", postBody, headers, func(body io.Reader, l *fails.Logger) bool {
 		b, err := ioutil.ReadAll(body)
 		if err != nil {
 			l.Add("レスポンス内容が読み込めませんでした", err)
@@ -161,7 +162,7 @@ func drawStroke(s *session.Session, token string, roomID int64, stroke seed.Stro
 	var strokeID int64
 
 	u := "/api/strokes/rooms/" + strconv.FormatInt(roomID, 10)
-	ok := s.Post(u, postBody, headers, func(body io.Reader, l *fails.Logger) bool {
+	ok := action.Post(s, u, postBody, headers, func(body io.Reader, l *fails.Logger) bool {
 
 		b, err := ioutil.ReadAll(body)
 		if err != nil {

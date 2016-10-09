@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/catatsuy/isucon6-final/bench/action"
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/session"
 )
@@ -16,7 +17,7 @@ func newSession(origins []string) *session.Session {
 func fetchCSRFToken(s *session.Session, path string) (string, bool) {
 	var token string
 
-	ok := s.Get(path, func(body io.Reader, l *fails.Logger) bool {
+	ok := action.Get(s, path, func(body io.Reader, l *fails.Logger) bool {
 		doc, ok := makeDocument(body, l)
 		if !ok {
 			return false

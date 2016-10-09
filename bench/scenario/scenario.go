@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/catatsuy/isucon6-final/bench/action"
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/session"
 )
@@ -18,7 +19,7 @@ var (
 func loadImages(s *session.Session, images []string) bool {
 	status := true
 	for _, image := range images {
-		ok := s.Get(image, func(body io.Reader, l *fails.Logger) bool {
+		ok := action.Get(s, image, func(body io.Reader, l *fails.Logger) bool {
 			return false
 		})
 		status = status && ok
@@ -56,7 +57,7 @@ func LoadIndexPage(origins []string) {
 	var token string
 	var images []string
 
-	ok := s.Get("/", func(body io.Reader, l *fails.Logger) bool {
+	ok := action.Get(s, "/", func(body io.Reader, l *fails.Logger) bool {
 		doc, ok := makeDocument(body, l)
 		if !ok {
 			return false
@@ -89,7 +90,7 @@ func LoadRoomPage(origins []string) {
 	var images []string
 	var rooms []string
 
-	ok := s.Get("/", func(body io.Reader, l *fails.Logger) bool {
+	ok := action.Get(s, "/", func(body io.Reader, l *fails.Logger) bool {
 		doc, ok := makeDocument(body, l)
 		if !ok {
 			return false
@@ -118,7 +119,7 @@ func LoadRoomPage(origins []string) {
 
 	roomURL := rooms[rand.Intn(len(rooms))]
 
-	_ = s.Get(roomURL, func(body io.Reader, l *fails.Logger) bool {
+	_ = action.Get(s, roomURL, func(body io.Reader, l *fails.Logger) bool {
 
 		// TODO: polylineのidを上で開いたSVGと比較するか？
 
