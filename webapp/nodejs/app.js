@@ -1,10 +1,34 @@
-const Koa = require('koa');
+'use strict';
+import Koa from 'koa';
+import Router from 'koa-router';
+
+import convert from 'koa-convert';
+import logger from 'koa-logger';
+import bodyparser from 'koa-bodyparser';
+import json from 'koa-json';
+
+import mysql from 'promise-mysql';
+
 const app = new Koa();
 
-const convert = require('koa-convert');
-const logger = require('koa-logger');
-const json = require('koa-json');
+const getDBH = () => {
+  const host = process.env.MYSQL_HOST || 'localhost';
+  const port = process.env.MYSQL_PORT || '3306';
+  const user = process.env.MYSQL_USER || 'root';
+  const pass = process.env.MYSQL_PASS || '';
+  const dbname = 'isuketch';
+  return mysql.createPool({
+    host: host,
+    port: port,
+    user: user,
+    password: pass,
+    database: dbname,
+    connectionLimit: 1,
+    charset: 'utf8mb4',
+  });
+};
 
+app.use(convert(bodyparser()));
 app.use(convert(json()));
 app.use(convert(logger()));
 
@@ -16,12 +40,12 @@ app.use(async (ctx, next) => {
   console.log(`[app] ${ctx.method} ${ctx.url} - ${ms}ms`);
 });
 
-app.on('error', function(err, ctx){
+app.on('error', (err, ctx) => {
   console.log(err)
   logger.error('server error', err, ctx);
 });
 
-const router = require('koa-router')();
+const router = new Router();
 router.post('api/csrf_token', async () => {
 });
 
@@ -37,10 +61,22 @@ router.get('api/rooms/:id', async () => {
 router.post('api/strokes/rooms/:id', async () => {
 });
 
-router.get('api/initialize', async () => {
+router.get('/api/initialize', async (ctx, next) => {
+  const dbh = getDBH();
+  const sqls = [
+    'DELETE FROM `points` WHERE `id` > 1443000',
+    'DELETE FROM `strokes` WHERE `id` > 41000',
+    'DELETE FROM `rooms` WHERE `id` > 1000',
+    'DELETE FROM `tokens` WHERE `id` > 0',
+  ];
+
+  for (const sql of sqls) {
+    await dbh.query(sql);
+  }
+  ctx.body = 'ok';
 });
 
-router.use('/', router.routes(), router.allowedMethods());
-app.use(router.routes(), router.allowedMethods);
+app.use(router.routes());
+app.use(router.allowedMethods());
 
 module.exports = app;
