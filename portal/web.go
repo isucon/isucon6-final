@@ -110,6 +110,18 @@ func initWeb() error {
 	return nil
 }
 
+func getIsRankingFixed() bool {
+	var l int
+	err := db.QueryRow("SELECT COUNT(*) FROM setting WHERE name = 'is_ranking_fixed'").Scan(&l)
+	if err != nil {
+		panic(err)
+	}
+	if l > 0 {
+		return true
+	}
+	return false
+}
+
 type Team struct {
 	ID           int
 	Name         string
