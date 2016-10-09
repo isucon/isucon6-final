@@ -9,7 +9,7 @@ WORKDIR ${GOPATH}/src/github.com/catatsuy/isucon6-final/bench
 COPY . ${GOPATH}/src/github.com/catatsuy/isucon6-final/bench
 
 RUN \
-  glide update && \
+  glide install && \
   make
 
 #CMD ["./local-bench", "-urls", "https://react", "-timeout", "30"]
