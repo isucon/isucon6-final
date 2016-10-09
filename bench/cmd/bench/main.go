@@ -66,7 +66,7 @@ func makeOrigins(urls string) ([]string, error) {
 }
 
 func initialCheck(origins []string) {
-	scenario.CheckCSRFTokenRefreshed(origins)
+	scenario.CSRFTokenRefreshed(origins)
 	scenario.StrokeReflectedToTop(origins)
 	scenario.RoomWithoutStrokeNotShownAtTop(origins)
 	scenario.StrokeReflectedToSVG(origins)
@@ -96,7 +96,7 @@ L:
 			}()
 		case <-checkCSRFTokenRefreshedCh:
 			go func() {
-				scenario.CheckCSRFTokenRefreshed(origins)
+				scenario.CSRFTokenRefreshed(origins)
 				checkCSRFTokenRefreshedCh <- struct{}{}
 			}()
 		case <-matsuriCh:

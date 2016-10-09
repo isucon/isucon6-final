@@ -111,3 +111,23 @@ func StrokeReflectedToSVG(origins []string) {
 		ok = checkStrokeReflectedToSVG(s2, roomID, strokeID, stroke2)
 	}
 }
+
+// ページ内のCSRFトークンが毎回変わっている
+func CSRFTokenRefreshed(origins []string) {
+	s1 := newSession(origins)
+	s2 := newSession(origins)
+
+	token1, ok := fetchCSRFToken(s1, "/")
+	if !ok {
+		return
+	}
+
+	token2, ok := fetchCSRFToken(s2, "/")
+	if !ok {
+		return
+	}
+
+	if token1 == token2 {
+		fails.Critical("csrf_tokenが使いまわされています", nil)
+	}
+}

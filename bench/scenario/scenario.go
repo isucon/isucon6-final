@@ -126,22 +126,3 @@ func LoadRoomPage(origins []string) {
 		return true
 	})
 }
-
-// ページ内のCSRFトークンが毎回変わっていることをチェック
-func CheckCSRFTokenRefreshed(origins []string) {
-	s := newSession(origins)
-
-	token1, ok := fetchCSRFToken(s, "/")
-	if !ok {
-		return
-	}
-
-	token2, ok := fetchCSRFToken(s, "/")
-	if !ok {
-		return
-	}
-
-	if token1 == token2 {
-		fails.Critical("csrf_tokenが使いまわされています", nil)
-	}
-}
