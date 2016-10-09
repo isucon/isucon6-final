@@ -37,3 +37,7 @@ proxyは以下のような挙動をする。
   * proxyは投入されると、consulのクラスタにjoinする
     * `/usr/local/bin/update_members`を叩く
     * portalはmemberが増えたら、portalのDBに登録して、ベンチマーカーに渡す
+
+proxyを減らす場合は以下の手順が必要
+
+  * 減らすインスタンス上で`consul leave`と打つ
