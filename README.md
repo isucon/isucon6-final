@@ -32,6 +32,8 @@ proxyは以下のような挙動をする。
   * portalと同じconsulのクラスタの一員になる
   * proxyはセットアップ時に、portalからnginxの設定を取得して設定を反映する
   * portalは参加者のIPアドレスが変更されたら、`consul event -name="nginx_reload" -node="proxy"`を叩く
+    * `/usr/local/bin/nginx_reload`を叩く
     * 全proxyはportalからnginxの設定を取得して設定を反映する
   * proxyは投入されると、consulのクラスタにjoinする
+    * `/usr/local/bin/update_members`を叩く
     * portalはmemberが増えたら、portalのDBに登録して、ベンチマーカーに渡す
