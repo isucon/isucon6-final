@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 # initial_data.sqlを生成するためのスクリプト
-# data/main001.jsonが既にあると仮定して、
+# data/foo.jsonが既にあると仮定して、
 # generate_initial_data.rb > ../webapp/sql/initial_data.sql
 # とやって、あとは ../webapp/sql/README.md の手順に従って初期データを用意する
 
@@ -10,7 +10,7 @@ require 'json'
 ROOM_ID_MAX = 1000
 TOKENS_ID_MAX = 5000
 
-json = File.read(File.dirname(__FILE__) + '/data/main001.json') # TODO: 今後mainXXXとsubXXXの複数ファイルになる
+json = File.read(File.dirname(__FILE__) + '/data/foo.json')
 strokes = JSON.parse(json, {:symbolize_names => true})
 
 stroke_id = 0

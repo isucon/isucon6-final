@@ -1,7 +1,7 @@
 require 'json'
 
 data_str = ""
-File.open("data/main001.json") do |file|
+File.open("data/isu.json") do |file|
   data_str += file.read
 end
 

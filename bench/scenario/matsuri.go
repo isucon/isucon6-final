@@ -35,7 +35,7 @@ func Matsuri(origins []string, timeout int) {
 		return
 	}
 
-	seedStroke := seed.GetStrokes("main001")
+	seedStroke := seed.GetStrokes("isu")
 
 	postTimes := make(map[int64]time.Time)
 
