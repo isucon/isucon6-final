@@ -38,7 +38,6 @@ func LoadIndexPage(origins []string) {
 }
 
 // /api/rooms にリクエストして、その中の一つの部屋を開いてstrokeをPOST
-// トップページを開いて適当な部屋を開く（Ajaxじゃないのは「別タブで」開いたということにでもしておく）
 func DrawOnRandomRoom(origins []string) {
 	s := session.New(randomOrigin(origins))
 	defer s.Bye()
