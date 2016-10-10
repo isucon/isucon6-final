@@ -36,7 +36,7 @@ func Matsuri(origins []string, timeout int) {
 	start := time.Now()
 
 	go func() {
-		// 1秒おきにstrokeをPOSTする
+		// 2秒おきにstrokeをPOSTする
 		for {
 			for _, seedStroke := range seedStrokes {
 				postTime := time.Now()
@@ -45,7 +45,7 @@ func Matsuri(origins []string, timeout int) {
 				if ok {
 					postTimes[stroke.ID] = postTime
 				}
-				time.Sleep(1 * time.Second)
+				time.Sleep(2 * time.Second)
 				if time.Now().Sub(start).Seconds() > float64(timeout) {
 					return
 				}
