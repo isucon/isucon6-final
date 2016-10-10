@@ -42,12 +42,14 @@ gulp.task('start', ['server', 'browser'], () => {
 gulp.task('server', () => {
   return gulp.src(['**/*.jsx'])
     .pipe(babel())
+    .on('error', swallowError)
     .pipe(gulp.dest('build'));
 });
 
 gulp.task('browser', () => {
   return gulp.src(['browser.js'])
     .pipe(webpack(webpackConfig))
+    .on('error', swallowError)
     .pipe(gulp.dest('public'));
 });
 
@@ -56,4 +58,12 @@ process.on('exit', () => {
     server.kill('SIGTERM');
   }
 });
+
+// http://stackoverflow.com/questions/23971388/prevent-errors-from-breaking-crashing-gulp-watch
+function swallowError (error) {
+  // If you want details of the error in the console
+  console.log(error.toString())
+
+  this.emit('end')
+}
 
