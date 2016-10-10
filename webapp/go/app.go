@@ -127,6 +127,9 @@ func getRoom(roomID int64) (*Room, error) {
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
+	if r.Strokes == nil {
+		r.Strokes = []Stroke{}
+	}
 	return r, nil
 }
 
