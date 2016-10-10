@@ -1,10 +1,10 @@
 package scenario
 
 import (
+	"encoding/json"
+	"fmt"
 	"io"
 	"strconv"
-
-	"encoding/json"
 
 	"github.com/catatsuy/isucon6-final/bench/action"
 	"github.com/catatsuy/isucon6-final/bench/fails"
@@ -192,4 +192,42 @@ func CantDrawFirstStrokeOnSomeoneElsesRoom(origins []string) {
 		// JSONも検証する？
 		return true
 	}))
+}
+
+// トップページの内容が正しいかをチェック
+func TopPageContent(origins []string) {
+	s := session.New(randomOrigin(origins))
+	defer s.Bye()
+
+	_ = action.Get(s, "/", action.OK(func(body io.Reader, l *fails.Logger) bool {
+		doc, ok := makeDocument(body, l)
+		if !ok {
+			return false
+		}
+		images := extractImages(doc)
+		if len(images) < 100 {
+			l.Critical("画像の枚数が少なすぎます", nil)
+			return false
+		}
+
+		reactidNum := doc.Find("[data-reactid]").Length()
+		expected := 1325
+		if reactidNum != expected {
+			l.Critical("トップページの内容が正しくありません",
+				fmt.Errorf("data-reactidの数が一致しません (expected %d, actual %d)", expected, reactidNum))
+			return false
+		}
+		return true
+	}))
+}
+
+// 静的ファイルが正しいかをチェック
+func CheckAssets(origins []string) {
+	s := session.New(randomOrigin(origins))
+	defer s.Bye()
+
+	ok := loadAssets(s, true /*checkHash*/)
+	if !ok {
+		fails.Critical("静的ファイルが正しくありません", nil)
+	}
 }

@@ -71,6 +71,8 @@ func initialCheck(origins []string) {
 	scenario.RoomWithoutStrokeNotShownAtTop(origins)
 	scenario.StrokeReflectedToSVG(origins)
 	scenario.CantDrawFirstStrokeOnSomeoneElsesRoom(origins)
+	scenario.TopPageContent(origins)
+	scenario.CheckAssets(origins)
 }
 
 func benchmark(origins []string) {
