@@ -37,7 +37,7 @@
         "name": "[concat(parameters('prefix'), '-isu01')]",
         "hostname": "isu01",
         "ipAddress": "10.6.1.4",
-        "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && curl -sL https://@AZURE_STORAGE_ACCOUNT@.blob.core.windows.net/@CONTAINER_NAME@/ansible.tar.gz | tar zxf - && ( cd ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local playbook/setup.yml ) && rm -rf ansible"
+        "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && curl -sL https://@AZURE_STORAGE_ACCOUNT@.blob.core.windows.net/@CONTAINER_NAME@/ansible.tar.gz | tar zxf - && ( cd ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local -t app playbook/setup.yml ) && rm -rf ansible"
       },
       {
         "name": "[concat(parameters('prefix'), '-isu02')]",
