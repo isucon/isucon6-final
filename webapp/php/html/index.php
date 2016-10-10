@@ -49,7 +49,7 @@ function typeCastPointData($data) {
 
 function toRFC3339Micro($date) {
     // RFC3339では+00:00のときはZにするという仕様だが、PHPの"P"は準拠していないため
-    return str_replace('+00:00', 'Z', date_create($data['created_at'])->format("Y-m-d\TH:i:s.uP"));
+    return str_replace('+00:00', 'Z', date_create($date)->format("Y-m-d\TH:i:s.uP"));
 }
 
 function typeCastStrokeData($data) {
