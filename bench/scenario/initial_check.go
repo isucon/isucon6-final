@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"time"
 
 	"github.com/catatsuy/isucon6-final/bench/action"
 	"github.com/catatsuy/isucon6-final/bench/fails"
@@ -24,18 +25,32 @@ func StrokeReflectedToTop(origins []string) {
 		return
 	}
 
+	t1 := time.Now()
+
 	room, ok := makeRoom(s1, token)
 	if !ok {
 		fails.Critical("部屋の作成に失敗しました", nil)
 		return
 	}
 
+	t2 := time.Now()
+	if room.CreatedAt.After(t2) || room.CreatedAt.Before(t1) {
+		fails.Critical("作成した部屋のcreated_atが正しくありません",
+			fmt.Errorf("should be %s < %s < %s", t1.Format("2006-01-02-15:04:05.000"), room.CreatedAt.Format("2006-01-02-15:04:05.000"), t2.Format("2006-01-02-15:04:05.000")))
+	}
+
 	seedStrokes := seed.GetStrokes("star")
 	seedStroke := seed.FluctuateStroke(seedStrokes[0])
-	_, ok = drawStroke(s1, token, room.ID, seedStroke)
+	stroke, ok := drawStroke(s1, token, room.ID, seedStroke)
 	if !ok {
 		fails.Critical("線の投稿に失敗しました", nil)
 		return
+	}
+
+	t3 := time.Now()
+	if stroke.CreatedAt.After(t3) || stroke.CreatedAt.Before(t2) {
+		fails.Critical("作成した部屋のcreated_atが正しくありません",
+			fmt.Errorf("should be %s < %s < %s", t2.Format("2006-01-02-15:04:05.000"), stroke.CreatedAt.Format("2006-01-02-15:04:05.000"), t3.Format("2006-01-02-15:04:05.000")))
 	}
 
 	// 描いた直後にトップページに表示される
