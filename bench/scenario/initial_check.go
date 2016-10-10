@@ -231,7 +231,7 @@ func TopPageContent(origins []string) {
 		}
 
 		reactidNum := doc.Find("[data-reactid]").Length()
-		expected := 1625
+		expected := 1525
 		if reactidNum != expected {
 			l.Critical("トップページの内容が正しくありません",
 				fmt.Errorf("data-reactidの数が一致しません (expected %d, actual %d)", expected, reactidNum))

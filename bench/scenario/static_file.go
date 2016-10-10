@@ -21,7 +21,7 @@ func loadStaticFiles(s *session.Session, checkHash bool) bool {
 	assets := []StaticFile{
 		StaticFile{Path: "/css/rc-color-picker.css", MD5: "78055c5c02a2dd66f6207fa19f7ca928"},
 		StaticFile{Path: "/css/sanitize.css", MD5: "7375990d0f1f7d436a952314e3ac7fd0"},
-		StaticFile{Path: "/bundle.js", MD5: "3d66e4a976da7c915b82188865dc994b"},
+		StaticFile{Path: "/bundle.js", MD5: "e34dc2ae543ec9adcc8a671798da3263"},
 	}
 	var wg sync.WaitGroup
 
