@@ -117,7 +117,6 @@ func output() {
 	s := score.Get()
 	pass := true
 	if fails.GetIsCritical() {
-		s = 0
 		pass = false
 	}
 	b, _ := json.Marshal(score.Output{
