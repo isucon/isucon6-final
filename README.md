@@ -42,3 +42,45 @@ proxyは以下のような挙動をする。
 proxyを減らす場合は以下の手順が必要
 
   * 減らすインスタンス上で`consul leave`と打つ
+
+### Azure-CLIを使う方法
+
+#### install
+
+```
+npm install azure-cli -g
+```
+
+#### login
+
+```
+azure login
+```
+
+#### Portalデプロイ例
+
+##### parameters.json
+
+```
+{
+    "vmName":{
+        "value": "isucon6f-ex-portal(change name if you want)"
+    },
+    "sshPublicKey": {
+        "value": "ssh-rsa ...(your ssh-public-key)"
+    }
+}
+```
+
+portalが要求する変数を書いておく。
+
+##### command
+
+```
+azure group deployment create --template-file deploy.json -e parameters.json isucon6-final-dev
+```
+
+* -e
+  * パラメータ設定用ファイルの指定
+* --template-file
+  * テンプレートファイルの指定
