@@ -21,7 +21,7 @@ func loadAssets(s *session.Session, checkHash bool) bool {
 	assets := []Asset{
 		Asset{Path: "/css/rc-color-picker.css", MD5: "78055c5c02a2dd66f6207fa19f7ca928"},
 		Asset{Path: "/css/sanitize.css", MD5: "7375990d0f1f7d436a952314e3ac7fd0"},
-		Asset{Path: "/bundle.js", MD5: "68a787c981bf44f173d0315f3838564f"},
+		Asset{Path: "/bundle.js", MD5: "3d66e4a976da7c915b82188865dc994b"},
 	}
 	var wg sync.WaitGroup
 
