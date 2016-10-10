@@ -39,7 +39,7 @@ func main() {
 
 	// 初期チェックで失敗したらそこで終了
 	initialCheck(origins)
-	if fails.GetIsCritical() || !InitialCheckOnly {
+	if fails.GetIsCritical() || InitialCheckOnly {
 		output()
 		return
 	}

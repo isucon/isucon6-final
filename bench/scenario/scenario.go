@@ -16,7 +16,6 @@ func LoadIndexPage(origins []string) {
 	s := session.New(randomOrigin(origins))
 	defer s.Bye()
 
-	var token string
 	var images []string
 
 	ok := action.Get(s, "/", action.OK(func(body io.Reader, l *fails.Logger) bool {
@@ -24,25 +23,17 @@ func LoadIndexPage(origins []string) {
 		if !ok {
 			return false
 		}
-
-		token, ok = extractCsrfToken(doc, l)
-		if !ok {
-			return false
-		}
-
 		images = extractImages(doc)
-		if len(images) < 100 {
-			l.Critical("画像の枚数が少なすぎます", nil)
-			return false
-		}
-
 		return true
 	}))
 	if !ok {
 		return
 	}
 
-	loadImages(s, images)
+	// assetで失敗しても画像はリクエストかける
+	_ = loadAssets(s, false /*checkHash*/)
+
+	_ = loadImages(s, images)
 }
 
 // トップページを開いて適当な部屋を開く（Ajaxじゃないのは「別タブで」開いたということにでもしておく）
