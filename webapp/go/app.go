@@ -465,8 +465,8 @@ func getAPIStreamRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Req
 			return
 		}
 		if newWatcherCount != watcherCount {
-			printAndFlush(w, "event:watcher_count\n"+"data:"+strconv.Itoa(watcherCount)+"\n\n")
 			watcherCount = newWatcherCount
+			printAndFlush(w, "event:watcher_count\n"+"data:"+strconv.Itoa(watcherCount)+"\n\n")
 		}
 	}
 }
