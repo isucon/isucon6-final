@@ -11,10 +11,6 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
-var (
-	StrokeReceiveScore int64 = 1
-)
-
 // トップページと画像に負荷をかける
 func LoadIndexPage(origins []string) {
 	s := session.New(randomOrigin(origins))

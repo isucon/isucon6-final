@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	initialWatcherNum       = 5
-	watcherIncreaseInterval = 5
+	initialWatcherNum             = 5
+	watcherIncreaseInterval       = 5
+	StrokeReceiveScore      int64 = 1
 )
 
 // 一人がroomを作る→大勢がそのroomをwatchする
@@ -28,50 +29,58 @@ func Matsuri(origins []string, timeout int) {
 		return
 	}
 
-	seedStroke := seed.GetStrokes("isu")
+	strokes := seed.GetStrokes("isu")
 
 	postTimes := make(map[int64]time.Time)
 
+	start := time.Now()
+
 	go func() {
+		// 1秒おきにstrokeをPOSTする
 		for {
-			for _, stroke := range seedStroke {
+			for _, stroke := range strokes {
 				postTime := time.Now()
 
-				strokeID, _ := drawStroke(s, token, roomID, stroke)
-				// 特に止める必要もない
-				postTimes[strokeID] = postTime
+				strokeID, ok := drawStroke(s, token, roomID, seed.FluctuateStroke(stroke))
+				if ok {
+					postTimes[strokeID] = postTime
+				}
+				time.Sleep(1 * time.Second)
+				if time.Now().Sub(start).Seconds() > float64(timeout) {
+					return
+				}
 			}
 		}
 	}()
 
 	watchers := make([]*RoomWatcher, 0)
 
-	// まず最初にinitialWatcherNum人が入室する
-	for i := 0; i < initialWatcherNum; i++ {
-		//fmt.Println("watcher", len(watchers)+1)
-		watchers = append(watchers, NewRoomWatcher(randomOrigin(origins), roomID))
-	}
+	for {
+		// watcherIncreaseInterval秒おきに、まだ退室していないwatcherの数と同数の人数が入室する
 
-	numToIncreaseWatcher := (timeout - watcherIncreaseInterval) / watcherIncreaseInterval
-	for k := 0; k < numToIncreaseWatcher; k++ {
-		// watcherIncreaseIntervalごとにその時点でまだ退室していない参加人数の数と同じ人数が入ってくる
-		time.Sleep(time.Duration(watcherIncreaseInterval) * time.Second)
-
+		n := 0
 		for _, w := range watchers {
 			if len(w.EndCh) == 0 {
-				//fmt.Println("watcher", len(watchers)+1)
-				watchers = append(watchers, NewRoomWatcher(randomOrigin(origins), roomID))
+				n++
 			}
+		}
+		if n == 0 { // ゼロならinitialWatcherNum人が入室する（特に初回）
+			n = initialWatcherNum
+		}
+		for i := 0; i < n; i++ {
+			watchers = append(watchers, NewRoomWatcher(randomOrigin(origins), roomID))
+		}
+
+		time.Sleep(time.Duration(watcherIncreaseInterval) * time.Second)
+		if time.Now().Sub(start).Seconds() > float64(timeout-watcherIncreaseInterval) {
+			break
 		}
 	}
 
-	time.Sleep(time.Duration(watcherIncreaseInterval) * time.Second)
-
-	// ここまでで合計 timeout 秒かかり、
-	// 最大で initialWatcherNum * 2 ^ numToIncreaseWatcher 人が入室してる
+	// ここまでで最大 initialWatcherNum * 2 ^ ((timeout - watcherIncreaseInterval) / watcherIncreaseInterval) 人が入室してるはず
+	// 例えば initialWatcherNum=10, timeout=55, watcherIncreaseInterval=5 なら 10 * 2 ^ ((55-5)/5) = 10240 人
 
 	//fmt.Println("stop")
-
 	for _, w := range watchers {
 		w.Leave()
 	}
@@ -81,18 +90,16 @@ func Matsuri(origins []string, timeout int) {
 	}
 	//fmt.Println("done")
 
-	StrokeLogs := []StrokeLog{}
 	for _, w := range watchers {
-		StrokeLogs = append(StrokeLogs, w.StrokeLogs...)
-	}
+		for _, strokeLog := range w.StrokeLogs {
+			postTime := postTimes[strokeLog.Stroke.ID]
+			timeTaken := strokeLog.ReceivedTime.Sub(postTime).Seconds()
 
-	for _, strokeLog := range StrokeLogs {
-		postTime := postTimes[strokeLog.Stroke.ID]
-		timeTaken := strokeLog.ReceivedTime.Sub(postTime).Seconds()
-		if timeTaken < 1 { // TODO: この時間は要調整
-			score.Increment(StrokeReceiveScore * 2)
-		} else if timeTaken < 3 {
-			score.Increment(StrokeReceiveScore)
+			if timeTaken < 1 { // TODO: この時間は要調整
+				score.Increment(StrokeReceiveScore * 2)
+			} else if timeTaken < 3 {
+				score.Increment(StrokeReceiveScore)
+			}
 		}
 	}
 }
