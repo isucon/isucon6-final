@@ -75,7 +75,6 @@ func initialCheck(origins []string) {
 func benchmark(origins []string) {
 	loadIndexPageCh := makeChan(2)
 	loadRoomPageCh := makeChan(2)
-	checkCSRFTokenRefreshedCh := makeChan(1)
 	matsuriCh := makeChan(MatsuriNum)
 	matsuriEndCh := make(chan struct{}, MatsuriNum)
 
@@ -93,11 +92,6 @@ L:
 			go func() {
 				scenario.LoadRoomPage(origins)
 				loadRoomPageCh <- struct{}{}
-			}()
-		case <-checkCSRFTokenRefreshedCh:
-			go func() {
-				scenario.CSRFTokenRefreshed(origins)
-				checkCSRFTokenRefreshedCh <- struct{}{}
 			}()
 		case <-matsuriCh:
 			go func() {
