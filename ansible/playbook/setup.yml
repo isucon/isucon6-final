@@ -2,8 +2,7 @@
 - hosts: "build_servers"
   become: yes
   roles:
-    - { role: base, tags: [base, app, proxy] }
+    - { role: base, tags: [base, app] }
     - { role: docker, tags: [base, app] }
     - { role: user, tags: [ app ] }
     - { role: app, tags: [ app ] }
-    - { role: proxy, tags: [ proxy ] }

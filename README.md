@@ -10,9 +10,9 @@
 
 ### proxy
 
-`ansible/playbook/roles/proxy/vars/main.yml.tmp`のtmpを取り、portalのprivate ipを記述する。これをしないとセットアップに失敗する。
+`provisioning/proxy/ansible/01_settings.yml`の`vars`の`portal_private_ip`をportalのprivate ipにする。これをしないとセットアップに失敗する。
 
-`ansible`ディレクトリ以下で、以下のような`prodution`というファイル名のものを作る。`~/.ssh/config`を作る必要があるのと、__azure上でVMを作る際に名前にproxyという名前が含まれている必要がある（重要）__。
+`provisioning/proxy`ディレクトリ以下で、以下のような`prodution`というファイル名のものを作る。`~/.ssh/config`を作る必要があるのと、__azure上でVMを作る際に名前にproxyという名前が含まれている必要がある（重要）__。
 
 ```
 [build_servers]
@@ -24,7 +24,8 @@ isu6f-proxy03
 以下のコマンドを実行する。
 
 ```
-ansible-playbook -i production playbook/setup.yml --tags=proxy
+cd provisioning/proxy
+ansible-playbook -i production playbook/*.yml
 ```
 
 proxyは以下のような挙動をする。
