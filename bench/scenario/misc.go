@@ -18,8 +18,8 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/svg"
 )
 
-func newSession(origins []string) *session.Session {
-	return session.New(origins[rand.Intn(len(origins))])
+func randomOrigin(origins []string) string {
+	return origins[rand.Intn(len(origins))]
 }
 
 func fetchCSRFToken(s *session.Session, path string) (string, bool) {

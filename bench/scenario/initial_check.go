@@ -9,12 +9,13 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/action"
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/seed"
+	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
 // 部屋を作って線を描くとトップページに出てくる
 func StrokeReflectedToTop(origins []string) {
-	s1 := newSession(origins)
-	s2 := newSession(origins)
+	s1 := session.New(randomOrigin(origins))
+	s2 := session.New(randomOrigin(origins))
 	defer s1.Bye()
 	defer s2.Bye()
 
@@ -61,8 +62,8 @@ func StrokeReflectedToTop(origins []string) {
 
 // 線の描かれてない部屋はトップページに並ばない
 func RoomWithoutStrokeNotShownAtTop(origins []string) {
-	s1 := newSession(origins)
-	s2 := newSession(origins)
+	s1 := session.New(randomOrigin(origins))
+	s2 := session.New(randomOrigin(origins))
 	defer s1.Bye()
 	defer s2.Bye()
 
@@ -96,7 +97,7 @@ func RoomWithoutStrokeNotShownAtTop(origins []string) {
 
 // 線がSVGに反映される
 func StrokeReflectedToSVG(origins []string) {
-	s1 := newSession(origins)
+	s1 := session.New(randomOrigin(origins))
 	defer s1.Bye()
 
 	token, ok := fetchCSRFToken(s1, "/")
@@ -119,7 +120,7 @@ func StrokeReflectedToSVG(origins []string) {
 			return
 		}
 
-		s2 := newSession(origins)
+		s2 := session.New(randomOrigin(origins))
 		_ = checkStrokeReflectedToSVG(s2, roomID, strokeID, stroke2)
 		s2.Bye()
 	}
@@ -127,8 +128,8 @@ func StrokeReflectedToSVG(origins []string) {
 
 // ページ内のCSRFトークンが毎回変わっている
 func CSRFTokenRefreshed(origins []string) {
-	s1 := newSession(origins)
-	s2 := newSession(origins)
+	s1 := session.New(randomOrigin(origins))
+	s2 := session.New(randomOrigin(origins))
 	defer s1.Bye()
 	defer s2.Bye()
 
@@ -149,8 +150,8 @@ func CSRFTokenRefreshed(origins []string) {
 
 // 他人の作った部屋に最初の線を描けない
 func CantDrawFirstStrokeOnSomeoneElsesRoom(origins []string) {
-	s1 := newSession(origins)
-	s2 := newSession(origins)
+	s1 := session.New(randomOrigin(origins))
+	s2 := session.New(randomOrigin(origins))
 	defer s1.Bye()
 	defer s2.Bye()
 

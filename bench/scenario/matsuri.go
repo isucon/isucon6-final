@@ -1,11 +1,11 @@
 package scenario
 
 import (
-	"math/rand"
 	"time"
 
 	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/seed"
+	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
 const (
@@ -15,7 +15,7 @@ const (
 
 // 一人がroomを作る→大勢がそのroomをwatchする
 func Matsuri(origins []string, timeout int) {
-	s := newSession(origins)
+	s := session.New(randomOrigin(origins))
 	defer s.Bye()
 
 	token, ok := fetchCSRFToken(s, "/")
@@ -49,7 +49,7 @@ func Matsuri(origins []string, timeout int) {
 	// まず最初にinitialWatcherNum人が入室する
 	for i := 0; i < initialWatcherNum; i++ {
 		//fmt.Println("watcher", len(watchers)+1)
-		watchers = append(watchers, NewRoomWatcher(origins[rand.Intn(len(origins))], roomID))
+		watchers = append(watchers, NewRoomWatcher(randomOrigin(origins), roomID))
 	}
 
 	numToIncreaseWatcher := (timeout - watcherIncreaseInterval) / watcherIncreaseInterval
@@ -60,7 +60,7 @@ func Matsuri(origins []string, timeout int) {
 		for _, w := range watchers {
 			if len(w.EndCh) == 0 {
 				//fmt.Println("watcher", len(watchers)+1)
-				watchers = append(watchers, NewRoomWatcher(origins[rand.Intn(len(origins))], roomID))
+				watchers = append(watchers, NewRoomWatcher(randomOrigin(origins), roomID))
 			}
 		}
 	}
