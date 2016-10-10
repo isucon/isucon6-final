@@ -37,14 +37,13 @@ func main() {
 		fmt.Fprintf(os.Stderr, err.Error())
 	}
 
-	// 初期チェックで失敗したらそこで終了
 	initialCheck(origins)
-	if fails.GetIsCritical() || InitialCheckOnly {
-		output()
-		return
+
+	// 初期チェックのみモードではない、かつ、この時点でcriticalが出ていなければ負荷をかけにいく
+	if !InitialCheckOnly && !fails.GetIsCritical() {
+		benchmark(origins)
 	}
 
-	benchmark(origins)
 	output()
 }
 
@@ -114,14 +113,9 @@ L:
 }
 
 func output() {
-	s := score.Get()
-	pass := true
-	if fails.GetIsCritical() {
-		pass = false
-	}
 	b, _ := json.Marshal(score.Output{
-		Pass:     pass,
-		Score:    s,
+		Pass:     !fails.GetIsCritical(),
+		Score:    score.Get(),
 		Messages: fails.GetUnique(),
 	})
 
