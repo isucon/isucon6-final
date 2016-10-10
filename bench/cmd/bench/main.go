@@ -19,7 +19,7 @@ import (
 var BenchmarkTimeout int
 var InitialCheckOnly bool
 var MatsuriNum = 10
-var LoadIndexPageNum = 10
+var LoadIndexPageNum = 20
 var DrawOnRandomRoomNum = 2
 
 func main() {
@@ -95,7 +95,7 @@ L:
 		case <-loadIndexPageCh:
 			go func() {
 				scenario.LoadIndexPage(origins)
-				time.Sleep(100 * time.Millisecond)
+				time.Sleep(200 * time.Millisecond)
 				loadIndexPageCh <- struct{}{}
 			}()
 		case <-drawOnRandomRoomCh:
