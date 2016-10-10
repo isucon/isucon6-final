@@ -201,18 +201,20 @@ post '/api/rooms' => sub {
         check_token($self->dbh, $c->req->header('X-CSRF-Token'));
     };
     if ($@) {
-        $c->res->code(400);
-        return $c->render_json({
+        $c->render_json({
             error => 'トークンエラー。ページを再読み込みしてください。'
         });
+        $c->res->code(400);
+        return $c->res;
     }
 
     my $posted_room = decode_json $c->req->content;
     if (!length($posted_room->{name}) || !length($posted_room->{canvas_width}) || !length($posted_room->{canvas_height})) {
-        $c->res->code(400);
-        return $c->render_json({
+        $c->render_json({
             error => 'リクエストが正しくありません。'
         });
+        $c->res->code(400);
+        return $c->res;
     }
 
     my $txn = $self->dbh->txn_scope;
@@ -238,10 +240,11 @@ post '/api/rooms' => sub {
     if (my $e = $@) {
         $txn->rollback;
         warn $e;
-        $c->res->code(500);
-        return $c->render_json({
+        $c->render_json({
             error => 'エラーが発生しました。'
         });
+        $c->res->code(500);
+        return $c->res;
     }
 
     my $room = get_room($self->dbh, $room_id);
@@ -254,10 +257,11 @@ get '/api/rooms/:id' => sub {
     my ($self, $c) = @_;
     my $room = get_room($self->dbh, $c->args->{id});
     unless ($room) {
-        $c->res->code(404);
-        return $c->render_json({
+        $c->render_json({
             error => 'この部屋は存在しません。'
-        })
+        });
+        $c->res->code(404);
+        return $c->res;
     }
 
     my $strokes = get_strokes($self->dbh, $room->{id}, 0);
@@ -352,34 +356,38 @@ post '/api/strokes/rooms/:id' => sub {
         check_token($self->dbh, $c->req->header('X-CSRF-Token'));
     };
     if ($@) {
-        $c->res->code(400);
-        return $c->render_json({
+        $c->render_json({
             error => 'トークンエラー。ページを再読み込みしてください。'
         });
+        $c->res->code(400);
+        return $c->res;
     }
 
     my $room = get_room($self->dbh, $c->args->{id});
     unless ($room) {
-        $c->res->code(404);
-        return $c->render_json({
+        $c->render_json({
             error => 'この部屋は存在しません。'
-        })
+        });
+        $c->res->code(404);
+        return $c->res;
     }
 
     my $posted_stroke = decode_json $c->req->content;
     if (!length($posted_stroke->{width}) || !length($posted_stroke->{points})) {
-        $c->res->code(400);
-        return $c->render_json({
+        $c->render_json({
             error => 'リクエストが正しくありません。'
         });
+        $c->res->code(400);
+        return $c->res;
     }
 
     my $stroke_count = scalar @{ get_strokes($self->dbh, $room->{id}, 0) };
     if ($stroke_count > 1000) {
-        $c->res->code(400);
-        return $c->render_json({
+        $c->render_json({
             error => '1000画を超えました。これ以上描くことはできません。'
         });
+        $c->res->code(400);
+        return $c->res;
     }
     if ($stroke_count == 0) {
         my $count = $self->dbh->select_one(q[
@@ -388,10 +396,11 @@ post '/api/strokes/rooms/:id' => sub {
               AND `token_id` = ?
         ], $room->{id}, $token->{id});
         if ($count == 0) {
-            $c->res->code(400);
-            return $c->render_json({
+            $c->render_json({
                 error => '他人の作成した部屋に1画目を描くことはできません'
             });
+            $c->res->code(400);
+            return $c->res;
         }
     }
 
@@ -418,10 +427,11 @@ post '/api/strokes/rooms/:id' => sub {
     if (my $e = $@) {
         $txn->rollback;
         warn $e;
-        $c->res->code(500);
-        return $c->render_json({
+        $c->render_json({
             error => 'エラーが発生しました。'
         });
+        $c->res->code(500);
+        return $c->res;
     }
 
     my $stroke = $self->dbh->select_row(q[
