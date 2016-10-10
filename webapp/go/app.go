@@ -132,9 +132,7 @@ func getRoom(roomID int64) (*Room, error) {
 		return nil, err
 	}
 	// 空スライスを入れてJSONでnullを返さないように
-	if r.Strokes == nil {
-		r.Strokes = []Stroke{}
-	}
+	r.Strokes = []Stroke{}
 	return r, nil
 }
 
