@@ -117,6 +117,7 @@ func getStrokes(roomID int64, greaterThanID int64) ([]Stroke, error) {
 	if err != nil {
 		return nil, err
 	}
+	// 空スライスを入れてJSONでnullを返さないように
 	for i := range strokes {
 		if strokes[i].Points == nil {
 			strokes[i].Points = []Point{}
@@ -132,6 +133,7 @@ func getRoom(roomID int64) (*Room, error) {
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
+	// 空スライスを入れてJSONでnullを返さないように
 	if r.Strokes == nil {
 		r.Strokes = []Stroke{}
 	}
