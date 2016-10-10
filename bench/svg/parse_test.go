@@ -36,3 +36,18 @@ func TestParse(t *testing.T) {
 	}
 
 }
+
+func TestParseWithoutXMLMetaData(t *testing.T) {
+	s, err := Parse([]byte(`
+	<svg baseProfile="full" width="1028" height="768" style="width:1028px;height:768px;background-color:white;" viewBox="0 0 1028 768">
+	<polyline stroke="rgba(128,128,128,0.7)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none" points="105,204 105,202 106,193 114,179 129,162 152,143 175,128 206,116 232,111 250,111 272,111 290,113 304,122 324,145 332,165 343,191 351,217 354,240 355,262 354,281 343,303 322,333 300,354 271,376 252,387 237,394 223,399 216,401 213,402 212,405"></polyline>
+	</svg>`))
+
+	if err != nil {
+		t.Errorf("%v", err)
+	}
+
+	if len(s.PolyLines) != 1 {
+		t.Errorf("want %d, got %d", 1, len(s.PolyLines))
+	}
+}
