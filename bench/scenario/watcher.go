@@ -14,6 +14,16 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/sse"
 )
 
+type StrokeLog struct {
+	ReceivedTime time.Time
+	Stroke
+}
+
+type WatcherCountLog struct {
+	ReceivedTime time.Time
+	Count        int
+}
+
 type RoomWatcher struct {
 	EndCh            chan struct{}
 	StrokeLogs       []StrokeLog

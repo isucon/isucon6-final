@@ -39,13 +39,3 @@ type Room struct {
 	StrokeCount  int       `json:"stroke_count"`
 	WatcherCount int       `json:"watcher_count"`
 }
-
-type StrokeLog struct {
-	ReceivedTime time.Time
-	Stroke
-}
-
-type WatcherCountLog struct {
-	ReceivedTime time.Time
-	Count        int
-}
