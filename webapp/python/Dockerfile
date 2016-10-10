@@ -14,4 +14,6 @@ RUN \
 
 COPY . /var/www
 
+EXPOSE 80
+
 CMD ["python", "app.py"]
