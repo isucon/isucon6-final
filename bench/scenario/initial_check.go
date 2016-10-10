@@ -25,6 +25,7 @@ func StrokeReflectedToTop(origins []string) {
 
 	roomID, ok := makeRoom(s1, token)
 	if !ok {
+		fails.Critical("部屋の作成に失敗しました", nil)
 		return
 	}
 
@@ -32,6 +33,7 @@ func StrokeReflectedToTop(origins []string) {
 	stroke := seed.FluctuateStroke(strokes[0])
 	_, ok = drawStroke(s1, token, roomID, stroke)
 	if !ok {
+		fails.Critical("線の投稿に失敗しました", nil)
 		return
 	}
 
@@ -71,6 +73,7 @@ func RoomWithoutStrokeNotShownAtTop(origins []string) {
 
 	roomID, ok := makeRoom(s1, token)
 	if !ok {
+		fails.Critical("部屋の作成に失敗しました", nil)
 		return
 	}
 
@@ -103,6 +106,7 @@ func StrokeReflectedToSVG(origins []string) {
 
 	roomID, ok := makeRoom(s1, token)
 	if !ok {
+		fails.Critical("部屋の作成に失敗しました", nil)
 		return
 	}
 
@@ -111,6 +115,7 @@ func StrokeReflectedToSVG(origins []string) {
 		stroke2 := seed.FluctuateStroke(stroke)
 		strokeID, ok := drawStroke(s1, token, roomID, stroke2)
 		if !ok {
+			fails.Critical("線の投稿に失敗しました", nil)
 			return
 		}
 
@@ -156,6 +161,7 @@ func CantDrawFirstStrokeOnSomeoneElsesRoom(origins []string) {
 
 	roomID, ok := makeRoom(s1, token1)
 	if !ok {
+		fails.Critical("部屋の作成に失敗しました", nil)
 		return
 	}
 

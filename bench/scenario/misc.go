@@ -155,17 +155,17 @@ func makeRoom(s *session.Session, token string) (int64, bool) {
 	ok := action.Post(s, "/api/rooms", postBody, headers, action.OK(func(body io.Reader, l *fails.Logger) bool {
 		b, err := ioutil.ReadAll(body)
 		if err != nil {
-			l.Critical("レスポンス内容が読み込めませんでした", err)
+			l.Add("レスポンス内容が読み込めませんでした", err)
 			return false
 		}
 		var res Response
 		err = json.Unmarshal(b, &res)
 		if err != nil {
-			l.Critical("レスポンス内容が正しくありません"+string(b[:20]), err)
+			l.Add("レスポンス内容が正しくありません"+string(b[:20]), err)
 			return false
 		}
 		if res.Room == nil || res.Room.ID <= 0 {
-			l.Critical("レスポンス内容が正しくありません"+string(b[:20]), nil)
+			l.Add("レスポンス内容が正しくありません"+string(b[:20]), nil)
 			return false
 		}
 		roomID = res.Room.ID
@@ -197,18 +197,18 @@ func drawStroke(s *session.Session, token string, roomID int64, stroke seed.Stro
 
 		b, err := ioutil.ReadAll(body)
 		if err != nil {
-			l.Critical("レスポンス内容が読み込めませんでした", err)
+			l.Add("レスポンス内容が読み込めませんでした", err)
 			return false
 		}
 
 		var res Response
 		err = json.Unmarshal(b, &res)
 		if err != nil {
-			l.Critical("レスポンス内容が正しくありません"+string(b[:20]), err)
+			l.Add("レスポンス内容が正しくありません"+string(b[:20]), err)
 			return false
 		}
 		if res.Stroke == nil || res.Stroke.ID <= 0 {
-			l.Critical("レスポンス内容が正しくありません"+string(b[:20]), nil)
+			l.Add("レスポンス内容が正しくありません"+string(b[:20]), nil)
 			return false
 		}
 
