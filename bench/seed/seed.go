@@ -21,7 +21,7 @@ type Point struct {
 }
 
 func GetStrokes(name string) []Stroke {
-	data, err := StaticFile("data/" + name + ".json")
+	data, err := Asset("data/" + name + ".json")
 	if err != nil {
 		panic(err)
 	}
