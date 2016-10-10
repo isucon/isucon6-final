@@ -192,6 +192,9 @@ func CantDrawFirstStrokeOnSomeoneElsesRoom(origins []string) {
 		// JSONも検証する？
 		return true
 	}))
+	if !ok {
+		fails.Critical("他人の作成した部屋に1画目を描くことができました", nil)
+	}
 }
 
 // トップページの内容が正しいかをチェック
