@@ -19,7 +19,9 @@ function restartServer() {
   server.stderr.on('data', (buf) => process.stderr.write(buf));
 }
 
-gulp.task('default', ['start']);
+gulp.task('default', ['build']);
+
+gulp.task('build', ['server', 'browser']);
 
 gulp.task('clean', () => {
   return del(['build']);
