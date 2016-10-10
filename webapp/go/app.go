@@ -117,6 +117,11 @@ func getStrokes(roomID int64, greaterThanID int64) ([]Stroke, error) {
 	if err != nil {
 		return nil, err
 	}
+	for i := range strokes {
+		if strokes[i].Points == nil {
+			strokes[i].Points = []Point{}
+		}
+	}
 	return strokes, nil
 }
 
