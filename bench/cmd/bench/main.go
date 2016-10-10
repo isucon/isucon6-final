@@ -20,6 +20,7 @@ var BenchmarkTimeout int
 var InitialCheckOnly bool
 var MatsuriNum = 10
 var LoadIndexPageNum = 10
+var DrawOnRandomRoomNum = 2
 
 func main() {
 
@@ -84,7 +85,7 @@ func benchmark(origins []string) {
 	}
 
 	loadIndexPageCh := makeChan(LoadIndexPageNum)
-	loadRoomPageCh := makeChan(2)
+	drawOnRandomRoomCh := makeChan(DrawOnRandomRoomNum)
 	timeoutCh := time.After(time.Duration(BenchmarkTimeout) * time.Second)
 
 L:
@@ -96,11 +97,11 @@ L:
 				time.Sleep(100 * time.Millisecond)
 				loadIndexPageCh <- struct{}{}
 			}()
-		case <-loadRoomPageCh:
+		case <-drawOnRandomRoomCh:
 			go func() {
-				scenario.LoadRoomPage(origins)
-				time.Sleep(100 * time.Millisecond)
-				loadRoomPageCh <- struct{}{}
+				scenario.DrawOnRandomRoom(origins)
+				time.Sleep(500 * time.Millisecond)
+				drawOnRandomRoomCh <- struct{}{}
 			}()
 		case <-timeoutCh:
 			break L

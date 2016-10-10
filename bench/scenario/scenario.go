@@ -1,13 +1,14 @@
 package scenario
 
 import (
+	"encoding/json"
 	"io"
 	"math/rand"
-	"strings"
+	"strconv"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/catatsuy/isucon6-final/bench/action"
 	"github.com/catatsuy/isucon6-final/bench/fails"
+	"github.com/catatsuy/isucon6-final/bench/seed"
 	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
@@ -38,46 +39,40 @@ func LoadIndexPage(origins []string) {
 
 // /api/rooms にリクエストして、その中の一つの部屋を開いてstrokeをPOST
 // トップページを開いて適当な部屋を開く（Ajaxじゃないのは「別タブで」開いたということにでもしておく）
-func LoadRoomPage(origins []string) {
+func DrawOnRandomRoom(origins []string) {
 	s := session.New(randomOrigin(origins))
 	defer s.Bye()
 
-	var images []string
-	var rooms []string
+	var rooms []Room
 
-	ok := action.Get(s, "/", action.OK(func(body io.Reader, l *fails.Logger) bool {
-		doc, ok := makeDocument(body, l)
-		if !ok {
+	ok := action.Get(s, "/api/rooms", action.OK(func(body io.Reader, l *fails.Logger) bool {
+		var res Response
+		err := json.NewDecoder(body).Decode(&res)
+		if err != nil {
+			l.Add("レスポンスのJSONが読みとれませんでした", err)
 			return false
 		}
-
-		images = extractImages(doc)
-
-		doc.Find("a").Each(func(_ int, selection *goquery.Selection) {
-			if url, ok := selection.Attr("href"); ok {
-				if strings.HasPrefix(url, "/rooms/") {
-					rooms = append(rooms, url)
-				}
-			}
-		})
-
+		if len(res.Rooms) != 100 {
+			l.Add("部屋の数が100件になっていません: "+strconv.Itoa(len(res.Rooms)), nil)
+			return false
+		}
+		rooms = res.Rooms
 		return true
 	}))
 	if !ok {
 		return
 	}
 
-	ok = loadImages(s, images)
+	room := rooms[rand.Intn(80)+20] // 上の方はスキップしてちょっと後ろの方を見ることにする
+
+	roomURL := "/rooms/" + strconv.FormatInt(room.ID, 10)
+
+	token, ok := fetchCSRFToken(s, roomURL)
 	if !ok {
 		return
 	}
 
-	roomURL := rooms[rand.Intn(len(rooms))]
-
-	_ = action.Get(s, roomURL, action.OK(func(body io.Reader, l *fails.Logger) bool {
-
-		// TODO: polylineのidを上で開いたSVGと比較するか？
-
-		return true
-	}))
+	strokes := seed.GetStrokes("wwws")
+	stroke := strokes[rand.Intn(len(strokes))]
+	_, _ = drawStroke(s, token, room.ID, seed.FluctuateStroke(stroke))
 }
