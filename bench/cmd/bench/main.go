@@ -70,7 +70,7 @@ func initialCheck(origins []string) {
 	scenario.StrokeReflectedToSVG(origins)
 	scenario.CantDrawFirstStrokeOnSomeoneElsesRoom(origins)
 	scenario.TopPageContent(origins)
-	scenario.CheckAssets(origins)
+	scenario.CheckStaticFiles(origins)
 }
 
 func benchmark(origins []string) {

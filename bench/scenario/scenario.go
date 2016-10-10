@@ -31,11 +31,12 @@ func LoadIndexPage(origins []string) {
 	}
 
 	// assetで失敗しても画像はリクエストかける
-	_ = loadAssets(s, false /*checkHash*/)
+	_ = loadStaticFiles(s, false /*checkHash*/)
 
 	_ = loadImages(s, images)
 }
 
+// /api/rooms にリクエストして、その中の一つの部屋を開いてstrokeをPOST
 // トップページを開いて適当な部屋を開く（Ajaxじゃないのは「別タブで」開いたということにでもしておく）
 func LoadRoomPage(origins []string) {
 	s := session.New(randomOrigin(origins))

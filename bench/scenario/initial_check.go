@@ -222,11 +222,11 @@ func TopPageContent(origins []string) {
 }
 
 // 静的ファイルが正しいかをチェック
-func CheckAssets(origins []string) {
+func CheckStaticFiles(origins []string) {
 	s := session.New(randomOrigin(origins))
 	defer s.Bye()
 
-	ok := loadAssets(s, true /*checkHash*/)
+	ok := loadStaticFiles(s, true /*checkHash*/)
 	if !ok {
 		fails.Critical("静的ファイルが正しくありません", nil)
 	}

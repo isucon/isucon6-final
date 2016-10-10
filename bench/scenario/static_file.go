@@ -12,23 +12,23 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
-type Asset struct {
+type StaticFile struct {
 	Path string
 	MD5  string
 }
 
-func loadAssets(s *session.Session, checkHash bool) bool {
-	assets := []Asset{
-		Asset{Path: "/css/rc-color-picker.css", MD5: "78055c5c02a2dd66f6207fa19f7ca928"},
-		Asset{Path: "/css/sanitize.css", MD5: "7375990d0f1f7d436a952314e3ac7fd0"},
-		Asset{Path: "/bundle.js", MD5: "3d66e4a976da7c915b82188865dc994b"},
+func loadStaticFiles(s *session.Session, checkHash bool) bool {
+	assets := []StaticFile{
+		StaticFile{Path: "/css/rc-color-picker.css", MD5: "78055c5c02a2dd66f6207fa19f7ca928"},
+		StaticFile{Path: "/css/sanitize.css", MD5: "7375990d0f1f7d436a952314e3ac7fd0"},
+		StaticFile{Path: "/bundle.js", MD5: "3d66e4a976da7c915b82188865dc994b"},
 	}
 	var wg sync.WaitGroup
 
 	OK := true
 	for _, asset := range assets {
 		wg.Add(1)
-		go func(asset Asset) {
+		go func(asset StaticFile) {
 			defer wg.Done()
 
 			ok := action.Get(s, asset.Path, action.OK(func(body io.Reader, l *fails.Logger) bool {
