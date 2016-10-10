@@ -1,0 +1,33 @@
+version: '2'
+services:
+  mysql:
+    extends:
+      file: docker-compose-mysql.yml
+      service: mysql
+  perl:
+    build:
+      context: ./perl
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./perl:/app
+      - /app/local
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      ISUCON_ENV: development
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
+  react_dev_perl:
+    extends:
+      file: docker-compose-react.yml
+      service: react_dev
+    depends_on:
+      - perl
+    links:
+      - perl
+    environment:
+      API: http://perl:5000
