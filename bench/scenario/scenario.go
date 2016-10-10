@@ -72,7 +72,7 @@ func DrawOnRandomRoom(origins []string) {
 		return
 	}
 
-	strokes := seed.GetStrokes("wwws")
-	stroke := strokes[rand.Intn(len(strokes))]
-	_, _ = drawStroke(s, token, room.ID, seed.FluctuateStroke(stroke))
+	seedStrokes := seed.GetStrokes("wwws")
+	seedStroke := seedStrokes[rand.Intn(len(seedStrokes))]
+	_, _ = drawStroke(s, token, room.ID, seed.FluctuateStroke(seedStroke))
 }

@@ -24,12 +24,12 @@ func Matsuri(origins []string, timeout int) {
 		return
 	}
 
-	roomID, ok := makeRoom(s, token)
+	room, ok := makeRoom(s, token)
 	if !ok {
 		return
 	}
 
-	strokes := seed.GetStrokes("isu")
+	seedStrokes := seed.GetStrokes("isu")
 
 	postTimes := make(map[int64]time.Time)
 
@@ -38,12 +38,12 @@ func Matsuri(origins []string, timeout int) {
 	go func() {
 		// 1秒おきにstrokeをPOSTする
 		for {
-			for _, stroke := range strokes {
+			for _, seedStroke := range seedStrokes {
 				postTime := time.Now()
 
-				strokeID, ok := drawStroke(s, token, roomID, seed.FluctuateStroke(stroke))
+				stroke, ok := drawStroke(s, token, room.ID, seed.FluctuateStroke(seedStroke))
 				if ok {
-					postTimes[strokeID] = postTime
+					postTimes[stroke.ID] = postTime
 				}
 				time.Sleep(1 * time.Second)
 				if time.Now().Sub(start).Seconds() > float64(timeout) {
@@ -68,7 +68,7 @@ func Matsuri(origins []string, timeout int) {
 			n = initialWatcherNum
 		}
 		for i := 0; i < n; i++ {
-			watchers = append(watchers, NewRoomWatcher(randomOrigin(origins), roomID))
+			watchers = append(watchers, NewRoomWatcher(randomOrigin(origins), room.ID))
 		}
 
 		time.Sleep(time.Duration(watcherIncreaseInterval) * time.Second)

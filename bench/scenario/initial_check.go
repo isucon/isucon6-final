@@ -24,15 +24,15 @@ func StrokeReflectedToTop(origins []string) {
 		return
 	}
 
-	roomID, ok := makeRoom(s1, token)
+	room, ok := makeRoom(s1, token)
 	if !ok {
 		fails.Critical("部屋の作成に失敗しました", nil)
 		return
 	}
 
-	strokes := seed.GetStrokes("star")
-	stroke := seed.FluctuateStroke(strokes[0])
-	_, ok = drawStroke(s1, token, roomID, stroke)
+	seedStrokes := seed.GetStrokes("star")
+	seedStroke := seed.FluctuateStroke(seedStrokes[0])
+	_, ok = drawStroke(s1, token, room.ID, seedStroke)
 	if !ok {
 		fails.Critical("線の投稿に失敗しました", nil)
 		return
@@ -48,7 +48,7 @@ func StrokeReflectedToTop(origins []string) {
 
 		found := false
 		for _, img := range imageUrls {
-			if img == "/img/"+strconv.FormatInt(roomID, 10) {
+			if img == "/img/"+strconv.FormatInt(room.ID, 10) {
 				found = true
 			}
 		}
@@ -72,7 +72,7 @@ func RoomWithoutStrokeNotShownAtTop(origins []string) {
 		return
 	}
 
-	roomID, ok := makeRoom(s1, token)
+	room, ok := makeRoom(s1, token)
 	if !ok {
 		fails.Critical("部屋の作成に失敗しました", nil)
 		return
@@ -86,7 +86,7 @@ func RoomWithoutStrokeNotShownAtTop(origins []string) {
 		imageUrls := extractImages(doc)
 
 		for _, img := range imageUrls {
-			if img == "/img/"+strconv.FormatInt(roomID, 10) {
+			if img == "/img/"+strconv.FormatInt(room.ID, 10) {
 				l.Critical("まだ線の無い部屋が表示されています", nil)
 				return false
 			}
@@ -105,23 +105,23 @@ func StrokeReflectedToSVG(origins []string) {
 		return
 	}
 
-	roomID, ok := makeRoom(s1, token)
+	room, ok := makeRoom(s1, token)
 	if !ok {
 		fails.Critical("部屋の作成に失敗しました", nil)
 		return
 	}
 
-	strokes := seed.GetStrokes("wwws")
-	for _, stroke := range strokes {
-		stroke2 := seed.FluctuateStroke(stroke)
-		strokeID, ok := drawStroke(s1, token, roomID, stroke2)
+	seedStrokes := seed.GetStrokes("wwws")
+	for _, seedStroke := range seedStrokes {
+		stroke2 := seed.FluctuateStroke(seedStroke)
+		stroke, ok := drawStroke(s1, token, room.ID, stroke2)
 		if !ok {
 			fails.Critical("線の投稿に失敗しました", nil)
 			return
 		}
 
 		s2 := session.New(randomOrigin(origins))
-		_ = checkStrokeReflectedToSVG(s2, roomID, strokeID, stroke2)
+		_ = checkStrokeReflectedToSVG(s2, room.ID, stroke.ID, stroke2)
 		s2.Bye()
 	}
 }
@@ -160,7 +160,7 @@ func CantDrawFirstStrokeOnSomeoneElsesRoom(origins []string) {
 		return
 	}
 
-	roomID, ok := makeRoom(s1, token1)
+	room, ok := makeRoom(s1, token1)
 	if !ok {
 		fails.Critical("部屋の作成に失敗しました", nil)
 		return
@@ -178,7 +178,7 @@ func CantDrawFirstStrokeOnSomeoneElsesRoom(origins []string) {
 		RoomID int64 `json:"room_id"`
 		seed.Stroke
 	}{
-		RoomID: roomID,
+		RoomID: room.ID,
 		Stroke: stroke,
 	})
 
@@ -187,7 +187,7 @@ func CantDrawFirstStrokeOnSomeoneElsesRoom(origins []string) {
 		"x-csrf-token": token2,
 	}
 
-	u := "/api/strokes/rooms/" + strconv.FormatInt(roomID, 10)
+	u := "/api/strokes/rooms/" + strconv.FormatInt(room.ID, 10)
 	ok = action.Post(s2, u, postBody, headers, action.BadRequest(func(body io.Reader, l *fails.Logger) bool {
 		// JSONも検証する？
 		return true

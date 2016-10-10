@@ -133,7 +133,7 @@ func loadImages(s *session.Session, images []string) bool {
 	return OK
 }
 
-func makeRoom(s *session.Session, token string) (int64, bool) {
+func makeRoom(s *session.Session, token string) (*Room, bool) {
 	postBody, _ := json.Marshal(struct {
 		Name         string `json:"name"`
 		CanvasWidth  int    `json:"canvas_width"`
@@ -149,7 +149,7 @@ func makeRoom(s *session.Session, token string) (int64, bool) {
 		"x-csrf-token": token,
 	}
 
-	var roomID int64
+	var room *Room
 
 	ok := action.Post(s, "/api/rooms", postBody, headers, action.OK(func(body io.Reader, l *fails.Logger) bool {
 		b, err := ioutil.ReadAll(body)
@@ -167,21 +167,21 @@ func makeRoom(s *session.Session, token string) (int64, bool) {
 			l.Add("レスポンス内容が正しくありません"+string(b[:20]), nil)
 			return false
 		}
-		roomID = res.Room.ID
+		room = res.Room
 
 		return true
 	}))
 
-	return roomID, ok
+	return room, ok
 }
 
-func drawStroke(s *session.Session, token string, roomID int64, stroke seed.Stroke) (int64, bool) {
+func drawStroke(s *session.Session, token string, roomID int64, seedStroke seed.Stroke) (*Stroke, bool) {
 	postBody, _ := json.Marshal(struct {
 		RoomID int64 `json:"room_id"`
 		seed.Stroke
 	}{
 		RoomID: roomID,
-		Stroke: stroke,
+		Stroke: seedStroke,
 	})
 
 	headers := map[string]string{
@@ -189,7 +189,7 @@ func drawStroke(s *session.Session, token string, roomID int64, stroke seed.Stro
 		"x-csrf-token": token,
 	}
 
-	var strokeID int64
+	var stroke *Stroke
 
 	u := "/api/strokes/rooms/" + strconv.FormatInt(roomID, 10)
 	ok := action.Post(s, u, postBody, headers, action.OK(func(body io.Reader, l *fails.Logger) bool {
@@ -211,10 +211,10 @@ func drawStroke(s *session.Session, token string, roomID int64, stroke seed.Stro
 			return false
 		}
 
-		strokeID = res.Stroke.ID
+		stroke = res.Stroke
 
 		return true
 	}))
 
-	return strokeID, ok
+	return stroke, ok
 }
