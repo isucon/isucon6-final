@@ -2,15 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
-	"time"
-
 	"net/url"
-	"strings"
-
-	"errors"
 	"os"
+	"strings"
+	"sync"
+	"time"
 
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/scenario"
@@ -75,11 +74,17 @@ func initialCheck(origins []string) {
 }
 
 func benchmark(origins []string) {
+	var wg sync.WaitGroup
+	for i := 0; i < MatsuriNum; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			scenario.Matsuri(origins, BenchmarkTimeout-5)
+		}()
+	}
+
 	loadIndexPageCh := makeChan(LoadIndexPageNum)
 	loadRoomPageCh := makeChan(2)
-	matsuriCh := makeChan(MatsuriNum)
-	matsuriEndCh := make(chan struct{}, MatsuriNum)
-
 	timeoutCh := time.After(time.Duration(BenchmarkTimeout) * time.Second)
 
 L:
@@ -97,19 +102,12 @@ L:
 				time.Sleep(100 * time.Millisecond)
 				loadRoomPageCh <- struct{}{}
 			}()
-		case <-matsuriCh:
-			go func() {
-				scenario.Matsuri(origins, BenchmarkTimeout-5)
-				//matsuriRoomCh <- struct{}{} // Never again.
-				matsuriEndCh <- struct{}{}
-			}()
 		case <-timeoutCh:
 			break L
 		}
 	}
-	for i := 0; i < MatsuriNum; i++ {
-		<-matsuriEndCh
-	}
+
+	wg.Wait()
 }
 
 func output() {
