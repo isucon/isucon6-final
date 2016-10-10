@@ -1,0 +1,7 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: no
+  tasks:
+    - raw: apt-get update -qq
+    - raw: apt-get install -qq python
