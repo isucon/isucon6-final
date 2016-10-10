@@ -49,6 +49,21 @@ func makeDocument(body io.Reader, l *fails.Logger) (*goquery.Document, bool) {
 	return doc, true
 }
 
+func parseResponseJSON(body io.Reader, l *fails.Logger) (*Response, bool) {
+	b, err := ioutil.ReadAll(body)
+	if err != nil {
+		l.Add("レスポンス内容が読み込めませんでした", err)
+		return nil, false
+	}
+	var res Response
+	err = json.Unmarshal(b, &res)
+	if err != nil {
+		l.Add("レスポンスのJSONがパースできませんでした: "+string(b[:20]), err)
+		return nil, false
+	}
+	return &res, true
+}
+
 func extractCsrfToken(doc *goquery.Document, l *fails.Logger) (string, bool) {
 	token := ""
 
@@ -217,4 +232,43 @@ func drawStroke(s *session.Session, token string, roomID int64, seedStroke seed.
 	}))
 
 	return stroke, ok
+}
+
+func getRoomsAPI(s *session.Session) ([]Room, bool) {
+	var rooms []Room
+
+	ok := action.Get(s, "/api/rooms", action.OK(func(body io.Reader, l *fails.Logger) bool {
+		res, ok := parseResponseJSON(body, l)
+		if !ok {
+			return false
+		}
+		if len(res.Rooms) != 100 {
+			l.Add("部屋の数が100件になっていません: "+strconv.Itoa(len(res.Rooms)), nil)
+			return false
+		}
+		rooms = res.Rooms
+		return true
+	}))
+
+	return rooms, ok
+}
+
+func getRoomAPI(s *session.Session, roomID int64) (*Room, bool) {
+	var room *Room
+
+	roomAPIURL := "/api/rooms/" + strconv.FormatInt(roomID, 10)
+	ok := action.Get(s, roomAPIURL, action.OK(func(body io.Reader, l *fails.Logger) bool {
+		res, ok := parseResponseJSON(body, l)
+		if !ok {
+			return false
+		}
+		if res.Room == nil || len(res.Room.Strokes) == 0 {
+			l.Add("レスポンス内容が正しくありません", nil)
+			return false
+		}
+		room = res.Room
+		return true
+	}))
+
+	return room, ok
 }

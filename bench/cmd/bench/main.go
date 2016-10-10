@@ -71,6 +71,7 @@ func initialCheck(origins []string) {
 	scenario.StrokeReflectedToSVG(origins)
 	scenario.CantDrawFirstStrokeOnSomeoneElsesRoom(origins)
 	scenario.TopPageContent(origins)
+	scenario.APIAndHTMLMustBeConsistent(origins)
 	scenario.CheckStaticFiles(origins)
 }
 

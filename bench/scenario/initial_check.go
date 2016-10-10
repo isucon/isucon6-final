@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"strconv"
 	"time"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/catatsuy/isucon6-final/bench/action"
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/seed"
@@ -229,7 +231,7 @@ func TopPageContent(origins []string) {
 		}
 
 		reactidNum := doc.Find("[data-reactid]").Length()
-		expected := 1325
+		expected := 1625
 		if reactidNum != expected {
 			l.Critical("トップページの内容が正しくありません",
 				fmt.Errorf("data-reactidの数が一致しません (expected %d, actual %d)", expected, reactidNum))
@@ -248,4 +250,108 @@ func CheckStaticFiles(origins []string) {
 	if !ok {
 		fails.Critical("静的ファイルが正しくありません", nil)
 	}
+}
+
+// APIとHTMLの整合性が取れているかをチェック
+func APIAndHTMLMustBeConsistent(origins []string) {
+	s := session.New(randomOrigin(origins))
+	defer s.Bye()
+
+	rooms, ok := getRoomsAPI(s)
+	if !ok {
+		fails.Critical("部屋一覧APIの取得に失敗しました", nil)
+		return
+	}
+
+	ok = compareToTopHTML(s, rooms)
+	if !ok {
+		return
+	}
+
+	room := rooms[rand.Intn(50)+50] // 後ろの方から
+
+	room2, ok := getRoomAPI(s, room.ID)
+	if !ok {
+		fails.Critical("部屋APIの取得に失敗しました", nil)
+		return
+	}
+	ok = compareToRoomHTML(s, room2.ID, room2.Strokes)
+}
+
+func compareToTopHTML(s *session.Session, rooms []Room) bool {
+	roomStrokeCounts := make(map[int64]int)
+
+	ok := action.Get(s, "/", action.OK(func(body io.Reader, l *fails.Logger) bool {
+		doc, ok := makeDocument(body, l)
+		if !ok {
+			return false
+		}
+		doc.Find(".room").Each(func(i int, sel *goquery.Selection) {
+			idStr, ok := sel.Attr("id")
+			if !ok {
+				fails.Critical("roomのidがありません", nil)
+				return
+			}
+			id, err := strconv.ParseInt(idStr, 10, 64)
+			if err != nil {
+				fails.Critical("roomのidが数字ではありません", err)
+				return
+			}
+			strokeCountStr := sel.Find(".stroke_count").Text()
+			if strokeCountStr == "" {
+				fails.Critical("stroke_countがありません", err)
+				return
+			}
+			strokeCount, err := strconv.Atoi(strokeCountStr)
+			if err != nil {
+				fails.Critical("stroke_countが数字ではありません", err)
+				return
+			}
+			roomStrokeCounts[id] = strokeCount
+		})
+		if len(roomStrokeCounts) != 100 {
+			fails.Critical("部屋の数が100件になっていません: "+strconv.Itoa(len(roomStrokeCounts)), nil)
+			return false
+		}
+
+		return true
+	}))
+	if !ok {
+		return false
+	}
+
+	bad := 0
+	for _, room := range rooms {
+		if roomStrokeCount, ok := roomStrokeCounts[room.ID]; ok {
+			if roomStrokeCount < room.StrokeCount {
+				fails.Critical("APIとHTMLの差分が大きすぎます", nil)
+				return false
+			}
+		} else {
+			bad++
+		}
+	}
+	if bad > 90 {
+		fails.Critical("APIとHTMLの差分が大きすぎます", nil)
+		return false
+	}
+	return true
+}
+
+func compareToRoomHTML(s *session.Session, roomID int64, strokes []Stroke) bool {
+	roomURL := "/rooms/" + strconv.FormatInt(roomID, 10)
+	ok := action.Get(s, roomURL, action.OK(func(body io.Reader, l *fails.Logger) bool {
+		doc, ok := makeDocument(body, l)
+		if !ok {
+			return false
+		}
+		if doc.Find("polyline[id]").Length() < len(strokes) {
+			fails.Critical("APIとHTMLの差分が大きすぎます", nil)
+		}
+		return true
+	}))
+	if !ok {
+		return false
+	}
+	return true
 }
