@@ -16,4 +16,4 @@ COPY . /var/www
 
 EXPOSE 80
 
-CMD ["python", "app.py"]
+CMD ["gunicorn", "-w", "32", "-b", ":80", "app:app"]
