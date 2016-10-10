@@ -93,9 +93,15 @@ class Index extends React.Component {
           <Subheader>新着描き込み</Subheader>
           {this.props.rooms.map((room) => (
             <GridTile
+              className="room"
+              id={room.id}
               key={room.id}
               title={room.name}
-              subtitle={`${room.stroke_count}画`}
+              subtitle={
+                <span>
+                  <span className="stroke_count">{room.stroke_count}</span>画
+                </span>
+              }
               actionIcon={
                 <Link to={`/rooms/${room.id}`}>
                   <IconButton>
