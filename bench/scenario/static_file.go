@@ -32,12 +32,13 @@ func loadStaticFiles(s *session.Session, checkHash bool) bool {
 			defer wg.Done()
 
 			ok := action.Get(s, asset.Path, action.OK(func(body io.Reader, l *fails.Logger) bool {
+				content, err := ioutil.ReadAll(body)
+				if err != nil {
+					l.Add("ファイルの読み込みに失敗しました", err)
+					return false
+				}
+
 				if checkHash {
-					content, err := ioutil.ReadAll(body)
-					if err != nil {
-						l.Add("ファイルの読み込みに失敗しました", err)
-						return false
-					}
 					actual := fmt.Sprintf("%x", md5.Sum(content))
 					if actual != asset.MD5 {
 						l.Add("ファイルの内容が正しくありません",
