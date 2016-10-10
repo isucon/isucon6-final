@@ -19,7 +19,8 @@ import (
 
 var BenchmarkTimeout int
 var InitialCheckOnly bool
-var MatsuriNum int = 10
+var MatsuriNum = 10
+var LoadIndexPageNum = 10
 
 func main() {
 
@@ -73,7 +74,7 @@ func initialCheck(origins []string) {
 }
 
 func benchmark(origins []string) {
-	loadIndexPageCh := makeChan(2)
+	loadIndexPageCh := makeChan(LoadIndexPageNum)
 	loadRoomPageCh := makeChan(2)
 	matsuriCh := makeChan(MatsuriNum)
 	matsuriEndCh := make(chan struct{}, MatsuriNum)
@@ -86,11 +87,13 @@ L:
 		case <-loadIndexPageCh:
 			go func() {
 				scenario.LoadIndexPage(origins)
+				time.Sleep(100 * time.Millisecond)
 				loadIndexPageCh <- struct{}{}
 			}()
 		case <-loadRoomPageCh:
 			go func() {
 				scenario.LoadRoomPage(origins)
+				time.Sleep(100 * time.Millisecond)
 				loadRoomPageCh <- struct{}{}
 			}()
 		case <-matsuriCh:
