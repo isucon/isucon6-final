@@ -19,6 +19,7 @@ import (
 
 var BenchmarkTimeout int
 var InitialCheckOnly bool
+var MatsuriNum int = 10
 
 func main() {
 
@@ -75,8 +76,8 @@ func benchmark(origins []string) {
 	loadIndexPageCh := makeChan(2)
 	loadRoomPageCh := makeChan(2)
 	checkCSRFTokenRefreshedCh := makeChan(1)
-	matsuriCh := makeChan(1)
-	matsuriEndCh := make(chan struct{})
+	matsuriCh := makeChan(MatsuriNum)
+	matsuriEndCh := make(chan struct{}, MatsuriNum)
 
 	timeoutCh := time.After(time.Duration(BenchmarkTimeout) * time.Second)
 
@@ -100,7 +101,7 @@ L:
 			}()
 		case <-matsuriCh:
 			go func() {
-				scenario.Matsuri(origins, BenchmarkTimeout)
+				scenario.Matsuri(origins, BenchmarkTimeout-5)
 				//matsuriRoomCh <- struct{}{} // Never again.
 				matsuriEndCh <- struct{}{}
 			}()
@@ -108,7 +109,9 @@ L:
 			break L
 		}
 	}
-	<-matsuriEndCh
+	for i := 0; i < MatsuriNum; i++ {
+		<-matsuriEndCh
+	}
 }
 
 func output() {

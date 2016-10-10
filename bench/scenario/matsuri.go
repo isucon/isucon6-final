@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	initialWatcherNum             = 5
+	initialWatcherNum             = 10
 	watcherIncreaseInterval       = 5
 	StrokeReceiveScore      int64 = 1
 )
