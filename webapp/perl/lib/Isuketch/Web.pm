@@ -439,21 +439,4 @@ post '/api/strokes/rooms/:id' => sub {
     });
 };
 
-get '/api/initialize' => sub {
-    my ($self, $c) = @_;
-
-    my @sqls = (
-        'DELETE FROM `points` WHERE `id` > 1443000',
-        'DELETE FROM `strokes` WHERE `id` > 41000',
-        'DELETE FROM `rooms` WHERE `id` > 1000',
-        'DELETE FROM `tokens` WHERE `id` > 0',
-    );
-
-    foreach my $sql (@sqls) {
-        $self->dbh->query($sql);
-    }
-
-    return 'ok';
-};
-
 1;
