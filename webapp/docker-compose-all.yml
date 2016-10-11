@@ -18,18 +18,6 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
-  react:
-    extends:
-      file: docker-compose-react.yml
-      service: react
-    depends_on:
-      - go
-    links:
-      - go
-    environment:
-      API: http://go:80
-    ports:
-      - "10001:443"
   perl:
     build:
       context: ./perl
@@ -44,18 +32,6 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
-  react:
-    extends:
-      file: docker-compose-react.yml
-      service: react
-    depends_on:
-      - perl
-    links:
-      - perl
-    environment:
-      API: http://perl:5000
-    ports:
-      - "10002:443"
   python:
     build:
       context: ./python
@@ -70,18 +46,6 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
-  react:
-    extends:
-      file: docker-compose-react.yml
-      service: react
-    depends_on:
-      - python
-    links:
-      - python
-    environment:
-      API: http://python:80
-    ports:
-      - "10003:443"
   php:
     build:
       context: ./php
@@ -98,7 +62,43 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
-  react:
+  react_go:
+    extends:
+      file: docker-compose-react.yml
+      service: react
+    depends_on:
+      - go
+    links:
+      - go
+    environment:
+      API: http://go:80
+    ports:
+      - "10001:443"
+  react_perl:
+    extends:
+      file: docker-compose-react.yml
+      service: react
+    depends_on:
+      - perl
+    links:
+      - perl
+    environment:
+      API: http://perl:5000
+    ports:
+      - "10002:443"
+  react_python:
+    extends:
+      file: docker-compose-react.yml
+      service: react
+    depends_on:
+      - python
+    links:
+      - python
+    environment:
+      API: http://python:80
+    ports:
+      - "10003:443"
+  react_php:
     extends:
       file: docker-compose-react.yml
       service: react
