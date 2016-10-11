@@ -13,9 +13,9 @@ import (
 	"time"
 
 	"github.com/catatsuy/isucon6-final/bench/fails"
-	"github.com/catatsuy/isucon6-final/bench/job"
 	"github.com/catatsuy/isucon6-final/bench/scenario"
 	"github.com/catatsuy/isucon6-final/bench/score"
+	"github.com/catatsuy/isucon6-final/portal/job"
 )
 
 var BenchmarkTimeout int
