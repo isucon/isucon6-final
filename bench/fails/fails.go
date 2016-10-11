@@ -45,7 +45,7 @@ func Add(msg string, err error) {
 	if err != nil {
 		msg += " error: " + err.Error()
 	}
-	fmt.Fprintln(os.Stderr, msg) // TODO: デバッグモードのみにする?
+	fmt.Fprintln(os.Stderr, msg)
 }
 
 func Critical(msg string, err error) {
