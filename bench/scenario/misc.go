@@ -2,12 +2,11 @@ package scenario
 
 import (
 	"encoding/json"
-	"io"
-	"math/rand"
-
 	"fmt"
+	"io"
 	"io/ioutil"
 	"math"
+	"math/rand"
 	"strconv"
 
 	"github.com/PuerkitoBio/goquery"
@@ -48,6 +47,21 @@ func makeDocument(body io.Reader, l *fails.Logger) (*goquery.Document, bool) {
 		return nil, false
 	}
 	return doc, true
+}
+
+func parseResponseJSON(body io.Reader, l *fails.Logger) (*Response, bool) {
+	b, err := ioutil.ReadAll(body)
+	if err != nil {
+		l.Add("レスポンス内容が読み込めませんでした", err)
+		return nil, false
+	}
+	var res Response
+	err = json.Unmarshal(b, &res)
+	if err != nil {
+		l.Add("レスポンスのJSONがパースできませんでした: "+string(b[:20]), err)
+		return nil, false
+	}
+	return &res, true
 }
 
 func extractCsrfToken(doc *goquery.Document, l *fails.Logger) (string, bool) {
@@ -134,7 +148,7 @@ func loadImages(s *session.Session, images []string) bool {
 	return OK
 }
 
-func makeRoom(s *session.Session, token string) (int64, bool) {
+func makeRoom(s *session.Session, token string) (*Room, bool) {
 	postBody, _ := json.Marshal(struct {
 		Name         string `json:"name"`
 		CanvasWidth  int    `json:"canvas_width"`
@@ -150,7 +164,7 @@ func makeRoom(s *session.Session, token string) (int64, bool) {
 		"x-csrf-token": token,
 	}
 
-	var roomID int64
+	var room *Room
 
 	ok := action.Post(s, "/api/rooms", postBody, headers, action.OK(func(body io.Reader, l *fails.Logger) bool {
 		b, err := ioutil.ReadAll(body)
@@ -168,21 +182,21 @@ func makeRoom(s *session.Session, token string) (int64, bool) {
 			l.Add("レスポンス内容が正しくありません"+string(b[:20]), nil)
 			return false
 		}
-		roomID = res.Room.ID
+		room = res.Room
 
 		return true
 	}))
 
-	return roomID, ok
+	return room, ok
 }
 
-func drawStroke(s *session.Session, token string, roomID int64, stroke seed.Stroke) (int64, bool) {
+func drawStroke(s *session.Session, token string, roomID int64, seedStroke seed.Stroke) (*Stroke, bool) {
 	postBody, _ := json.Marshal(struct {
 		RoomID int64 `json:"room_id"`
 		seed.Stroke
 	}{
 		RoomID: roomID,
-		Stroke: stroke,
+		Stroke: seedStroke,
 	})
 
 	headers := map[string]string{
@@ -190,7 +204,7 @@ func drawStroke(s *session.Session, token string, roomID int64, stroke seed.Stro
 		"x-csrf-token": token,
 	}
 
-	var strokeID int64
+	var stroke *Stroke
 
 	u := "/api/strokes/rooms/" + strconv.FormatInt(roomID, 10)
 	ok := action.Post(s, u, postBody, headers, action.OK(func(body io.Reader, l *fails.Logger) bool {
@@ -212,10 +226,49 @@ func drawStroke(s *session.Session, token string, roomID int64, stroke seed.Stro
 			return false
 		}
 
-		strokeID = res.Stroke.ID
+		stroke = res.Stroke
 
 		return true
 	}))
 
-	return strokeID, ok
+	return stroke, ok
+}
+
+func getRoomsAPI(s *session.Session) ([]Room, bool) {
+	var rooms []Room
+
+	ok := action.Get(s, "/api/rooms", action.OK(func(body io.Reader, l *fails.Logger) bool {
+		res, ok := parseResponseJSON(body, l)
+		if !ok {
+			return false
+		}
+		if len(res.Rooms) != 100 {
+			l.Add("部屋の数が100件になっていません: "+strconv.Itoa(len(res.Rooms)), nil)
+			return false
+		}
+		rooms = res.Rooms
+		return true
+	}))
+
+	return rooms, ok
+}
+
+func getRoomAPI(s *session.Session, roomID int64) (*Room, bool) {
+	var room *Room
+
+	roomAPIURL := "/api/rooms/" + strconv.FormatInt(roomID, 10)
+	ok := action.Get(s, roomAPIURL, action.OK(func(body io.Reader, l *fails.Logger) bool {
+		res, ok := parseResponseJSON(body, l)
+		if !ok {
+			return false
+		}
+		if res.Room == nil || len(res.Room.Strokes) == 0 {
+			l.Add("レスポンス内容が正しくありません", nil)
+			return false
+		}
+		room = res.Room
+		return true
+	}))
+
+	return room, ok
 }

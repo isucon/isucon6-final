@@ -12,6 +12,20 @@
         group=root
         mode=644
       notify: reload sysctl conf
+    - name: make directory of nginx systemd
+      file:
+        path=/etc/systemd/system/nginx.service.d/
+        state=directory
+        owner=root
+        group=root
+        mode=0755
+    - name: place nginx limits.conf
+      copy:
+        src=../files/etc/systemd/system/nginx.service.d/limits.conf
+        dest=/etc/systemd/system/nginx.service.d/limits.conf
+        owner=root
+        group=root
+        mode=644
     - name: apt source for nginx
       copy:
         src=../files/etc/apt/sources.list.d/nginx.list
@@ -24,11 +38,25 @@
       apt: name={{ item }}
       with_items:
         - nginx
+    - name: place nginx.conf
+      copy:
+        src=../files/etc/nginx/nginx.conf
+        dest=/etc/nginx/nginx.conf
+        owner=root
+        group=root
+        mode=644
     - name: download nginx settings
       get_url:
         url=http://{{ portal_private_ip }}:8080/mBGWHqBVEjUSKpBF/proxy/nginx.conf
-        dest=/etc/nginx.conf
+        dest=/etc/nginx/conf.d/isucon.conf
       notify: restart nginx
+    - name: place the file of systemd
+      copy:
+        src=../files/etc/systemd/system/nginx.service
+        dest=/etc/systemd/system/nginx.service
+        owner=root
+        mode=644
+      notify: reload systemctl
     - name: nginx service enabled
       service: name=nginx state=started enabled=yes
     - name: place reload script

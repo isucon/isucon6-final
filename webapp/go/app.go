@@ -117,6 +117,10 @@ func getStrokes(roomID int64, greaterThanID int64) ([]Stroke, error) {
 	if err != nil {
 		return nil, err
 	}
+	// 空スライスを入れてJSONでnullを返さないように
+	for i := range strokes {
+		strokes[i].Points = []Point{}
+	}
 	return strokes, nil
 }
 
@@ -127,9 +131,8 @@ func getRoom(roomID int64) (*Room, error) {
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
-	if r.Strokes == nil {
-		r.Strokes = []Stroke{}
-	}
+	// 空スライスを入れてJSONでnullを返さないように
+	r.Strokes = []Stroke{}
 	return r, nil
 }
 
@@ -462,8 +465,8 @@ func getAPIStreamRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Req
 			return
 		}
 		if newWatcherCount != watcherCount {
-			printAndFlush(w, "event:watcher_count\n"+"data:"+strconv.Itoa(watcherCount)+"\n\n")
 			watcherCount = newWatcherCount
+			printAndFlush(w, "event:watcher_count\n"+"data:"+strconv.Itoa(watcherCount)+"\n\n")
 		}
 	}
 }

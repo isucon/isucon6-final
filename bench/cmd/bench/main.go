@@ -2,15 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
-	"time"
-
 	"net/url"
-	"strings"
-
-	"errors"
 	"os"
+	"strings"
+	"sync"
+	"time"
 
 	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/scenario"
@@ -19,6 +18,9 @@ import (
 
 var BenchmarkTimeout int
 var InitialCheckOnly bool
+var MatsuriNum = 10
+var LoadIndexPageNum = 10
+var DrawOnRandomRoomNum = 2
 
 func main() {
 
@@ -35,14 +37,13 @@ func main() {
 		fmt.Fprintf(os.Stderr, err.Error())
 	}
 
-	// 初期チェックで失敗したらそこで終了
 	initialCheck(origins)
-	if fails.GetIsCritical() || !InitialCheckOnly {
-		output()
-		return
+
+	// 初期チェックのみモードではない、かつ、この時点でcriticalが出ていなければ負荷をかけにいく
+	if !InitialCheckOnly && !fails.GetIsCritical() {
+		benchmark(origins)
 	}
 
-	benchmark(origins)
 	output()
 }
 
@@ -69,15 +70,23 @@ func initialCheck(origins []string) {
 	scenario.RoomWithoutStrokeNotShownAtTop(origins)
 	scenario.StrokeReflectedToSVG(origins)
 	scenario.CantDrawFirstStrokeOnSomeoneElsesRoom(origins)
+	scenario.TopPageContent(origins)
+	scenario.APIAndHTMLMustBeConsistent(origins)
+	scenario.CheckStaticFiles(origins)
 }
 
 func benchmark(origins []string) {
-	loadIndexPageCh := makeChan(2)
-	loadRoomPageCh := makeChan(2)
-	checkCSRFTokenRefreshedCh := makeChan(1)
-	matsuriCh := makeChan(1)
-	matsuriEndCh := make(chan struct{})
+	var wg sync.WaitGroup
+	for i := 0; i < MatsuriNum; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			scenario.Matsuri(origins, BenchmarkTimeout-5)
+		}()
+	}
 
+	loadIndexPageCh := makeChan(LoadIndexPageNum)
+	drawOnRandomRoomCh := makeChan(DrawOnRandomRoomNum)
 	timeoutCh := time.After(time.Duration(BenchmarkTimeout) * time.Second)
 
 L:
@@ -86,41 +95,27 @@ L:
 		case <-loadIndexPageCh:
 			go func() {
 				scenario.LoadIndexPage(origins)
+				time.Sleep(100 * time.Millisecond)
 				loadIndexPageCh <- struct{}{}
 			}()
-		case <-loadRoomPageCh:
+		case <-drawOnRandomRoomCh:
 			go func() {
-				scenario.LoadRoomPage(origins)
-				loadRoomPageCh <- struct{}{}
-			}()
-		case <-checkCSRFTokenRefreshedCh:
-			go func() {
-				scenario.CSRFTokenRefreshed(origins)
-				checkCSRFTokenRefreshedCh <- struct{}{}
-			}()
-		case <-matsuriCh:
-			go func() {
-				scenario.Matsuri(origins, BenchmarkTimeout)
-				//matsuriRoomCh <- struct{}{} // Never again.
-				matsuriEndCh <- struct{}{}
+				scenario.DrawOnRandomRoom(origins)
+				time.Sleep(500 * time.Millisecond)
+				drawOnRandomRoomCh <- struct{}{}
 			}()
 		case <-timeoutCh:
 			break L
 		}
 	}
-	<-matsuriEndCh
+
+	wg.Wait()
 }
 
 func output() {
-	s := score.Get()
-	pass := true
-	if fails.GetIsCritical() {
-		s = 0
-		pass = false
-	}
 	b, _ := json.Marshal(score.Output{
-		Pass:     pass,
-		Score:    s,
+		Pass:     !fails.GetIsCritical(),
+		Score:    score.Get(),
 		Messages: fails.GetUnique(),
 	})
 
