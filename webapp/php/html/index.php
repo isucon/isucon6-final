@@ -332,9 +332,6 @@ $app->post('/api/strokes/rooms/[{id}]', function ($request, $response, $args) {
     }
 
     $stroke_count = count(getStrokes($dbh, $room['id'], 0));
-    if ($stroke_count > 1000) {
-        return $response->withStatus(400)->withJson(['error' => '1000画を超えました。これ以上描くことはできません。']);
-    }
     if ($stroke_count == 0) {
         $sql = 'SELECT COUNT(*) AS cnt FROM `room_owners` WHERE `room_id` = :room_id AND `token_id` = :token_id';
         $result = selectOne($dbh, $sql, [':room_id' => $room['id'], ':token_id' => $token['id']]);
