@@ -15,7 +15,7 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
-// 部屋を作って線を描くとトップページに出てくる
+// 部屋を作って線を描くとトップページに出てくる & 線がSVGに反映される
 func StrokeReflectedToTop(origins []string) {
 	s1 := session.New(randomOrigin(origins))
 	s2 := session.New(randomOrigin(origins))
@@ -41,7 +41,7 @@ func StrokeReflectedToTop(origins []string) {
 			fmt.Errorf("should be %s < %s < %s", t1.Format("2006-01-02-15:04:05.000"), room.CreatedAt.Format("2006-01-02-15:04:05.000"), t2.Format("2006-01-02-15:04:05.000")))
 	}
 
-	seedStrokes := seed.GetStrokes("star")
+	seedStrokes := seed.GetStrokes("ramen")
 	seedStroke := seed.FluctuateStroke(seedStrokes[0])
 	stroke, ok := drawStroke(s1, token, room.ID, seedStroke)
 	if !ok {
@@ -56,7 +56,7 @@ func StrokeReflectedToTop(origins []string) {
 	}
 
 	// 描いた直後にトップページに表示される
-	_ = action.Get(s2, "/", action.OK(func(body io.Reader, l *fails.Logger) bool {
+	ok = action.Get(s2, "/", action.OK(func(body io.Reader, l *fails.Logger) bool {
 		doc, ok := makeDocument(body, l)
 		if !ok {
 			return false
@@ -75,6 +75,24 @@ func StrokeReflectedToTop(origins []string) {
 		}
 		return true
 	}))
+	if !ok {
+		return
+	}
+
+	// SVGに反映される
+	for _, seedStroke := range seedStrokes[1:] {
+		stroke2 := seed.FluctuateStroke(seedStroke)
+		stroke, ok := drawStroke(s1, token, room.ID, stroke2)
+		if !ok {
+			fails.Critical("線の投稿に失敗しました", nil)
+			break
+		}
+
+		ok = checkStrokeReflectedToSVG(s2, room.ID, stroke.ID, stroke2)
+		if !ok {
+			break
+		}
+	}
 }
 
 // 線の描かれてない部屋はトップページに並ばない
@@ -110,37 +128,6 @@ func RoomWithoutStrokeNotShownAtTop(origins []string) {
 		}
 		return true
 	}))
-}
-
-// 線がSVGに反映される
-func StrokeReflectedToSVG(origins []string) {
-	s1 := session.New(randomOrigin(origins))
-	defer s1.Bye()
-
-	token, ok := fetchCSRFToken(s1, "/")
-	if !ok {
-		return
-	}
-
-	room, ok := makeRoom(s1, token)
-	if !ok {
-		fails.Critical("部屋の作成に失敗しました", nil)
-		return
-	}
-
-	seedStrokes := seed.GetStrokes("wwws")
-	for _, seedStroke := range seedStrokes {
-		stroke2 := seed.FluctuateStroke(seedStroke)
-		stroke, ok := drawStroke(s1, token, room.ID, stroke2)
-		if !ok {
-			fails.Critical("線の投稿に失敗しました", nil)
-			return
-		}
-
-		s2 := session.New(randomOrigin(origins))
-		_ = checkStrokeReflectedToSVG(s2, room.ID, stroke.ID, stroke2)
-		s2.Bye()
-	}
 }
 
 // ページ内のCSRFトークンが毎回変わっている

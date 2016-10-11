@@ -68,7 +68,6 @@ func initialCheck(origins []string) {
 	scenario.CSRFTokenRefreshed(origins)
 	scenario.StrokeReflectedToTop(origins)
 	scenario.RoomWithoutStrokeNotShownAtTop(origins)
-	scenario.StrokeReflectedToSVG(origins)
 	scenario.CantDrawFirstStrokeOnSomeoneElsesRoom(origins)
 	scenario.TopPageContent(origins)
 	scenario.APIAndHTMLMustBeConsistent(origins)
