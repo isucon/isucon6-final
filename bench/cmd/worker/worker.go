@@ -20,7 +20,6 @@ import (
 
 	"github.com/Songmu/timeout"
 	"github.com/catatsuy/isucon6-final/bench/job"
-	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/mitchellh/go-homedir"
 )
 
@@ -164,7 +163,7 @@ func (cli *CLI) start(portalHost, benchPath string) int {
 			log.Println(stderr)
 		}
 		log.Println("bench result: " + out)
-		var o score.Output
+		var o job.Output
 		err = json.Unmarshal([]byte(out), &o)
 		if err != nil {
 			log.Printf("bench failed: %#v, err: %s\n", j, err.Error())

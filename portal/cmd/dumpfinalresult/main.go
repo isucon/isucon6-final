@@ -9,9 +9,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/catatsuy/isucon6-final/bench/job"
 	_ "github.com/go-sql-driver/mysql"
-
-	"github.com/catatsuy/isucon6-final/portal/score"
 )
 
 const (
@@ -109,7 +108,7 @@ func main() {
 		}
 
 		var (
-			output     score.Output
+			output     job.Output
 			resultJSON []byte
 		)
 		err = db.QueryRow(`

@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/catatsuy/isucon6-final/portal/job"
-	"github.com/catatsuy/isucon6-final/portal/score"
 )
 
 func TestEnqueueJob(t *testing.T) {
@@ -79,7 +78,7 @@ func TestEnqueueJob(t *testing.T) {
 			ID:     1,
 			TeamID: 11,
 		},
-		Output: &score.Output{},
+		Output: &job.Output{},
 		Stderr: "",
 	}
 	err = doneJob(res)
@@ -99,7 +98,7 @@ func TestEnqueueJob(t *testing.T) {
 			ID:     2,
 			TeamID: 12,
 		},
-		Output: &score.Output{},
+		Output: &job.Output{},
 		Stderr: "",
 	}
 	err = doneJob(res)
@@ -113,7 +112,7 @@ func TestEnqueueJob(t *testing.T) {
 	}
 	res = &job.Result{
 		Job:    j,
-		Output: &score.Output{},
+		Output: &job.Output{},
 		Stderr: "",
 	}
 	err = doneJob(res)

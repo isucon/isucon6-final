@@ -20,7 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/catatsuy/isucon6-final/portal/job"
-	"github.com/catatsuy/isucon6-final/portal/score"
 )
 
 var s *httptest.Server
@@ -90,7 +89,7 @@ func benchGetJob(bench *testHTTPClient) *job.Job {
 	return &j
 }
 
-func benchPostResult(bench *testHTTPClient, j *job.Job, output *score.Output) {
+func benchPostResult(bench *testHTTPClient, j *job.Job, output *job.Output) {
 	time.Sleep(1 * time.Second)
 
 	result := job.Result{
@@ -176,7 +175,7 @@ func TestPostJob(t *testing.T) {
 	assert.Contains(t, readAll(resp.Body), `<span class="label label-success">1026*</span>`, "ジョブ実行中の表示")
 
 	// bench: 結果入れる
-	benchPostResult(bench, j, &score.Output{Pass: false, Score: 5000})
+	benchPostResult(bench, j, &job.Output{Pass: false, Score: 5000})
 
 	// cli: トップリロード
 	resp = cli.Must(cli.Get(s.URL + "/"))
@@ -193,7 +192,7 @@ func TestPostJob(t *testing.T) {
 	j = benchGetJob(bench)
 
 	// bench: 結果入れる
-	benchPostResult(bench, j, &score.Output{Pass: true, Score: 3000})
+	benchPostResult(bench, j, &job.Output{Pass: true, Score: 3000})
 
 	// cli: トップリロード
 	resp = cli.Must(cli.Get(s.URL + "/"))
@@ -205,7 +204,7 @@ func TestPostJob(t *testing.T) {
 	require.NotContains(t, body, "ダミーチーム5")
 
 	// bench: 結果入れる
-	benchPostResult(bench, j2, &score.Output{Pass: true, Score: 4500})
+	benchPostResult(bench, j2, &job.Output{Pass: true, Score: 4500})
 
 	resp = cli2.Must(cli2.Get(s.URL + "/"))
 	body = readAll(resp.Body)

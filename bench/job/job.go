@@ -1,7 +1,5 @@
 package job
 
-import "github.com/catatsuy/isucon6-final/bench/score"
-
 type Job struct {
 	ID     int    `json:"id"`
 	TeamID int    `json:"teamID"`
@@ -10,6 +8,12 @@ type Job struct {
 
 type Result struct {
 	Job    *Job
-	Output *score.Output
+	Output *Output
 	Stderr string
+}
+
+type Output struct {
+	Pass     bool     `json:"pass"`
+	Score    int64    `json:"score"`
+	Messages []string `json:"messages"`
 }

@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/catatsuy/isucon6-final/portal/score"
+	"github.com/catatsuy/isucon6-final/portal/job"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
@@ -200,7 +200,7 @@ type viewParamsLayout struct {
 }
 
 type latestResult struct {
-	Output *score.Output
+	Output *job.Output
 	At     time.Time
 	Score  *Score
 }
@@ -453,7 +453,7 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 
 	// 自分チームの最新状況を取得
 	var (
-		latestScore     *score.Output
+		latestScore     *job.Output
 		latestScoreAt   time.Time
 		latestScoreJSON string
 	)
@@ -468,7 +468,7 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 	case sql.ErrNoRows:
 		// nop
 	case nil:
-		var res score.Output
+		var res job.Output
 		err := json.Unmarshal([]byte(latestScoreJSON), &res)
 		if err != nil {
 			return err

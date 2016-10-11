@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/catatsuy/isucon6-final/bench/fails"
+	"github.com/catatsuy/isucon6-final/bench/job"
 	"github.com/catatsuy/isucon6-final/bench/scenario"
 	"github.com/catatsuy/isucon6-final/bench/score"
 )
@@ -117,7 +118,7 @@ L:
 }
 
 func output() {
-	b, _ := json.Marshal(score.Output{
+	b, _ := json.Marshal(job.Output{
 		Pass:     !fails.GetIsCritical(),
 		Score:    score.Get(),
 		Messages: fails.GetUnique(),
