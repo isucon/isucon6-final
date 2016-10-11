@@ -57,7 +57,7 @@ func NewEventSource(c *http.Client, urlStr string) *EventSource {
 		cancelFunc: cancelFunc,
 		listeners:  map[string][]Listener{},
 		headers:    map[string]string{},
-		retryWait:  1 * time.Second,
+		retryWait:  1 * time.Millisecond,
 		isClosed:   false,
 		url:        urlStr,
 	}
