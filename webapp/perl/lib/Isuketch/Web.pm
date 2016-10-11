@@ -382,13 +382,6 @@ post '/api/strokes/rooms/:id' => sub {
     }
 
     my $stroke_count = scalar @{ get_strokes($self->dbh, $room->{id}, 0) };
-    if ($stroke_count > 1000) {
-        $c->render_json({
-            error => '1000画を超えました。これ以上描くことはできません。'
-        });
-        $c->res->code(400);
-        return $c->res;
-    }
     if ($stroke_count == 0) {
         my $count = $self->dbh->select_one(q[
             SELECT COUNT(*) as cnt FROM `room_owners`
