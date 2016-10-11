@@ -522,12 +522,7 @@ func postAPIStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.R
 		outputError(w, err)
 		return
 	}
-	strokeCount := len(strokes)
-	if strokeCount > 1000 {
-		outputErrorMsg(w, http.StatusBadRequest, "1000画を超えました。これ以上描くことはできません。")
-		return
-	}
-	if strokeCount == 0 {
+	if len(strokes) == 0 {
 		query := "SELECT COUNT(*) AS cnt FROM `room_owners` WHERE `room_id` = ? AND `token_id` = ?"
 		cnt := 0
 		err = dbx.QueryRow(query, room.ID, t.ID).Scan(&cnt)
