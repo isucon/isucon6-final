@@ -320,12 +320,8 @@ def post_api_strokes_rooms_id(id):
         res.status_code = 400
         return res
 
-    stroke_count = len(get_strokes(db, room['id'], 0))
-    if stroke_count > 1000:
-        res = jsonify({'error': '1000画を超えました。これ以上描くことはできません。'})
-        res.status_code = 400
-        return res
-    if stroke_count == 0:
+    strokes = get_strokes(db, room['id'], 0)
+    if len(strokes) == 0:
         sql = 'SELECT COUNT(*) AS cnt FROM `room_owners` WHERE `room_id` = %(room_id)s AND `token_id` = %(token_id)s'
         result = select_one(db, sql, {'room_id': room['id'], 'token_id': token['id']})
         if result['cnt'] == 0:
