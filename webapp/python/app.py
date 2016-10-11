@@ -370,23 +370,6 @@ def post_api_strokes_rooms_id(id):
     return jsonify({'stroke': type_cast_stroke_data(stroke)})
 
 
-@app.route('/api/initialize')
-def get_api_initialize():
-    db = get_db()
-
-    sqls = [
-        'DELETE FROM `points` WHERE `id` > 1443000',
-        'DELETE FROM `strokes` WHERE `id` > 41000',
-        'DELETE FROM `rooms` WHERE `id` > 1000',
-        'DELETE FROM `tokens` WHERE `id` > 0',
-    ]
-
-    for sql in sqls:
-        execute(db, sql)
-
-    return 'ok'
-
-
 if __name__ == '__main__':
     debug = os.environ.get('ISUCON_ENV') != 'production'
     app.run(host='', port=80, debug=debug)
