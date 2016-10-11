@@ -32,3 +32,5 @@ services:
       - php_dev
     environment:
       API: http://php_dev:80
+    ports:
+      - "443:443"

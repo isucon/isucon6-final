@@ -14,8 +14,6 @@ services:
       SSL_CERT: /ssl/oreore.crt
       ISUCON_ENV: development
       PORT: 443
-    ports:
-      - "443:443"
   react:
     build:
       context: ./react
@@ -28,5 +26,3 @@ services:
       ISUCON_ENV: production
       NODE_ENV: production
       PORT: 443
-    ports:
-      - "443:443"

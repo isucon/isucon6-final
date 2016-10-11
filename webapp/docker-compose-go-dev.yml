@@ -30,3 +30,5 @@ services:
       - go_dev
     environment:
       API: http://go_dev:80
+    ports:
+      - "443:443"

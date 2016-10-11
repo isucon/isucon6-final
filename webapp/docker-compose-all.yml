@@ -1,0 +1,112 @@
+version: '2'
+services:
+  mysql:
+    extends:
+      file: docker-compose-mysql.yml
+      service: mysql
+  go:
+    build:
+      context: ./go
+      dockerfile: Dockerfile
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      ISUCON_ENV: production
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
+  react:
+    extends:
+      file: docker-compose-react.yml
+      service: react
+    depends_on:
+      - go
+    links:
+      - go
+    environment:
+      API: http://go:80
+    ports:
+      - "10001:443"
+  perl:
+    build:
+      context: ./perl
+      dockerfile: Dockerfile
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      ISUCON_ENV: production
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
+  react:
+    extends:
+      file: docker-compose-react.yml
+      service: react
+    depends_on:
+      - perl
+    links:
+      - perl
+    environment:
+      API: http://perl:5000
+    ports:
+      - "10002:443"
+  python:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      ISUCON_ENV: production
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
+  react:
+    extends:
+      file: docker-compose-react.yml
+      service: react
+    depends_on:
+      - python
+    links:
+      - python
+    environment:
+      API: http://python:80
+    ports:
+      - "10003:443"
+  php:
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    volumes:
+      - ./php/html:/var/www/html:ro
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      ISUCON_ENV: production
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
+  react:
+    extends:
+      file: docker-compose-react.yml
+      service: react
+    depends_on:
+      - php
+    links:
+      - php
+    environment:
+      API: http://php:80
+    ports:
+      - "10004:443"

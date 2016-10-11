@@ -30,3 +30,5 @@ services:
       - php
     environment:
       API: http://php:80
+    ports:
+      - "443:443"

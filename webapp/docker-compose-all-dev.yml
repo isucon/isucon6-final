@@ -1,0 +1,119 @@
+version: '2'
+services:
+  mysql:
+    extends:
+      file: docker-compose-mysql.yml
+      service: mysql
+  go_dev:
+    build:
+      context: ./go
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./go:/go/src/github.com/catatsuy/isucon6-final/webapp/go
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      ISUCON_ENV: development
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
+  perl_dev:
+    build:
+      context: ./perl
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./perl:/app
+      - /app/local
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      ISUCON_ENV: development
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
+  python_dev:
+    build:
+      context: ./python
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./python:/var/www
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      ISUCON_ENV: development
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
+  php_dev:
+    build:
+      context: ./php
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./php/html:/var/www/html:ro
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      ISUCON_ENV: development
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
+  react_go_dev:
+    extends:
+      file: docker-compose-react.yml
+      service: react_dev
+    depends_on:
+      - go_dev
+    links:
+      - go_dev
+    environment:
+      API: http://go_dev:80
+    ports:
+      - "10001:443"
+  react_perl_dev:
+    extends:
+      file: docker-compose-react.yml
+      service: react_dev
+    depends_on:
+      - perl_dev
+    links:
+      - perl_dev
+    environment:
+      API: http://perl_dev:5000
+    ports:
+      - "10002:443"
+  react_python_dev:
+    extends:
+      file: docker-compose-react.yml
+      service: react_dev
+    depends_on:
+      - python_dev
+    links:
+      - python_dev
+    environment:
+      API: http://python_dev:80
+    ports:
+      - "10003:443"
+  react_php_dev:
+    extends:
+      file: docker-compose-react.yml
+      service: react_dev
+    depends_on:
+      - php_dev
+    links:
+      - php_dev
+    environment:
+      API: http://php_dev:80
+    ports:
+      - "10004:443"

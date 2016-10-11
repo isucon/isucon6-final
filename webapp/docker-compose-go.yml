@@ -28,3 +28,5 @@ services:
       - go
     environment:
       API: http://go:80
+    ports:
+      - "443:443"

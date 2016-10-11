@@ -32,3 +32,5 @@ services:
       - python_dev
     environment:
       API: http://python_dev:80
+    ports:
+      - "443:443"
