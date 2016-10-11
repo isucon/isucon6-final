@@ -52,7 +52,7 @@ gulp.task('browser', () => {
   return gulp.src(['browser.js'])
     .pipe(webpack(webpackConfig))
     .on('error', swallowError)
-    .pipe(gulp.dest('public'));
+    .pipe(gulp.dest('build'));
 });
 
 process.on('exit', () => {
