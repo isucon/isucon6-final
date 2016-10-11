@@ -60,7 +60,7 @@ func Matsuri(origins []string, timeout int) {
 
 		n := 0
 		for _, w := range watchers {
-			if len(w.EndCh) == 0 {
+			if len(w.StrokeLogs) > 0 && len(w.EndCh) == 0 { // 既に最初のStrokeLogを1つ以上受け取ってる、かつ、まだ退室してない
 				n++
 			}
 		}
