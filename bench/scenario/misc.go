@@ -154,7 +154,7 @@ func makeRoom(s *session.Session, token string) (*Room, bool) {
 		CanvasWidth  int    `json:"canvas_width"`
 		CanvasHeight int    `json:"canvas_height"`
 	}{
-		Name:         "ひたすら椅子を描く部屋",
+		Name:         "ひたすら椅子を描く部屋【" + strconv.Itoa(rand.Intn(1000)+1000) + "】",
 		CanvasWidth:  1024,
 		CanvasHeight: 768,
 	})
