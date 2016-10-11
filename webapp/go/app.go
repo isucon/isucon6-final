@@ -590,26 +590,6 @@ func postAPIStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.R
 	w.Write(b)
 }
 
-func getAPIInitialize(w http.ResponseWriter, r *http.Request) {
-	queries := []string{
-		"DELETE FROM `points` WHERE `id` > 1443000",
-		"DELETE FROM `strokes` WHERE `id` > 41000",
-		"DELETE FROM `rooms` WHERE `id` > 1000",
-		"DELETE FROM `tokens` WHERE `id` > 0",
-	}
-
-	for _, query := range queries {
-		_, err := dbx.Exec(query)
-		if err != nil {
-			outputError(w, err)
-			return
-		}
-	}
-
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, "ok")
-}
-
 func main() {
 	host := os.Getenv("MYSQL_HOST")
 	if host == "" {
@@ -652,7 +632,6 @@ func main() {
 	mux.HandleFuncC(pat.Get("/api/rooms/:id"), getAPIRoomsID)
 	mux.HandleFuncC(pat.Get("/api/stream/rooms/:id"), getAPIStreamRoomsID)
 	mux.HandleFuncC(pat.Post("/api/strokes/rooms/:id"), postAPIStrokesRoomsID)
-	mux.HandleFunc(pat.Get("/api/initialize"), getAPIInitialize)
 
 	log.Fatal(http.ListenAndServe("0.0.0.0:80", mux))
 }
