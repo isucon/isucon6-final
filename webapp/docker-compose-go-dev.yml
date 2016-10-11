@@ -4,7 +4,7 @@ services:
     extends:
       file: docker-compose-mysql.yml
       service: mysql
-  go:
+  go_dev:
     build:
       context: ./go
       dockerfile: Dockerfile-dev
@@ -20,13 +20,13 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
-  react_dev_go:
+  react_dev:
     extends:
       file: docker-compose-react.yml
       service: react_dev
     depends_on:
-      - go
+      - go_dev
     links:
-      - go
+      - go_dev
     environment:
-      API: http://go:80
+      API: http://go_dev:80

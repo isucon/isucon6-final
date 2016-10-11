@@ -4,7 +4,7 @@ services:
     extends:
       file: docker-compose-mysql.yml
       service: mysql
-  perl:
+  perl_dev:
     build:
       context: ./perl
       dockerfile: Dockerfile-dev
@@ -21,13 +21,13 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
-  react_dev_perl:
+  react_dev:
     extends:
       file: docker-compose-react.yml
       service: react_dev
     depends_on:
-      - perl
+      - perl_dev
     links:
-      - perl
+      - perl_dev
     environment:
-      API: http://perl:5000
+      API: http://perl_dev:5000

@@ -4,7 +4,7 @@ services:
     extends:
       file: docker-compose-mysql.yml
       service: mysql
-  php:
+  php_dev:
     build:
       context: ./php
       dockerfile: Dockerfile-dev
@@ -22,13 +22,13 @@ services:
       MYSQL_PASS: isucon
     ports:
       - "80:80"
-  react_dev_php:
+  react_dev:
     extends:
       file: docker-compose-react.yml
       service: react_dev
     depends_on:
-      - php
+      - php_dev
     links:
-      - php
+      - php_dev
     environment:
-      API: http://php:80
+      API: http://php_dev:80
