@@ -302,11 +302,11 @@ $app->get('/api/stream/rooms/[{id}]', function ($request, $response, $args) {
         updateRoomWatcher($dbh, $room['id'], $token['id']);
         $new_watcher_count = getWatcherCount($dbh, $room['id']);
         if ($new_watcher_count !== $watcher_count) {
+            $watcher_count = $new_watcher_count;
             printAndFlush(
                 "event:watcher_count\n" .
                 'data:' . $watcher_count . "\n\n"
             );
-            $watcher_count = $new_watcher_count;
         }
     }
 });
