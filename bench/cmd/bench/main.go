@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"math/rand"
 	"net/url"
 	"os"
 	"strings"
@@ -21,6 +22,10 @@ var InitialCheckOnly bool
 var MatsuriNum = 10
 var LoadIndexPageNum = 10
 var DrawOnRandomRoomNum = 2
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 func main() {
 
