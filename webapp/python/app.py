@@ -128,7 +128,6 @@ def update_room_watcher(db, room_id, token_id):
 
 app = Flask(__name__)
 app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
-app.config['DEBUG'] = os.environ.get('ISUCON_ENV') != 'production'
 
 # Routes
 
@@ -393,4 +392,5 @@ def get_api_initialize():
 
 
 if __name__ == '__main__':
-    app.run(host='', port=80)
+    debug = os.environ.get('ISUCON_ENV') != 'production'
+    app.run(host='', port=80, debug=debug)
