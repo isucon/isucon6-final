@@ -11,9 +11,7 @@
         owner=root
         group=root
         mode=644
-    - name: read sysctl.conf
-      become_user: root
-      command: sysctl -p
+      notify: reload sysctl conf
     - name: make directory of nginx systemd
       file:
         path=/etc/systemd/system/nginx.service.d/
@@ -114,5 +112,7 @@
       command: consul reload
     - name: restart nginx
       command: systemctl restart nginx
+    - name: reload sysctl conf
+      command: sysctl -p
   vars:
     portal_private_ip: 10.6.1.13
