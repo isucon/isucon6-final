@@ -33,6 +33,30 @@ const selectOne = async (dbh, sql, params = []) => {
   return result[0];
 };
 
+const selectAll = async (dbh, sql, params = []) => {
+  return await dbh.query(sql, params);
+};
+
+const getStrokePoints = async (dbh) => {
+};
+
+const getStrokes = async (dbh, roomId, greaterThanId) => {
+  let sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`';
+  sql +=      ' WHERE `room_id` = ? AND `id` > ? ORDER BY `id` ASC';
+  return await selectAll(dbh, sql, [roomId, greaterThanId]);
+};
+
+const getRoom = async (dbh, roomId) => {
+  const sql = 'SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at` FROM `rooms` WHERE `id` = ?';
+  return await selectOne(dbh, sql, [roomId]);
+};
+
+const getWatcherCount = async () => {
+};
+
+const updateRoomWatcher = async () => {
+};
+
 app.use(convert(bodyparser()));
 app.use(convert(json()));
 app.use(convert(logger()));
@@ -66,7 +90,20 @@ router.post('/api/csrf_token', async (ctx, next) => {
   };
 });
 
-router.get('/api/rooms', async () => {
+router.get('/api/rooms', async (ctx, next) => {
+  const dbh = getDBH();
+  const sql = 'SELECT `room_id`, MAX(`id`) AS `max_id` FROM `strokes` GROUP BY `room_id` ORDER BY `max_id` DESC LIMIT 100';
+  const results = await selectAll(dbh, sql);
+  const rooms = [];
+  for (const result of results) {
+    const room = await getRoom(dbh, result['room_id']);
+    const strokes = await getStrokes(dbh, room['id'], 0);
+    room['stroke_count'] = strokes.length;
+    rooms.push(room);
+  }
+  ctx.body = {
+    rooms: rooms
+  };
 });
 
 router.post('/api/rooms', async () => {
