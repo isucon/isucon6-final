@@ -105,7 +105,7 @@ func (w *RoomWatcher) watch(roomID int64) {
 	})
 	w.es.OnError(func(err error) {
 		if e, ok := err.(*sse.BadContentType); ok {
-			l.Add(path+" Content-Typeが正しくありません: "+e.ContentType, err)
+			l.Add("Content-Typeが正しくありません: "+e.ContentType, err)
 			return
 		}
 		if e, ok := err.(*sse.BadStatusCode); ok {
