@@ -10,6 +10,16 @@
     - name: set timezone
       copy: dest=/etc/timezone owner=root group=root mode=0644 content="Asia/Tokyo\n"
       notify: update timezone
+    - name: sysctl.conf
+      copy:
+        src=../files/etc/sysctl.conf
+        dest=/etc/sysctl.conf
+        owner=root
+        group=root
+        mode=644
+      notify: reload sysctl conf
   handlers:
     - name: update timezone
       command: /usr/sbin/dpkg-reconfigure --frontend noninteractive tzdata
+    - name: reload sysctl conf
+      command: sysctl -p
