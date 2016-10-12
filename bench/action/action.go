@@ -64,7 +64,9 @@ func request(s *session.Session, method, path string, body io.Reader, headers ma
 	l := &fails.Logger{Prefix: "[" + method + " " + path + "] "}
 
 	u, err := url.Parse(path)
-	if err != nil { //TODO: メッセージ
+	if err != nil {
+		l.Critical("予期せぬエラー（主催者に連絡してください）",
+			errors.New("URLのパースに失敗しました: "+path+", error: "+err.Error()))
 		return false
 	}
 	u.Scheme = s.Scheme
@@ -122,7 +124,7 @@ func Post(s *session.Session, path string, body []byte, headers map[string]strin
 func SSE(s *session.Session, path string) (*sse.EventSource, bool) {
 	u, err := url.Parse(path)
 	if err != nil {
-		fails.Add("予期せぬエラー（主催者に連絡してください）",
+		fails.Critical("予期せぬエラー（主催者に連絡してください）",
 			errors.New("URLのパースに失敗しました: "+path+", error: "+err.Error()))
 		return nil, false
 	}
