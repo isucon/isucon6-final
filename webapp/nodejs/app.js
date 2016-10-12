@@ -28,6 +28,11 @@ const getDBH = () => {
   });
 };
 
+const selectOne = async (dbh, sql, params = []) => {
+  const result = await dbh.query(sql, params);
+  return result[0];
+};
+
 app.use(convert(bodyparser()));
 app.use(convert(json()));
 app.use(convert(logger()));
@@ -46,19 +51,31 @@ app.on('error', (err, ctx) => {
 });
 
 const router = new Router();
-router.post('api/csrf_token', async () => {
+router.post('/api/csrf_token', async (ctx, next) => {
+  const dbh = getDBH();
+
+  let sql = 'INSERT INTO `tokens` (`csrf_token`) VALUES (SHA2(CONCAT(RAND(), UUID_SHORT()), 256))';
+  await dbh.query(sql);
+  const tokens = await dbh.query('SELECT LAST_INSERT_ID() AS lastInsertId');
+  const id = tokens[0].lastInsertId;
+
+  sql = 'SELECT `id`, `csrf_token`, `created_at` FROM `tokens` WHERE id = ?';
+  const token = await selectOne(dbh, sql, [id]);
+  ctx.body = {
+    token: token['csrf_token'],
+  };
 });
 
-router.get('api/rooms', async () => {
+router.get('/api/rooms', async () => {
 });
 
-router.post('api/rooms', async () => {
+router.post('/api/rooms', async () => {
 });
 
-router.get('api/rooms/:id', async () => {
+router.get('/api/rooms/:id', async () => {
 });
 
-router.post('api/strokes/rooms/:id', async () => {
+router.post('/api/strokes/rooms/:id', async () => {
 });
 
 router.get('/api/initialize', async (ctx, next) => {
