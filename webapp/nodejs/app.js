@@ -37,7 +37,9 @@ const selectAll = async (dbh, sql, params = []) => {
   return await dbh.query(sql, params);
 };
 
-const getStrokePoints = async (dbh) => {
+const getStrokePoints = async (dbh, strokeId) => {
+  const sql = 'SELECT `id`, `stroke_id`, `x`, `y` FROM `points` WHERE `stroke_id` = ? ORDER BY `id` ASC';
+  return await dbh.query(sql, [strokeId]);
 };
 
 const getStrokes = async (dbh, roomId, greaterThanId) => {
@@ -51,7 +53,11 @@ const getRoom = async (dbh, roomId) => {
   return await selectOne(dbh, sql, [roomId]);
 };
 
-const getWatcherCount = async () => {
+const getWatcherCount = async (dbh, roomId) => {
+  let sql = 'SELECT COUNT(*) AS `watcher_count` FROM `room_watchers`';
+  sql +=    ' WHERE `room_id` = ? AND `updated_at` > CURRENT_TIMESTAMP(6) - INTERVAL 3 SECOND';
+  const result = await selectOne(dbh, sql, [roomId]);
+  return result['watcher_count'];
 };
 
 const updateRoomWatcher = async () => {
@@ -109,7 +115,31 @@ router.get('/api/rooms', async (ctx, next) => {
 router.post('/api/rooms', async () => {
 });
 
-router.get('/api/rooms/:id', async () => {
+router.get('/api/rooms/:id', async (ctx, next) => {
+  const dbh = getDBH();
+
+  const room = await getRoom(dbh, ctx.params.id);
+  if (room === undefined) {
+    ctx.status = 404;
+    ctx.body = {
+      error: 'この部屋は存在しません。',
+    };
+    return;
+  }
+
+  const strokes = await getStrokes(dbh, room['id'], 0);
+  let i = 0;
+  for ( const stroke of strokes ) {
+    strokes[i]['points'] = await getStrokePoints(dbh, stroke['id']);
+    i++;
+  }
+
+  room['strokes'] = strokes;
+  room['watcher_count'] = await getWatcherCount(dbh, room['id']);
+
+  ctx.body = {
+    room: room,
+  };
 });
 
 router.post('/api/strokes/rooms/:id', async () => {
