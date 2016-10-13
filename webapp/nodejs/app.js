@@ -286,21 +286,6 @@ router.post('/api/strokes/rooms/:id', async (ctx, next) => {
 
 });
 
-router.get('/api/initialize', async (ctx, next) => {
-  const dbh = getDBH();
-  const sqls = [
-    'DELETE FROM `points` WHERE `id` > 1443000',
-    'DELETE FROM `strokes` WHERE `id` > 41000',
-    'DELETE FROM `rooms` WHERE `id` > 1000',
-    'DELETE FROM `tokens` WHERE `id` > 0',
-  ];
-
-  for (const sql of sqls) {
-    await dbh.query(sql);
-  }
-  ctx.body = 'ok';
-});
-
 app.use(router.routes());
 app.use(router.allowedMethods());
 
