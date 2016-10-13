@@ -111,13 +111,13 @@ func checkStrokeReflectedToSVG(s *session.Session, roomID int64, strokeID int64,
 		for i, polyLine := range data.PolyLines {
 			if data.PolyLines[i].ID == strconv.FormatInt(strokeID, 10) {
 				if len(stroke.Points) != len(polyLine.Points) {
-					l.Critical("投稿が反映されていません（pointが足りません）", err)
+					l.Critical("投稿が反映されていません（pointが足りません）", nil)
 					return false
 				}
 				for j, p := range polyLine.Points {
 					if math.Abs(float64(stroke.Points[j].X)-float64(p.X)) > 0.1 || math.Abs(float64(stroke.Points[j].Y)-float64(p.Y)) > 0.1 {
 						fmt.Println(stroke.Points[j].X, p.X, stroke.Points[j].Y, p.Y)
-						l.Critical("投稿が反映されていません（x,yの値が改変されています）", err)
+						l.Critical("投稿が反映されていません（x,yの値が改変されています）", nil)
 						return false
 					}
 				}
