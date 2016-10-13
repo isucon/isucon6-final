@@ -1,12 +1,11 @@
 package scenario
 
 import (
-	"fmt"
-	"time"
-
 	"encoding/json"
-
+	"fmt"
+	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/catatsuy/isucon6-final/bench/action"
 	"github.com/catatsuy/isucon6-final/bench/fails"
@@ -63,8 +62,11 @@ func (w *RoomWatcher) watch(roomID int64) {
 	path = "/api/stream" + path
 	l := &fails.Logger{Prefix: "[" + path + "] "}
 
+	values := url.Values{}
+	values.Add("csrf_token", token)
+
 	startTime := time.Now()
-	w.es, ok = action.SSE(w.s, path+"?csrf_token="+token)
+	w.es, ok = action.SSE(w.s, path+"?"+values.Encode())
 	if !ok {
 		w.finalize()
 		return
@@ -113,7 +115,7 @@ func (w *RoomWatcher) watch(roomID int64) {
 			w.es.Close()
 			return
 		}
-		l.Add("予期せぬエラー（主催者に連絡してください）", err)
+		l.Add("リクエストに失敗しました", err)
 	})
 	w.es.OnEnd(func() {
 		w.finalize()
