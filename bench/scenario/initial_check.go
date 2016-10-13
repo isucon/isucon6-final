@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"math/rand"
 	"strconv"
 	"time"
@@ -86,6 +87,18 @@ func StrokeReflectedToTop(origins []string) {
 		if !ok {
 			fails.Critical("線の投稿に失敗しました", nil)
 			break
+		}
+
+		if len(stroke.Points) != len(stroke2.Points) {
+			fails.Critical("投稿した線が反映されていません", nil)
+			return
+		}
+		for j, p := range stroke2.Points {
+			if math.Abs(float64(stroke.Points[j].X)-float64(p.X)) > 0.1 || math.Abs(float64(stroke.Points[j].Y)-float64(p.Y)) > 0.1 {
+				fmt.Println(stroke.Points[j].X, p.X, stroke.Points[j].Y, p.Y)
+				fails.Critical("投稿が反映されていません（x,yの値が改変されています）", nil)
+				return false
+			}
 		}
 
 		ok = checkStrokeReflectedToSVG(s2, room.ID, stroke.ID, stroke2)
