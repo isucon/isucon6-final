@@ -206,7 +206,84 @@ router.get('/api/rooms/:id', async (ctx, next) => {
   };
 });
 
-router.post('/api/strokes/rooms/:id', async () => {
+router.post('/api/strokes/rooms/:id', async (ctx, next) => {
+  const dbh = await getDBH();
+
+  let token;
+  try {
+    token = checkToken(dbh, ctx.headers['x-csrf-token']);
+  } catch (e) {
+    if (e instanceof TokenException) {
+      ctx.status = 400;
+      ctx.body = {
+        error: 'トークンエラー。ページを再読み込みしてください。',
+      };
+    } else {
+      throw e;
+    }
+  }
+
+  const room = await getRoom(dbh, ctx.params.id);
+  if (typeof room === 'undefined') {
+    ctx.status = 400;
+    ctx.body = {
+      error: 'この部屋は存在しません。'
+    };
+    return;
+  }
+
+  if (!ctx.request.body.width || !ctx.request.body.points) {
+    ctx.status = 400;
+    ctx.body = {
+      error: 'リクエストが正しくありません。'
+    };
+    return;
+  }
+
+  const strokes = await getStrokes(dbh, room.id, 0);
+  const strokeCount = strokes.length;
+  // TODO:
+  if (strokeCount === 0) {
+    const sql = 'SELECT COUNT(*) AS cnt FROM `room_owners` WHERE `room_id` = ? AND `token_id` = ?';
+    const result = await selectOne(dbh, sql, [room.id, token.id]);
+    if (result.cnt === 0) {
+      ctx.status = 400;
+      ctx.body = {
+        error: '他人の作成した部屋に1画目を描くことはできません'
+      };
+      return;
+    }
+  }
+
+  await dbh.query('BEGIN');
+  try {
+    let sql = 'INSERT INTO `strokes` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)';
+    sql +=    'VALUES(?, ?, ?, ?, ?, ?)';
+    await dbh.query(sql, [
+      room.id,
+      ctx.request.body.width,
+      ctx.request.body.red,
+      ctx.request.body.green,
+      ctx.request.body.blue,
+      ctx.request.body.alpha
+    ]);
+    let strokeId = await dbh.query('SELECT LAST_INSERT_ID() AS lastInsertId');
+    strokeId = strokeId.lastInsertId;
+
+    sql = 'INSERT INTO `points` (`stroke_id`, `x`, `y`) VALUES (?, ?, ?)';
+    for (let point of ctx.request.body.points) {
+      await dbh.query(sql, [strokeId, point.x, point.y]);
+    }
+    await dbh.query('COMMIT');
+  } catch (e) {
+    await dbh.query('ROLLBACK');
+    console.error(e);
+    ctx.status = 500;
+    ctx.body = {
+      error: 'エラーが発生しました。'
+    };
+  }
+
 });
 
 router.get('/api/initialize', async (ctx, next) => {
