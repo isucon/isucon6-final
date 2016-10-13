@@ -34,3 +34,5 @@ services:
       - nodejs
     environment:
       API: http://nodejs:80
+    ports:
+      - "443:443"
