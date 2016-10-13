@@ -37,6 +37,18 @@ const selectAll = async (dbh, sql, params = []) => {
   return await dbh.query(sql, params);
 };
 
+class TokenException {};
+
+const checkToken = async (dbh, csrfToken) => {
+  let sql = 'SELECT `id`, `csrf_token`, `created_at` FROM `tokens`';
+  sql    += ' WHERE `csrf_token` = ? AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY';
+  const token = await selectOne(dbh, sql, [csrfToken]);
+  if (typeof token === 'undefined') {
+    throw new TokenException();
+  }
+  return token;
+};
+
 const getStrokePoints = async (dbh, strokeId) => {
   const sql = 'SELECT `id`, `stroke_id`, `x`, `y` FROM `points` WHERE `stroke_id` = ? ORDER BY `id` ASC';
   return await dbh.query(sql, [strokeId]);
@@ -112,7 +124,59 @@ router.get('/api/rooms', async (ctx, next) => {
   };
 });
 
-router.post('/api/rooms', async () => {
+router.post('/api/rooms', async (ctx, next) => {
+  const dbh = getDBH();
+
+  let token = null;
+  try {
+    token = await checkToken(dbh, ctx.headers['x-csrf-token']);
+  } catch (e) {
+    if (e instanceof TokenException) {
+      console.error(e);
+      ctx.status = 400;
+      ctx.body = {
+        error: 'トークンエラー。ページを再読み込みしてください。'
+      };
+      return;
+    } else {
+      throw e;
+    }
+  }
+
+  if (!ctx.request.body.name || !ctx.request.body.canvas_width || !ctx.request.body.canvas_height) {
+    ctx.status = 400;
+    ctx.body = {
+      error: 'リクエストが正しくありません。'
+    };
+    return;
+  }
+
+  let roomId;
+  await dbh.query('BEGIN');
+  try {
+    let sql = 'INSERT INTO `rooms` (`name`, `canvas_width`, `canvas_height`)';
+    sql +=    ' VALUES (?, ?, ?)';
+    await dbh.query(sql, [ctx.request.body.name, ctx.request.body.canvas_width, ctx.request.body.canvas_height]);
+    roomId = await dbh.query('SELECT LAST_INSERT_ID() AS lastInsertId');
+    roomId = roomId[0].lastInsertId;
+
+    sql = 'INSERT INTO `room_owners` (`room_id`, `token_id`) VALUES (?, ?)';
+    await dbh.query(sql, [roomId, token.id]);
+    await dbh.query('COMMIT');
+  } catch (e) {
+    await dbh.query('ROLLBACK');
+    console.error(e);
+    ctx.status = 500;
+    ctx.body = {
+      error: 'エラーが発生しました。'
+    };
+    return;
+  }
+
+  const room = await getRoom(dbh, roomId);
+  ctx.body = {
+    room: room,
+  };
 });
 
 router.get('/api/rooms/:id', async (ctx, next) => {
