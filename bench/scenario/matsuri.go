@@ -3,6 +3,7 @@ package scenario
 import (
 	"time"
 
+	"github.com/catatsuy/isucon6-final/bench/fails"
 	"github.com/catatsuy/isucon6-final/bench/score"
 	"github.com/catatsuy/isucon6-final/bench/seed"
 	"github.com/catatsuy/isucon6-final/bench/session"
@@ -35,6 +36,8 @@ func Matsuri(origins []string, timeout int) {
 
 	start := time.Now()
 
+	postedStrokes := make([]Stroke, 0)
+
 	go func() {
 		// 2秒おきにstrokeをPOSTする
 		for {
@@ -44,6 +47,7 @@ func Matsuri(origins []string, timeout int) {
 				stroke, ok := drawStroke(s, token, room.ID, seed.FluctuateStroke(seedStroke))
 				if ok {
 					postTimes[stroke.ID] = postTime
+					postedStrokes = append(postedStrokes, stroke)
 				}
 				time.Sleep(2 * time.Second)
 				if time.Now().Sub(start).Seconds() > float64(timeout) {
@@ -90,8 +94,10 @@ func Matsuri(origins []string, timeout int) {
 	}
 	//fmt.Println("done")
 
+	// TODO: watcher_countが正しいか
+
 	for _, w := range watchers {
-		for _, strokeLog := range w.StrokeLogs {
+		for i, strokeLog := range w.StrokeLogs {
 			postTime := postTimes[strokeLog.Stroke.ID]
 			timeTaken := strokeLog.ReceivedTime.Sub(postTime).Seconds()
 
@@ -99,6 +105,19 @@ func Matsuri(origins []string, timeout int) {
 				score.Increment(StrokeReceiveScore * 2)
 			} else if timeTaken < 3 {
 				score.Increment(StrokeReceiveScore)
+			}
+
+			if i >= len(postedStrokes) {
+				// 普通は起こらないはず
+				break
+			}
+			if strokeLog.ID != postedStrokes[i].ID {
+				fails.Critical("streamされたstrokeに抜け・狂いがあります", nil)
+				break
+			}
+			if len(strokeLog.Points) != len(postedStrokes[i].Points) {
+				fails.Critical("streamされたstrokeが間違っています", nil)
+				break
 			}
 		}
 	}
