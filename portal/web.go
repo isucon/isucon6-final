@@ -24,10 +24,10 @@ import (
 var (
 	databaseDSN = flag.String("database-dsn", "root:@/isu6fportal_day0", "database `dsn`")
 	debugMode   = flag.Bool("debug", false, "enable debug mode")
+	day         = 0
 )
 
 var db *sql.DB
-var day int
 var templates = map[string]*template.Template{}
 var sessionStore sessions.Store
 var locJST *time.Location
@@ -55,7 +55,7 @@ func parseTemplateAsset(t *template.Template, name string) error {
 func initWeb() error {
 	var err error
 
-	dsn := *databaseDSN + "?parseTime=true&loc=Asia%2FTokyo&time_zone='Asia%2FTokyo'"
+	dsn := *databaseDSN + "?charset=utf8mb4&parseTime=true&loc=Asia%2FTokyo&time_zone='Asia%2FTokyo'"
 	db, err = sql.Open("mysql", dsn)
 	if err != nil {
 		return errors.Wrapf(err, "sql.Open %q", dsn)
@@ -97,10 +97,10 @@ func initWeb() error {
 	}
 
 	// ホントはJSONだけど整数値しか入ってないことを知ってるのでショートカット
-	err = db.QueryRow("SELECT CONVERT(json,SIGNED) FROM setting WHERE name = 'day'").Scan(&day)
-	if err != nil {
-		return errors.Wrap(err, "SELECT CONVERT(json,SIGNED) FROM setting WHERE name = 'day'")
-	}
+	// err = db.QueryRow("SELECT CONVERT(json,SIGNED) FROM setting WHERE name = 'day'").Scan(&day)
+	// if err != nil {
+	// 	return errors.Wrap(err, "SELECT CONVERT(json,SIGNED) FROM setting WHERE name = 'day'")
+	// }
 
 	// 日によってDBを分けるので、万一 teams.id が被ってたら
 	// 前日のセッションでログイン状態になってしまう
