@@ -7,7 +7,7 @@ LimitNPROC=1006500
 
 WorkingDirectory=/home/isucon/
 
-ExecStart = /home/isucon/isucon6q/isucon6q-bench-worker
+ExecStart = /home/isucon/isucon6f/worker
 
 Restart   = always
 Type      = simple

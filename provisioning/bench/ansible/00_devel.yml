@@ -3,8 +3,17 @@
   become: yes
   gather_facts: no
   tasks:
-    - apt: upgrade=safe update_cache=true
-    - apt: name={{item}} state=present install_recommends=no
+    - raw: apt-get update -qq
+    - raw: apt-get install -qq python
+
+- hosts: all
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: apt-get update again
+      apt: update_cache=yes
+    - name: install misc
+      apt: name={{ item }}
       with_items:
         - git
         - curl
