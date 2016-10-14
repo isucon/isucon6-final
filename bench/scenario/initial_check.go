@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	"sync"
+
 	"github.com/PuerkitoBio/goquery"
 	"github.com/catatsuy/isucon6-final/bench/action"
 	"github.com/catatsuy/isucon6-final/bench/fails"
@@ -354,4 +356,49 @@ func compareToRoomHTML(s *session.Session, roomID int64, strokes []Stroke) bool 
 		return false
 	}
 	return true
+}
+
+// 入室するとWatcherCountが増える
+// 退室すると減るほうは、時間がたたないと正しい値に落ち着かないのでチェックしない
+func WatcherCountIncreases(origins []string) {
+	s := session.New(randomOrigin(origins))
+	defer s.Bye()
+
+	rooms, ok := getRoomsAPI(s)
+	if !ok {
+		fails.Critical("部屋一覧の取得に失敗しました", nil)
+		return
+	}
+
+	var wg sync.WaitGroup
+
+	for i := 0; i < 6; i++ {
+		room := rooms[30+rand.Intn(20)+i*10]
+
+		for j := 0; j < i; j++ {
+			wg.Add(1)
+
+			go func(i, j int) {
+				defer wg.Done()
+
+				w := NewRoomWatcher(randomOrigin(origins), room.ID)
+
+				time.Sleep(6 * time.Second)
+
+				w.Leave()
+				<-w.EndCh
+
+				c := 0
+				for _, log := range w.WatcherCountLogs {
+					if log.Count > c {
+						c = log.Count // 送られて来た最大のwatcher_countを取得
+					}
+				}
+				if c != i {
+					fails.Critical(fmt.Sprintf("正しいwatcher_countが送られていません: %d, %d, %d", i, j, c), nil)
+				}
+			}(i, j)
+		}
+	}
+	wg.Wait()
 }

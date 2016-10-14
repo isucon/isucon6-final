@@ -78,6 +78,7 @@ func initialCheck(origins []string) {
 	scenario.TopPageContent(origins)
 	scenario.APIAndHTMLMustBeConsistent(origins)
 	scenario.CheckStaticFiles(origins)
+	scenario.WatcherCountIncreases(origins)
 }
 
 func benchmark(origins []string) {
