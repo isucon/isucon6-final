@@ -101,9 +101,7 @@ func Matsuri(origins []string, timeout int) {
 			postTime := postTimes[strokeLog.Stroke.ID]
 			timeTaken := strokeLog.ReceivedTime.Sub(postTime).Seconds()
 
-			if timeTaken < 1 { // TODO: この時間は要調整
-				score.Increment(StrokeReceiveScore * 2)
-			} else if timeTaken < 3 {
+			if timeTaken < 2 {
 				score.Increment(StrokeReceiveScore)
 			}
 
