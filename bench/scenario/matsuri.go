@@ -47,7 +47,7 @@ func Matsuri(origins []string, timeout int) {
 				stroke, ok := drawStroke(s, token, room.ID, seed.FluctuateStroke(seedStroke))
 				if ok {
 					postTimes[stroke.ID] = postTime
-					postedStrokes = append(postedStrokes, stroke)
+					postedStrokes = append(postedStrokes, *stroke)
 				}
 				time.Sleep(2 * time.Second)
 				if time.Now().Sub(start).Seconds() > float64(timeout) {

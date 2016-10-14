@@ -97,7 +97,7 @@ func StrokeReflectedToTop(origins []string) {
 			if math.Abs(float64(stroke.Points[j].X)-float64(p.X)) > 0.1 || math.Abs(float64(stroke.Points[j].Y)-float64(p.Y)) > 0.1 {
 				fmt.Println(stroke.Points[j].X, p.X, stroke.Points[j].Y, p.Y)
 				fails.Critical("投稿が反映されていません（x,yの値が改変されています）", nil)
-				return false
+				return
 			}
 		}
 
