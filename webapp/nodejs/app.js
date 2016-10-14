@@ -217,7 +217,7 @@ router.post('/api/strokes/rooms/:id', async (ctx, next) => {
 
   let token;
   try {
-    token = checkToken(dbh, ctx.headers['x-csrf-token']);
+    token = await checkToken(dbh, ctx.headers['x-csrf-token']);
   } catch (e) {
     if (e instanceof TokenException) {
       ctx.status = 400;
@@ -262,6 +262,7 @@ router.post('/api/strokes/rooms/:id', async (ctx, next) => {
   }
 
   await dbh.query('BEGIN');
+  let strokeId;
   try {
     let sql = 'INSERT INTO `strokes` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)';
     sql +=    'VALUES(?, ?, ?, ?, ?, ?)';
@@ -273,7 +274,7 @@ router.post('/api/strokes/rooms/:id', async (ctx, next) => {
       ctx.request.body.blue,
       ctx.request.body.alpha
     ]);
-    let strokeId = result.insertId;
+    strokeId = result.insertId;
 
     sql = 'INSERT INTO `points` (`stroke_id`, `x`, `y`) VALUES (?, ?, ?)';
     for (let point of ctx.request.body.points) {
@@ -288,6 +289,14 @@ router.post('/api/strokes/rooms/:id', async (ctx, next) => {
       error: 'エラーが発生しました。'
     };
   }
+
+  let sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`';
+  sql +=    ' WHERE `id` = ?';
+  const stroke = await selectOne(dbh, sql, [strokeId]);
+  stroke.points = await getStrokePoints(dbh, strokeId);
+  ctx.body = {
+    stroke: stroke
+  };
 
 });
 
