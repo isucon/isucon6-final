@@ -105,9 +105,8 @@ router.post('/api/csrf_token', async (ctx, next) => {
   const dbh = getDBH(ctx);
 
   let sql = 'INSERT INTO `tokens` (`csrf_token`) VALUES (SHA2(CONCAT(RAND(), UUID_SHORT()), 256))';
-  await dbh.query(sql);
-  const tokens = await dbh.query('SELECT LAST_INSERT_ID() AS lastInsertId');
-  const id = tokens[0].lastInsertId;
+  const result = await dbh.query(sql);
+  const id = result.insertId;
 
   sql = 'SELECT `id`, `csrf_token`, `created_at` FROM `tokens` WHERE id = ?';
   const token = await selectOne(dbh, sql, [id]);
@@ -164,9 +163,8 @@ router.post('/api/rooms', async (ctx, next) => {
   try {
     let sql = 'INSERT INTO `rooms` (`name`, `canvas_width`, `canvas_height`)';
     sql +=    ' VALUES (?, ?, ?)';
-    await dbh.query(sql, [ctx.request.body.name, ctx.request.body.canvas_width, ctx.request.body.canvas_height]);
-    roomId = await dbh.query('SELECT LAST_INSERT_ID() AS lastInsertId');
-    roomId = roomId[0].lastInsertId;
+    const result = await dbh.query(sql, [ctx.request.body.name, ctx.request.body.canvas_width, ctx.request.body.canvas_height]);
+    roomId = result.insertId;
 
     sql = 'INSERT INTO `room_owners` (`room_id`, `token_id`) VALUES (?, ?)';
     await dbh.query(sql, [roomId, token.id]);
@@ -267,7 +265,7 @@ router.post('/api/strokes/rooms/:id', async (ctx, next) => {
   try {
     let sql = 'INSERT INTO `strokes` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)';
     sql +=    'VALUES(?, ?, ?, ?, ?, ?)';
-    await dbh.query(sql, [
+    const result = await dbh.query(sql, [
       room.id,
       ctx.request.body.width,
       ctx.request.body.red,
@@ -275,8 +273,7 @@ router.post('/api/strokes/rooms/:id', async (ctx, next) => {
       ctx.request.body.blue,
       ctx.request.body.alpha
     ]);
-    let strokeId = await dbh.query('SELECT LAST_INSERT_ID() AS lastInsertId');
-    strokeId = strokeId.lastInsertId;
+    let strokeId = result.insertId;
 
     sql = 'INSERT INTO `points` (`stroke_id`, `x`, `y`) VALUES (?, ?, ?)';
     for (let point of ctx.request.body.points) {
