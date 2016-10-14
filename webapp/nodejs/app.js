@@ -11,13 +11,13 @@ import mysql from 'promise-mysql';
 
 const app = new Koa();
 
-const getDBH = () => {
+const getDBH = (ctx) => {
   const host = process.env.MYSQL_HOST || 'localhost';
   const port = process.env.MYSQL_PORT || '3306';
   const user = process.env.MYSQL_USER || 'root';
   const pass = process.env.MYSQL_PASS || '';
   const dbname = 'isuketch';
-  return mysql.createPool({
+  return ctx.dbh = mysql.createPool({
     host: host,
     port: port,
     user: user,
@@ -87,6 +87,14 @@ app.use(async (ctx, next) => {
   console.log(`[app] ${ctx.method} ${ctx.url} - ${ms}ms`);
 });
 
+app.use(async (ctx, next) => {
+  await next();
+  if (typeof ctx.dbh !== 'undefined') {
+    await ctx.dbh.end();
+    ctx.dbh = null;
+  }
+});
+
 app.on('error', (err, ctx) => {
   console.log(err)
   logger.error('server error', err, ctx);
@@ -94,7 +102,7 @@ app.on('error', (err, ctx) => {
 
 const router = new Router();
 router.post('/api/csrf_token', async (ctx, next) => {
-  const dbh = getDBH();
+  const dbh = getDBH(ctx);
 
   let sql = 'INSERT INTO `tokens` (`csrf_token`) VALUES (SHA2(CONCAT(RAND(), UUID_SHORT()), 256))';
   await dbh.query(sql);
@@ -109,7 +117,7 @@ router.post('/api/csrf_token', async (ctx, next) => {
 });
 
 router.get('/api/rooms', async (ctx, next) => {
-  const dbh = getDBH();
+  const dbh = getDBH(ctx);
   const sql = 'SELECT `room_id`, MAX(`id`) AS `max_id` FROM `strokes` GROUP BY `room_id` ORDER BY `max_id` DESC LIMIT 100';
   const results = await selectAll(dbh, sql);
   const rooms = [];
@@ -125,7 +133,7 @@ router.get('/api/rooms', async (ctx, next) => {
 });
 
 router.post('/api/rooms', async (ctx, next) => {
-  const dbh = getDBH();
+  const dbh = getDBH(ctx);
 
   let token = null;
   try {
@@ -180,7 +188,7 @@ router.post('/api/rooms', async (ctx, next) => {
 });
 
 router.get('/api/rooms/:id', async (ctx, next) => {
-  const dbh = getDBH();
+  const dbh = getDBH(ctx);
 
   const room = await getRoom(dbh, ctx.params.id);
   if (room === undefined) {
@@ -207,7 +215,7 @@ router.get('/api/rooms/:id', async (ctx, next) => {
 });
 
 router.post('/api/strokes/rooms/:id', async (ctx, next) => {
-  const dbh = await getDBH();
+  const dbh = await getDBH(ctx);
 
   let token;
   try {
