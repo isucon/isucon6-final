@@ -90,8 +90,8 @@ module Isuketch
         {
           id: point[:id].to_i,
           stroke_id: point[:stroke_id].to_i,
-          x: point[:x].to_i,
-          y: point[:y].to_i,
+          x: point[:x].to_f,
+          y: point[:y].to_f,
         }
       end
 
