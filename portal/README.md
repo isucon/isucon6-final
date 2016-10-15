@@ -47,17 +47,13 @@ Host isucon6f-portal
 
 ```
 mysql -uroot -e 'DROP DATABASE IF EXISTS isu6fportal_day0;'
-mysql -uroot -e 'DROP DATABASE IF EXISTS isu6fportal_day1;'
 mysql -uroot -e 'CREATE DATABASE isu6fportal_day0;'
-mysql -uroot -e 'CREATE DATABASE isu6fportal_day1;'
 mysql -uroot -Disu6fportal_day0 < db/schema.sql
 mysql -uroot -Disu6fportal_day1 < db/schema.sql
-echo -n "" | go run cmd/importteams/main.go -dsn-base="root:@"
-mysql -uroot -Disu6fportal_day0 -e 'INSERT INTO setting (name, json) VALUES ("day", "0")'
-mysql -uroot -Disu6fportal_day1 -e 'INSERT INTO setting (name, json) VALUES ("day", "1")'
+cat data/teams.tsv | go run cmd/importteams/main.go -dsn-base="root:@"
 ```
 
-これでday0に26チームぶんのダミーデータと運営のデータが入る。
+これでチームデータと運営のデータが入るので、以下のコマンドでポータルを起動。
 
 ```
 make
