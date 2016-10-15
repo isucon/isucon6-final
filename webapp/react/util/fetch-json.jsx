@@ -5,8 +5,8 @@ export default function fetchJson(...args) {
     .then((response) => {
       const contentType = response.headers.get('content-type');
       if (!contentType || contentType.indexOf('application/json') === -1) {
-        return response.text().catch((text) => {
-          console.error(text);
+        return response.text().catch(() => {
+          // console.error(text);
           throw new Error('サーバーエラー');
         });
       }
