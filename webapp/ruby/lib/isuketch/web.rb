@@ -7,6 +7,8 @@ require 'sinatra/base'
 
 module Isuketch
   class Web < ::Sinatra::Base
+    JSON.load_default_options[:symbolize_names] = true
+
     helpers do
       def db
         Thread.current[:db] ||=
@@ -168,8 +170,8 @@ module Isuketch
         ))
       end
 
-      posted_room = JSON.parse(request.body)
-      if (posted_room['name'] || '').empty? || (posted_room['canvas_width'] || '').empty? || (posted_room['canvas_height'] || '').empty?
+      posted_room = JSON.load(request.body)
+      if (posted_room[:name] || '').empty? || (posted_room[:canvas_width] || '').empty? || (posted_room[:canvas_height] || '').empty?
         halt(400, {'Content-Type' => 'application/json'}, JSON.generate(
           error: 'リクエストが正しくありません。'
         ))
