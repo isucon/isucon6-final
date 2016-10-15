@@ -9,6 +9,8 @@ module Isuketch
   class Web < ::Sinatra::Base
     JSON.load_default_options[:symbolize_names] = true
 
+    set :protection, except: [:json_csrf]
+
     helpers do
       def db
         Thread.current[:db] ||=
