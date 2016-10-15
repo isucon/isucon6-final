@@ -44,7 +44,7 @@ func StrokeReflectedToTop(origins []string) {
 			fmt.Errorf("should be %s < %s < %s", t1.Format("2006-01-02-15:04:05.000"), room.CreatedAt.Format("2006-01-02-15:04:05.000"), t2.Format("2006-01-02-15:04:05.000")))
 	}
 
-	seedStrokes := seed.GetStrokes("ramen")
+	seedStrokes := seed.GetStrokes("stool")
 	seedStroke := seed.FluctuateStroke(seedStrokes[0])
 	stroke, ok := drawStroke(s1, token, room.ID, seedStroke)
 	if !ok {
