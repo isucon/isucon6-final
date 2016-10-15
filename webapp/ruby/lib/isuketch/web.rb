@@ -193,7 +193,7 @@ module Isuketch
           (`name`, `canvas_width`, `canvas_height`)
           VALUES
           (?, ?, ?)
-        |, posted_room['name'], posted_room['canvas_width'], posted_room['canvas_height'])
+        |, posted_room[:name], posted_room[:canvas_width], posted_room[:canvas_height])
         room_id = db.last_id
 
         db.xquery(%|
