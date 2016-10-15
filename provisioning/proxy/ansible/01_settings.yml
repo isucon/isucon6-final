@@ -115,4 +115,4 @@
     - name: reload sysctl conf
       command: sysctl -p
   vars:
-    portal_private_ip: 10.6.1.13
+    portal_private_ip: 10.6.1.19
