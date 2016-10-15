@@ -10,7 +10,7 @@
 
 ### proxy
 
-`provisioning/proxy/ansible/01_settings.yml`の`vars`の`portal_private_ip`をportalのprivate ipにする。これをしないとセットアップに失敗する。
+`provisioning/external_vars.yml`の`portal_private_ip`をportalのprivate ipにする。これをしないとセットアップに失敗する。
 
 `provisioning/proxy`ディレクトリ以下で、以下のような`prodution`というファイル名のものを作る。`~/.ssh/config`を作る必要があるのと、__azure上でVMを作る際に名前にproxyという名前が含まれている必要がある（重要）__。
 

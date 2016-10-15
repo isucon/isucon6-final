@@ -53,6 +53,7 @@
         "osProfile": {
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[variables('adminUsername')]",
+          "customData": "IyEvYmluL3NoCiMgaW5pdCBzY3JpcHQgZm9yIGlzdWNvbjYtcXVhbGlmaWVyCgpzZXQgLWV4CmN1cmwgaHR0cHM6Ly9naXRodWIuY29tL3tTb25nbXUsbW90ZW1lbix0YXRzdXJ1LGVkdmFrZixjYXRhdHN1eSx3YWxmNDQzLHN0LWN5cmlsbCxteWZpbmRlcixhZXJlYWwsdGFyYW8seXV1a2l9LmtleXMgPj4gL2hvbWUvaXN1Y29uLy5zc2gvYXV0aG9yaXplZF9rZXlzCg==",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
