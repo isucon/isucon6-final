@@ -48,8 +48,8 @@ const typeCastPointData = (data) => {
   };
 };
 
-const toRFC3339Micro = (data) => {
-  return data;
+const toRFC3339Micro = (date) => {
+  return date.toISOString();
 };
 
 const typeCastStrokeData = (data) => {
