@@ -7,7 +7,7 @@ ISUCON6 本選ポータルサイトです。
 どの日も同じアカウントで入れます。
 
 - ID: 9999
-- PASS: `FCedmJpLcF7DByju`
+- PASS: `Btw5R5fskVvXOzT`
 
 他のチームと同様の扱いでログインできます。
 
