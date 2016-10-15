@@ -9,6 +9,8 @@ import json from 'koa-json';
 
 import mysql from 'promise-mysql';
 
+import sse from './sse';
+
 const app = new Koa();
 
 const getDBH = (ctx) => {
@@ -51,7 +53,7 @@ const checkToken = async (dbh, csrfToken) => {
 
 const getStrokePoints = async (dbh, strokeId) => {
   const sql = 'SELECT `id`, `stroke_id`, `x`, `y` FROM `points` WHERE `stroke_id` = ? ORDER BY `id` ASC';
-  return await dbh.query(sql, [strokeId]);
+  return await selectAll(dbh, sql, [strokeId]);
 };
 
 const getStrokes = async (dbh, roomId, greaterThanId) => {
@@ -210,6 +212,88 @@ router.get('/api/rooms/:id', async (ctx, next) => {
   ctx.body = {
     room: room,
   };
+});
+
+router.get('/api/stream/rooms/:id', async (ctx, next) => {
+  ctx.type = 'text/event-stream';
+  ctx.req.setTimeout(Number.MAX_VALUE);
+  ctx.body = new sse();
+
+  const dbh = await getDBH(ctx);
+  let token;
+  try {
+    token = await checkToken(dbh, ctx.query.csrf_token);
+  } catch (e) {
+    if (e instanceof TokenException) {
+      ctx.body.write(
+        "event:bad_request\n" +
+        "data:トークンエラー。ページを再読みこみしてください。\n\n");
+      ctx.body.end();
+      return;
+    } else {
+      throw e;
+    }
+  }
+
+  const room = await getRoom(dbh, ctx.params.id);
+  if ( typeof room === 'undefined' ) {
+    ctx.body.write("event:bad_request\n" +
+                   'data:この部屋は存在しません\n\n');
+    ctx.body.end();
+    return;
+  }
+
+  await updateRoomWatcher(dbh, room.id, token.id);
+  const watcherCount = await getWatcherCount(dbh, room.id);
+
+  ctx.body.write(
+    "retry:500\n\n" +
+    "event:watcher_count\n" +
+    `data:${watcherCount}\n\n`
+  );
+
+  let lastStrokeId = 0;
+  if (ctx.headers['last-event-id']) {
+    lastStrokeId = parseInt(ctx.headers['last-event-id']);
+  }
+
+  await new Promise((resolve, reject) => {
+    let loop = 6;
+    const interval = async () => {
+      try {
+        loop--;
+        const strokes = await getStrokes(dbh, room.id, lastStrokeId);
+        for (const stroke of strokes) {
+          await getStrokePoints(dbh, stroke.id);
+          // ctx.body.write(stroke);
+          ctx.body.write(
+            `id:${stroke.id}\n\n` +
+            "event:stroke\n" +
+            `data:${JSON.stringify(stroke)}\n\n`
+          );
+          lastStrokeId = stroke.id;
+        }
+
+        await updateRoomWatcher(dbh, room.id, token.id);
+        const newWatcherCount = await getWatcherCount(dbh, room.id);
+        if (newWatcherCount !== watcherCount) {
+          watcherCount = newWatcherCount;
+          ctx.body.write(watcherCount);
+        }
+
+        if ( loop === 0 ) {
+          resolve();
+        } else {
+          intervalId = setTimeout(interval, 500);
+        }
+      } catch(e) {
+        console.error(e);
+        reject(e);
+      }
+    };
+    let intervalId = setTimeout(interval, 500);
+  });
+  ctx.body.end();
 });
 
 router.post('/api/strokes/rooms/:id', async (ctx, next) => {
