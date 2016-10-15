@@ -18,7 +18,7 @@
       {{range $score := .Ranking}}
         {{if (ne $score.Team.ID 9999) }}
           <tr {{if $.Team}}{{if (eq $score.Team.ID $.Team.ID)}}class="warning"{{end}}{{end}}>
-            <td>{{$score.Team.Name}}</td>
+            <td>{{if (eq "👼" $score.Team.Name)}}<img src="//cdn.jsdelivr.net/emojione/assets/png/1f607.png?v=2.2.6" style="width:1.5em;height:1.5em;" alt=":innocent:">{{else}}{{$score.Team.Name}}{{end}}</td>
             <td>{{$score.Latest}}</td>
             <td>{{$score.At}}</td>
           </tr>
