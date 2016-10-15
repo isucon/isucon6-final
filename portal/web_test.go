@@ -66,7 +66,7 @@ func TestLogin(t *testing.T) {
 	jar, _ := cookiejar.New(nil)
 	cli := &http.Client{Jar: jar}
 
-	resp, err = cli.PostForm(s.URL+"/login", url.Values{"team_id": {"1026"}, "password": {"dummy-pass-26"}})
+	resp, err = cli.PostForm(s.URL+"/login", url.Values{"team_id": {"26"}, "password": {"p6aYuUempoticryg"}})
 	require.NoError(t, err)
 	require.Equal(t, "/", resp.Request.URL.Path)
 }
@@ -104,13 +104,13 @@ func benchPostResult(bench *testHTTPClient, j *job.Job, output *job.Output) {
 	require.Equal(bench.T, http.StatusOK, resp.StatusCode)
 }
 
-func cliLogin(cli *testHTTPClient, teamID int) {
+func cliLogin(cli *testHTTPClient, teamID int, password string) {
 	resp := cli.Must(
 		cli.PostForm(
 			s.URL+"/login",
 			url.Values{
 				"team_id":  {fmt.Sprint(teamID)},
-				"password": {fmt.Sprintf("dummy-pass-%d", teamID-1000)},
+				"password": {password},
 			},
 		),
 	)
@@ -127,7 +127,7 @@ func TestPostJob(t *testing.T) {
 	var resp *http.Response
 
 	// cli: ログイン
-	resp = cli.Must(cli.PostForm(s.URL+"/login", url.Values{"team_id": {"1026"}, "password": {"dummy-pass-26"}}))
+	resp = cli.Must(cli.PostForm(s.URL+"/login", url.Values{"team_id": {"26"}, "password": {"p6aYuUempoticryg"}}))
 	require.Equal(t, "/", resp.Request.URL.Path)
 
 	// bench: ジョブ取る
@@ -144,12 +144,12 @@ func TestPostJob(t *testing.T) {
 
 	// cli: ジョブ入れる
 	resp = cli.Must(cli.PostForm(s.URL+"/queue", nil))
-	assert.Contains(t, readAll(resp.Body), `<span class="label label-default">1026*</span>`, "ジョブ入った表示")
+	assert.Contains(t, readAll(resp.Body), `<span class="label label-default">26*</span>`, "ジョブ入った表示")
 
 	// cli2: ログイン
-	resp = cli2.Must(cli2.PostForm(s.URL+"/login", url.Values{"team_id": {"1005"}, "password": {"dummy-pass-5"}}))
+	resp = cli2.Must(cli2.PostForm(s.URL+"/login", url.Values{"team_id": {"5"}, "password": {"Y7i06XOllyJI5ogn"}}))
 	require.Equal(t, "/", resp.Request.URL.Path)
-	assert.Contains(t, readAll(resp.Body), `<span class="label label-default">1026</span>`, "他人のジョブ入った表示")
+	assert.Contains(t, readAll(resp.Body), `<span class="label label-default">26</span>`, "他人のジョブ入った表示")
 
 	// bench: ジョブ取る
 	j := benchGetJob(bench)
@@ -164,7 +164,7 @@ func TestPostJob(t *testing.T) {
 
 	// cli2: ジョブ入れる → 入る
 	resp = cli2.Must(cli2.PostForm(s.URL+"/queue", nil))
-	assert.Contains(t, readAll(resp.Body), `<span class="label label-default">1005*</span>`, "ジョブ入った表示")
+	assert.Contains(t, readAll(resp.Body), `<span class="label label-default">5*</span>`, "ジョブ入った表示")
 
 	// bench: ジョブ取る → 放置
 	j2 := benchGetJob(bench)
@@ -172,7 +172,7 @@ func TestPostJob(t *testing.T) {
 
 	// cli: トップリロード
 	resp = cli.Must(cli.Get(s.URL + "/"))
-	assert.Contains(t, readAll(resp.Body), `<span class="label label-success">1026*</span>`, "ジョブ実行中の表示")
+	assert.Contains(t, readAll(resp.Body), `<span class="label label-success">26*</span>`, "ジョブ実行中の表示")
 
 	// bench: 結果入れる
 	benchPostResult(bench, j, &job.Output{Pass: false, Score: 5000})
@@ -200,8 +200,8 @@ func TestPostJob(t *testing.T) {
 	require.Contains(t, body, `<th>Status</th><td>PASS</td>`)
 	require.Contains(t, body, `<th>Score</th><td>3000</td>`)
 	require.Contains(t, body, `<th>Best</th><td>3000</td>`)
-	require.Regexp(t, `<td>ダミーチーム26</td>\s*<td>3000</td>`, body)
-	require.NotContains(t, body, "ダミーチーム5")
+	require.Regexp(t, `<td>RUDT</td>\s*<td>3000</td>`, body)
+	require.NotContains(t, body, "流れ弾")
 
 	// bench: 結果入れる
 	benchPostResult(bench, j2, &job.Output{Pass: true, Score: 4500})
@@ -211,12 +211,12 @@ func TestPostJob(t *testing.T) {
 	require.Contains(t, body, `<th>Status</th><td>PASS</td>`)
 	require.Contains(t, body, `<th>Score</th><td>4500</td>`)
 	require.Contains(t, body, `<th>Best</th><td>4500</td>`)
-	require.Regexp(t, `<td>ダミーチーム5</td>\s*<td>4500</td>(?s:.*)<td>ダミーチーム26</td>\s*<td>3000</td>`, body)
+	require.Regexp(t, `<td>流れ弾</td>\s*<td>4500</td>(?s:.*)<td>RUDT</td>\s*<td>3000</td>`, body)
 }
 
 func TestPostJobNotWithinContestTime(t *testing.T) {
 	cli := newTestClient(t)
-	cliLogin(cli, 1010)
+	cliLogin(cli, 10, "3svumTo3amDShlFy")
 
 	var resp *http.Response
 
@@ -236,7 +236,7 @@ func TestPostJobNotWithinContestTime(t *testing.T) {
 func TestUpdateTeam(t *testing.T) {
 	cli := newTestClient(t)
 	admin := newTestClient(t)
-	cliLogin(cli, 1011)
+	cliLogin(cli, 11, "L6KZ7UJyAEtpVr9G")
 
 	resp := cli.Must(cli.PostForm(s.URL+"/team", url.Values{"instance_name": {"xxxxxx"}, "ip_address": {"0.0.0.0"}}))
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
@@ -252,8 +252,8 @@ func TestUpdateTeam(t *testing.T) {
 	resp = admin.Must(admin.Get(s.URL + "/mBGWHqBVEjUSKpBF/proxy/nginx.conf"))
 	require.Equal(t, http.StatusOK, resp.StatusCode)
 	body = readAll(resp.Body)
-	assert.Contains(t, body, `# team1011`)
-	assert.Contains(t, body, `listen 11011;`)
+	assert.Contains(t, body, `# team11`)
+	assert.Contains(t, body, `listen 10011;`)
 	assert.Contains(t, body, `proxy_pass 0.0.0.0;`)
 }
 
@@ -261,15 +261,16 @@ func TestUpdateProxies(t *testing.T) {
 	cli := newTestClient(t)
 	bench := newTestClient(t)
 	admin := newTestClient(t)
-	cliLogin(cli, 1012)
+	cliLogin(cli, 12, "YJUaDANoex8Y6MB")
 
 	// proxyのIP一覧を入れる
-	nodes := `[{"Name":"portal","Addr":"192.168.0.10"},{"Name":"isu-proxy-1","Addr":"192.168.0.11"},{"Name":"isu-proxy-2","Addr":"192.168.0.12"}]`
+	nodes := `[{"Name":"portal","Addr":"192.168.0.10","Status":1},{"Name":"isu-proxy-1","Addr":"192.168.0.11","Status":1},{"Name":"isu-proxy-2","Addr":"192.168.0.12","Status":1},{"Name":"isu-proxy-3","Addr":"192.168.0.13","Status":0}]`
 	resp := admin.Must(admin.Post(s.URL+"/mBGWHqBVEjUSKpBF/proxy/update", "application/json", bytes.NewBuffer([]byte(nodes))))
 	body := readAll(resp.Body)
 	assert.NotContains(t, body, `192.168.0.10`, "portalのIP")
 	assert.Contains(t, body, `192.168.0.11`, "proxy-1のIP")
 	assert.Contains(t, body, `192.168.0.12`, "proxy-2のIP")
+	assert.NotContains(t, body, `192.168.0.13`, "proxy-3のIP")
 
 	// cli: IP入れる
 	resp = cli.Must(cli.PostForm(s.URL+"/team", url.Values{"ip_address": {"127.0.0.1"}, "instance_name": {""}}))
@@ -279,7 +280,8 @@ func TestUpdateProxies(t *testing.T) {
 
 	// bench: ジョブ取る
 	j := benchGetJob(bench)
-	require.Equal(t, 1012, j.TeamID)
-	assert.Contains(t, j.URLs, `https://192.168.0.11:11012`, "proxy-1のIP")
-	assert.Contains(t, j.URLs, `https://192.168.0.12:11012`, "proxy-2のIP")
+	require.Equal(t, 12, j.TeamID)
+	assert.Contains(t, j.URLs, `https://192.168.0.11:10012`, "proxy-1のIP")
+	assert.Contains(t, j.URLs, `https://192.168.0.12:10012`, "proxy-2のIP")
+	assert.NotContains(t, j.URLs, `https://192.168.0.13:10012`, "proxy-3のIP")
 }
