@@ -110,14 +110,13 @@ module Isuketch
         |, stroke_id)
       end
 
-      def get_watcher_count(room_id, greater_than_id)
+      def get_watcher_count(room_id)
         db.xquery(%|
-          SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at`
-          FROM `strokes`
+          SELECT COUNT(*) AS `watcher_count`
+          FROM `room_watchers`
           WHERE `room_id` = ?
-            AND `id` > ?
-          ORDER BY `id` ASC;
-        |, room_id, greater_than_id)
+            AND `updated_at` > CURRENT_TIMESTAMP(6) - INTERVAL 3 SECOND
+        |, room_id).first[:watcher_count].to_i
       end
     end
 
