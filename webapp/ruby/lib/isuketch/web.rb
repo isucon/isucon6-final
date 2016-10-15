@@ -142,7 +142,7 @@ module Isuketch
       )
     end
 
-    get '/api/room' do
+    get '/api/rooms' do
       results = db.xquery(%|
         SELECT `room_id`, MAX(`id`) AS `max_id`
         FROM `strokes`
