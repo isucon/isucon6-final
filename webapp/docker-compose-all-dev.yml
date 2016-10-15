@@ -69,6 +69,26 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
+  nodejs_dev:
+    build:
+      context: ./nodejs
+      dockerfile: Dockerfile-dev
+    volumes:
+      - ./nodejs:/app
+      - /app/node_modules
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      PORT: 80
+      ISUCON_ENV: development
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
+    ports:
+      - "80:80"
   react_go_dev:
     extends:
       file: docker-compose-react.yml
@@ -117,3 +137,15 @@ services:
       API: http://php_dev:80
     ports:
       - "10004:443"
+  react_nodejs_dev:
+    extends:
+      file: docker-compose-react.yml
+      service: react_dev
+    depends_on:
+      - nodejs_dev
+    links:
+      - nodejs_dev
+    environment:
+      API: http://nodejs_dev:80
+    ports:
+      - "10005:443"

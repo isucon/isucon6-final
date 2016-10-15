@@ -4,12 +4,12 @@ services:
     extends:
       file: docker-compose-mysql.yml
       service: mysql
-  nodejs:
+  nodejs_dev:
     build:
       context: ./nodejs
       dockerfile: Dockerfile-dev
     volumes:
-      - ./nodejs/:/app
+      - ./nodejs:/app
       - /app/node_modules
     depends_on:
       - mysql
@@ -24,15 +24,15 @@ services:
       MYSQL_PASS: isucon
     ports:
       - "80:80"
-  react_dev_nodejs:
+  react_dev:
     extends:
       file: docker-compose-react.yml
       service: react_dev
     depends_on:
-      - nodejs
+      - nodejs_dev
     links:
-      - nodejs
+      - nodejs_dev
     environment:
-      API: http://nodejs:80
+      API: http://nodejs_dev:80
     ports:
       - "443:443"

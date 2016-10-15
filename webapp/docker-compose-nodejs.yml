@@ -8,9 +8,6 @@ services:
     build:
       context: ./nodejs
       dockerfile: Dockerfile
-    volumes:
-      - ./nodejs/:/app
-      - /app/node_modules
     depends_on:
       - mysql
     links:

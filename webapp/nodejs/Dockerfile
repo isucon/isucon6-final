@@ -9,7 +9,9 @@ WORKDIR /app
 RUN npm install -g nodemon
 
 # キャッシュ効率を上げるためにまずpackage.jsonだけcopyしてnpm installする
-COPY ./package.json /app/
+COPY ./package.json /app
 RUN npm install && npm cache clean
+
+COPY . /app
 
 CMD ["/app/bin/run"]

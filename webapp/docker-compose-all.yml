@@ -50,14 +50,27 @@ services:
     build:
       context: ./php
       dockerfile: Dockerfile
-    volumes:
-      - ./php/html:/var/www/html:ro
     depends_on:
       - mysql
     links:
       - mysql
     environment:
       ISUCON_ENV: production
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
+  nodejs:
+    build:
+      context: ./nodejs
+      dockerfile: Dockerfile
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      ISUCON_ENV: production
+      PORT: 80
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
@@ -110,3 +123,15 @@ services:
       API: http://php:80
     ports:
       - "10004:443"
+  react_nodejs:
+    extends:
+      file: docker-compose-react.yml
+      service: react
+    depends_on:
+      - nodejs
+    links:
+      - nodejs
+    environment:
+      API: http://nodejs:80
+    ports:
+      - "10005:443"
