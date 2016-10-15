@@ -206,7 +206,7 @@ module Isuketch
         |, room_id, token[:id])
       rescue
         db.xquery(%|ROLLBACK|)
-        halt(500, ['Content-Type'], JSON.generate(
+        halt(500, {'Content-Type' => 'application/json'}, JSON.generate(
           error: 'エラーが発生しました。'
         ))
       else
@@ -223,7 +223,7 @@ module Isuketch
     get '/api/rooms/:id' do |id|
       room = get_room(id)
       unless room
-        halt(404, ['Content-Type'], JSON.generate(
+        halt(404, {'Content-Type' => 'application/json'}, JSON.generate(
           error: 'この部屋は存在しません。'
         ))
       end
@@ -251,7 +251,7 @@ module Isuketch
 
       room = get_room(id)
       unless room
-        halt(404, ['Content-Type'], JSON.generate(
+        halt(404, {'Content-Type' => 'application/json'}, JSON.generate(
           error: 'この部屋は存在しません。'
         ))
       end
