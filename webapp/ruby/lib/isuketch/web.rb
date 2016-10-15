@@ -296,18 +296,19 @@ module Isuketch
       else
         db.xquery(%| COMMIT |)
       end
+
+      stroke = db.xquery(%|
+        SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at`
+        FROM `strokes`
+        WHERE `id`= ?
+      |, stroke_id)
+      stroke[:points] = get_stroke_points(stroke_id)
+
+      content_type :json
+      JSON.generate(
+        stroke: to_stroke_json(stroke)
+      )
     end
 
-    stroke = db.xquery(%|
-      SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at`
-      FROM `strokes`
-      WHERE `id`= ?
-    |, stroke_id)
-    stroke[:points] = get_stroke_points(stroke_id)
-
-    content_type :json
-    JSON.generate(
-      stroke: to_stroke_json(stroke)
-    )
   end
 end
