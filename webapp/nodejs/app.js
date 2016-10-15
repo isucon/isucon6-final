@@ -39,6 +39,46 @@ const selectAll = async (dbh, sql, params = []) => {
   return await dbh.query(sql, params);
 };
 
+const typeCastPointData = (data) => {
+  return {
+    id: data.id,
+    stroke_id: data.stroke_id,
+    x: data.x,
+    y: data.y,
+  };
+};
+
+const toRFC3339Micro = (data) => {
+  return data;
+};
+
+const typeCastStrokeData = (data) => {
+  return {
+    id: data.id,
+    room_id: data.room_id,
+    width: data.width,
+    red: data.red,
+    green: data.green,
+    blue: data.blue,
+    alpha: data.alpha,
+    points: typeof(data.points) !== 'undefined' ? data.points.map(typeCastPointData) : [],
+    created_at: typeof(data.created_at) !== 'undefined' ? toRFC3339Micro(data.created_at) : '',
+  };
+};
+
+const typeCastRoomData = (data) => {
+  return {
+    id: data.id,
+    name: data.name,
+    canvas_width: data.canvas_width,
+    canvas_height: data.canvas_height,
+    created_at: typeof(data.created_at) !== 'undefined' ? toRFC3339Micro(data.created_at) : '',
+    strokes: typeof(data.strokes) !== 'undefined' ? data.strokes.map(typeCastStrokeData) : [],
+    stroke_count: data.stroke_count,
+    watcher_count: data.watcher_count,
+  };
+};
+
 class TokenException {};
 
 const checkToken = async (dbh, csrfToken) => {
@@ -132,7 +172,7 @@ router.get('/api/rooms', async (ctx, next) => {
     rooms.push(room);
   }
   ctx.body = {
-    rooms: rooms
+    rooms: rooms.map(typeCastRoomData)
   };
 });
 
@@ -186,7 +226,7 @@ router.post('/api/rooms', async (ctx, next) => {
 
   const room = await getRoom(dbh, roomId);
   ctx.body = {
-    room: room,
+    room: typeCastRoomData(room),
   };
 });
 
@@ -213,7 +253,7 @@ router.get('/api/rooms/:id', async (ctx, next) => {
   room['watcher_count'] = await getWatcherCount(dbh, room['id']);
 
   ctx.body = {
-    room: room,
+    room: typeCastRoomData(room),
   };
 });
 
@@ -271,7 +311,7 @@ router.get('/api/stream/rooms/:id', async (ctx, next) => {
           ctx.body.write(
             `id:${stroke.id}\n\n` +
             "event:stroke\n" +
-            `data:${JSON.stringify(stroke)}\n\n`
+            `data:${JSON.stringify(typeCastStrokeData(stroke))}\n\n`
           );
           lastStrokeId = stroke.id;
         }
@@ -384,7 +424,7 @@ router.post('/api/strokes/rooms/:id', async (ctx, next) => {
   const stroke = await selectOne(dbh, sql, [strokeId]);
   stroke.points = await getStrokePoints(dbh, strokeId);
   ctx.body = {
-    stroke: stroke
+    stroke: typeCastStrokeData(stroke)
   };
 
 });
