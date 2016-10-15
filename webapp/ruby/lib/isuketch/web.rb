@@ -322,6 +322,7 @@ module Isuketch
     get '/api/stream/rooms/:id', provides: 'text/event-stream' do |id|
       stream do |writer|
         token = check_token(request.params['HTTP_X_CSRF_TOKEN'])
+        token = check_token(request.params['csrf_token'])
         unless token
           logger.warn("---> mismatched token")
           writer << ("event:bad_request\n" + "data:トークンエラー。ページを再読み込みしてください。\n\n")
