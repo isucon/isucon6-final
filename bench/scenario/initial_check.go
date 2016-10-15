@@ -18,6 +18,8 @@ import (
 	"github.com/catatsuy/isucon6-final/bench/session"
 )
 
+const TIME_FORMAT = "2006-01-02 15:04:05.000000"
+
 // 部屋を作って線を描くとトップページに出てくる & 線がSVGに反映される
 func StrokeReflectedToTop(origins []string) {
 	s1 := session.New(randomOrigin(origins))
@@ -41,7 +43,10 @@ func StrokeReflectedToTop(origins []string) {
 	t2 := time.Now()
 	if room.CreatedAt.After(t2) || room.CreatedAt.Before(t1) {
 		fails.Critical("作成した部屋のcreated_atが正しくありません",
-			fmt.Errorf("should be %s < %s < %s", t1.Format("2006-01-02-15:04:05.000"), room.CreatedAt.Format("2006-01-02-15:04:05.000"), t2.Format("2006-01-02-15:04:05.000")))
+			fmt.Errorf("should be %s < %s < %s",
+				t1.Format(TIME_FORMAT),
+				room.CreatedAt.Format(TIME_FORMAT),
+				t2.Format(TIME_FORMAT)))
 	}
 
 	seedStrokes := seed.GetStrokes("stool")
@@ -55,7 +60,10 @@ func StrokeReflectedToTop(origins []string) {
 	t3 := time.Now()
 	if stroke.CreatedAt.After(t3) || stroke.CreatedAt.Before(t2) {
 		fails.Critical("作成した部屋のcreated_atが正しくありません",
-			fmt.Errorf("should be %s < %s < %s", t2.Format("2006-01-02-15:04:05.000"), stroke.CreatedAt.Format("2006-01-02-15:04:05.000"), t3.Format("2006-01-02-15:04:05.000")))
+			fmt.Errorf("should be %s < %s < %s",
+				t2.Format(TIME_FORMAT),
+				stroke.CreatedAt.Format(TIME_FORMAT),
+				t3.Format(TIME_FORMAT)))
 	}
 
 	// 描いた直後にトップページに表示される
