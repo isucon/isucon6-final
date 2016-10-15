@@ -117,7 +117,7 @@ const getWatcherCount = async (dbh, roomId) => {
 const updateRoomWatcher = async (dbh, roomId, tokenId) => {
   let sql = 'INSERT INTO `room_watchers` (`room_id`, `token_id`) VALUES (?, ?)';
   sql +=    'ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP(6)';
-  await selectOne(dbh, sql, [roomId, tokenId,]);
+  await dbh.query(sql, [roomId, tokenId]);
 };
 
 app.use(convert(bodyparser()));
@@ -234,7 +234,7 @@ router.get('/api/rooms/:id', async (ctx, next) => {
   const dbh = getDBH(ctx);
 
   const room = await getRoom(dbh, ctx.params.id);
-  if (room === undefined) {
+  if (typeof room === 'undefined') {
     ctx.status = 404;
     ctx.body = {
       error: 'この部屋は存在しません。',
@@ -280,8 +280,9 @@ router.get('/api/stream/rooms/:id', async (ctx, next) => {
 
   const room = await getRoom(dbh, ctx.params.id);
   if ( typeof room === 'undefined' ) {
-    ctx.body.write("event:bad_request\n" +
-                   'data:この部屋は存在しません\n\n');
+    ctx.body.write(
+      "event:bad_request\n" +
+      'data:この部屋は存在しません\n\n');
     ctx.body.end();
     return;
   }

@@ -22,7 +22,7 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
-  react_php:
+  react_nodejs:
     extends:
       file: docker-compose-react.yml
       service: react
