@@ -4,14 +4,16 @@
   become: yes
   become_user: isucon
   tasks:
+    - file:
+        path=/home/isucon/isucon6f/
+        state=directory
     - copy:
-        src=../../../bench/isucon6f/
-        dest=/home/isucon/isucon6f/
-    - file:
-        path=/home/isucon/isucon6f/bench
+        src=../../../bench/isucon6f/bench
+        dest=/home/isucon/isucon6f/bench
         mode=0755
-    - file:
-        path=/home/isucon/isucon6f/worker
+    - copy:
+        src=../../../bench/isucon6f/worker
+        dest=/home/isucon/isucon6f/worker
         mode=0755
 
 - hosts: all
@@ -19,6 +21,13 @@
   become: yes
   tasks:
     - name: bench (systemd)
-      copy: src=../files/etc/systemd/system/isucon6-worker.service dest=/etc/systemd/system/isucon6-worker.service owner=root mode=644
+      template:
+        src=../templates/isucon6-worker.service.j2
+        dest=/etc/systemd/system/isucon6-worker.service
+        owner=root
+        group=root
+        mode=644
     - name: enable bench worker
       service: name=isucon6-worker state=running enabled=true
+  vars_files:
+    - ../../external_vars.yml

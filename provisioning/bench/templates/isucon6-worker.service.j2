@@ -7,7 +7,7 @@ LimitNPROC=1006500
 
 WorkingDirectory=/home/isucon/
 
-ExecStart = /home/isucon/isucon6f/worker
+ExecStart = /home/isucon/isucon6f/worker -portal {{ portal_private_ip }}
 
 Restart   = always
 Type      = simple
