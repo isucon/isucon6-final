@@ -170,7 +170,7 @@ module Isuketch
       end
 
       posted_room = JSON.load(request.body)
-      if (posted_room[:name] || '').empty? || (posted_room[:canvas_width] || '').empty? || (posted_room[:canvas_height] || '').empty?
+      if (posted_room[:name] || '').empty? || !posted_room[:canvas_width] || !posted_room[:canvas_height]
         halt(400, {'Content-Type' => 'application/json'}, JSON.generate(
           error: 'リクエストが正しくありません。'
         ))
