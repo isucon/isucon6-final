@@ -90,6 +90,14 @@ module Isuketch
           y: point[:y].to_i,
         }
       end
+
+      def check_token(csrf_token)
+        db.xquery(%|
+          SELECT `id`, `csrf_token`, `created_at` FROM `tokens`
+          WHERE `csrf_token` = ?
+            AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY
+        |, csrf_token)
+      end
     end
 
     post '/api/csrf_token' do
@@ -130,6 +138,55 @@ module Isuketch
       content_type :json
       JSON.generate(
         rooms: rooms.map {|room| to_room_json(room) },
+      )
+    end
+
+    post '/api/rooms' do
+      token = check_token(request.env['HTTP_X_CSRF_TOKEN'])
+      unless token
+        halt(400, {'Content-Type' => 'application/json'}, JSON.generate(
+          error: 'トークンエラー。ページを再読み込みしてください。'
+        ))
+      end
+
+      posted_room = JSON.parse(request.body)
+      if (posted_room['name'] || '').empty? || (posted_room['canvas_width'] || '').empty? || (posted_room['canvas_height'] || '').empty?
+        halt(400, {'Content-Type' => 'application/json'}, JSON.generate(
+          error: 'リクエストが正しくありません。'
+        ))
+      end
+
+      room_id = nil
+      begin
+        db.xquery(%|BEGIN|)
+
+        db.xquery(%|
+          INSERT INTO `rooms`
+          (`name`, `canvas_width`, `canvas_height`)
+          VALUES
+          (?, ?, ?)
+        |, posted_room['name'], posted_room['canvas_width'], posted_room['canvas_height'])
+        room_id = db.last_id
+
+        db.xquery(%|
+          INSERT INTO `room_owners`
+          (`room_id`, `token_id`)
+          VALUES
+          (?, ?)
+        |, room_id, token[:id])
+      rescue
+        db.xquery(%|ROLLBACK|)
+        halt(500, ['Content-Type'], JSON.generate(
+          error: 'エラーが発生しました。'
+        ))
+      else
+        db.xquery(%|COMMIT|)
+      end
+
+      room = get_room(room_id)
+      content_type :json
+      JSON.generate(
+        room: to_room_json(room)
       )
     end
   end
