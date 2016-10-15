@@ -13,4 +13,4 @@ isucon6f: isucon6f/bench isucon6f/worker
 seed/bindata.go:
 	$(MAKE) -C seed
 
-.PHONY: local
+.PHONY: local seed/bindata.go
