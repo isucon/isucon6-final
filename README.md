@@ -55,13 +55,15 @@ npm install azure-cli -g
 
 ```
 azure login
+azure account list
+azure account set <ID>
 ```
 
 #### Portalデプロイ例
 
 ##### parameters.json
 
-```
+```json
 {
     "vmName":{
         "value": "isucon6f-ex-portal(change name if you want)"
