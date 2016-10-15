@@ -84,7 +84,7 @@ module Isuketch
           red: stroke[:red].to_i,
           green: stroke[:green].to_i,
           blue: stroke[:blue].to_i,
-          alpha: stroke[:alpha].to_i,
+          alpha: stroke[:alpha].to_f,
           points: (stroke[:points] ? stroke[:points].map {|point| to_point_json(point) } : []),
           created_at: (stroke[:created_at] ? to_rfc_3339(stroke[:created_at]) : ''),
         }
