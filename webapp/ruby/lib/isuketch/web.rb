@@ -98,6 +98,25 @@ module Isuketch
             AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY
         |, csrf_token)
       end
+
+      def get_stroke_points(stroke_id)
+        db.xquery(%|
+          SELECT `id`, `stroke_id`, `x`, `y`
+          FROM `points`
+          WHERE `stroke_id` = ?
+          ORDER BY `id` ASC
+        |, stroke_id)
+      end
+
+      def get_watcher_count(room_id, greater_than_id)
+        db.xquery(%|
+          SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at`
+          FROM `strokes`
+          WHERE `room_id` = ?
+            AND `id` > ?
+          ORDER BY `id` ASC;
+        |, room_id, greater_than_id)
+      end
     end
 
     post '/api/csrf_token' do
@@ -184,6 +203,27 @@ module Isuketch
       end
 
       room = get_room(room_id)
+      content_type :json
+      JSON.generate(
+        room: to_room_json(room)
+      )
+    end
+
+    get '/api/rooms/:id' do |id|
+      room = get_room(id)
+      unless room
+        halt(404, ['Content-Type'], JSON.generate(
+          error: 'この部屋は存在しません。'
+        ))
+      end
+
+      strokes = get_strokes(room[:id], 0)
+      strokes.each do |stroke|
+        stroke[:points] = get_stroke_points(stroke[:id])
+      end
+      room[:strokes] = strokes
+      room[:watcher_count] = get_watcher_count(room[:id])
+
       content_type :json
       JSON.generate(
         room: to_room_json(room)
