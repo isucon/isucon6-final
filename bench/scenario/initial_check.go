@@ -7,9 +7,9 @@ import (
 	"math"
 	"math/rand"
 	"strconv"
-	"time"
-
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/catatsuy/isucon6-final/bench/action"
@@ -239,6 +239,56 @@ func TopPageContent(origins []string) {
 				fmt.Errorf("data-reactidの数が一致しません (expected %d, actual %d)", expected, reactidNum))
 			return false
 		}
+
+		script := doc.Find("body script").First().Text()
+		if !strings.HasPrefix(script, "__ASYNC_PROPS__ = ") {
+			l.Critical("__ASYNC_PROPS__がありません", nil)
+			return false
+		}
+
+		var res []Response
+		err := json.Unmarshal([]byte(strings.TrimLeft(script, "__ASYNC_PROPS__ = ")), &res)
+		if err != nil {
+			l.Critical("__ASYNC_PROPS__が正しくありません", err)
+			return false
+		}
+		if len(res) != 1 {
+			l.Critical("__ASYNC_PROPS__が正しくありません", nil)
+			return false
+		}
+
+		if tok := doc.Find("html").AttrOr("data-csrf-token", ""); tok != res[0].CSRFToken {
+			l.Critical("__ASYNC_PROPS__が正しくありません",
+				fmt.Errorf("__ASYNC_PROPS__とcsrf_tokennが一致しない (%s, %s)", tok, res[0].CSRFToken))
+			return false
+		}
+
+		roomsMap := make(map[string]Room)
+		for _, room := range res[0].Rooms {
+			roomsMap[strconv.FormatInt(room.ID, 10)] = room
+		}
+
+		doc.Find(".room").Each(func(i int, sel *goquery.Selection) {
+			id, ok := sel.Attr("id")
+			if !ok {
+				fails.Critical("roomのidがありません", nil)
+				return
+			}
+
+			room, ok := roomsMap[id]
+			if !ok {
+				fails.Critical("トップページの内容が正しくありません",
+					fmt.Errorf("__ASYNC_PROPS__にある部屋IDがHTMLにない (%s)", id))
+				return
+			}
+
+			if cnt := sel.Find(".stroke_count").Text(); cnt != strconv.Itoa(room.StrokeCount) {
+				fails.Critical("トップページの内容が正しくありません",
+					fmt.Errorf("__ASYNC_PROPS__のstroke_countとHTMLが一致しない (%s, %d)", cnt, room.StrokeCount))
+				return
+			}
+		})
+
 		return true
 	}))
 }

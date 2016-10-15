@@ -3,11 +3,12 @@ package scenario
 import "time"
 
 type Response struct {
-	Error  string  `json:"error,omitempty"`
-	Room   *Room   `json:"room,omitempty"`
-	Rooms  []Room  `json:"rooms,omitempty"`
-	Stroke *Stroke `json:"stroke,omitempty"`
-	Token  string  `json:"token,omitempty"`
+	Error     string  `json:"error,omitempty"`
+	Room      *Room   `json:"room,omitempty"`
+	Rooms     []Room  `json:"rooms,omitempty"`
+	Stroke    *Stroke `json:"stroke,omitempty"`
+	Token     string  `json:"token,omitempty"`     // /api/csrf_tokenはこっち
+	CSRFToken string  `json:"csrfToken,omitempty"` // HTMLの__ASYNC_PROPS__はこっち
 }
 
 type Point struct {
