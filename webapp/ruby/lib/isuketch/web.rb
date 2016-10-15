@@ -39,7 +39,7 @@ module Isuketch
           SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at`
           FROM `rooms`
           WHERE `id` = ?
-        |, room_id)
+        |, room_id).first
       end
 
       def get_strokes(room_id, greater_than_id)
@@ -98,7 +98,7 @@ module Isuketch
           SELECT `id`, `csrf_token`, `created_at` FROM `tokens`
           WHERE `csrf_token` = ?
             AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY
-        |, csrf_token)
+        |, csrf_token).first
       end
 
       def get_stroke_points(stroke_id)
@@ -133,7 +133,7 @@ module Isuketch
         SELECT `id`, `csrf_token`, `created_at`
         FROM `tokens`
         WHERE `id` = ?
-      |, id)
+      |, id).first
 
       content_type :json
       JSON.generate(
@@ -260,7 +260,7 @@ module Isuketch
           SELECT COUNT(*) as cnt FROM `room_owners`
           WHERE `room_id` = ?
             AND `token_id` = ?
-        |, room[:id], token[:id])
+        |, room[:id], token[:id]).first[:cnt].to_i
         if count == 0
           halt(400, {'Content-Type' => 'application/json'}, JSON.generate(
             error: '他人の作成した部屋に1画目を描くことはできません'
@@ -301,7 +301,7 @@ module Isuketch
         SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at`
         FROM `strokes`
         WHERE `id`= ?
-      |, stroke_id)
+      |, stroke_id).first
       stroke[:points] = get_stroke_points(stroke_id)
 
       content_type :json
