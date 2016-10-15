@@ -36,9 +36,28 @@ const app = express();
 
 app.use(express.static('public'));
 
-app.use('/api/*', proxy({ target: apiBaseUrl, changeOrigin: true }));
+app.get('/api/stream/*', (req, res) => {
+  res.set({"Content-Type": "text/event-stream"});
+
+  let i = 0;
+  const t = setInterval(() => {
+    if (++i > 6) {
+      clearInterval(t);
+      return res.end();
+    }
+    res.write(`
+event:stroke
+data:{"id":40960,"room_id":1000,"width":17,"red":110,"green":132,"blue":100,"alpha":0.8,"created_at":"2016-10-22T11:22:40.660755Z","points":[]}
+
+`);
+  }, 500);
+});
+
+//app.use('/api/*', proxy({ target: apiBaseUrl, changeOrigin: true }));
 
 app.get('/img/:id', (req, res) => {
+  return res.send('img');
+
   fetchJson(`${apiBaseUrl}/api/rooms/${req.params.id}`)
     .then((json) => {
       const svg = renderToStaticMarkup(
@@ -61,6 +80,8 @@ app.get('/img/:id', (req, res) => {
 });
 
 app.get('*', (req, res) => {
+  return res.send('hoge');
+
   // https://github.com/reactjs/react-router/blob/master/docs/guides/ServerRendering.md
   match({ routes, location: req.url }, (err, redirectLocation, renderProps) => {
     if (err) {
