@@ -74,7 +74,10 @@ const getWatcherCount = async (dbh, roomId) => {
   return result['watcher_count'];
 };
 
-const updateRoomWatcher = async () => {
+const updateRoomWatcher = async (dbh, roomId, tokenId) => {
+  let sql = 'INSERT INTO `room_watchers` (`room_id`, `token_id`) VALUES (?, ?)';
+  sql +=    'ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP(6)';
+  await selectOne(dbh, sql, [roomId, tokenId,]);
 };
 
 app.use(convert(bodyparser()));
@@ -244,7 +247,7 @@ router.get('/api/stream/rooms/:id', async (ctx, next) => {
   }
 
   await updateRoomWatcher(dbh, room.id, token.id);
-  const watcherCount = await getWatcherCount(dbh, room.id);
+  let watcherCount = await getWatcherCount(dbh, room.id);
 
   ctx.body.write(
     "retry:500\n\n" +
@@ -265,7 +268,6 @@ router.get('/api/stream/rooms/:id', async (ctx, next) => {
         const strokes = await getStrokes(dbh, room.id, lastStrokeId);
         for (const stroke of strokes) {
           await getStrokePoints(dbh, stroke.id);
-          // ctx.body.write(stroke);
           ctx.body.write(
             `id:${stroke.id}\n\n` +
             "event:stroke\n" +
@@ -278,7 +280,10 @@ router.get('/api/stream/rooms/:id', async (ctx, next) => {
         const newWatcherCount = await getWatcherCount(dbh, room.id);
         if (newWatcherCount !== watcherCount) {
           watcherCount = newWatcherCount;
-          ctx.body.write(watcherCount);
+          ctx.body.write(
+            "event:watcher_count\n" +
+            `data:${watcherCount}\n\n`
+          );
         }
 
         if ( loop === 0 ) {
