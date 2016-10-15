@@ -11,6 +11,11 @@ module Isuketch
 
     set :protection, except: [:json_csrf]
 
+    configure :development do
+      require 'sinatra/reloader'
+      register Sinatra::Reloader
+    end
+
     helpers do
       def db
         Thread.current[:db] ||=

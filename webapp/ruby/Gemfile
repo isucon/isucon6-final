@@ -4,3 +4,7 @@ gem 'mysql2'
 gem 'mysql2-cs-bind'
 gem 'sinatra'
 gem 'thin'
+
+group :development do
+  gem 'sinatra-contrib', require: nil
+end
