@@ -10,7 +10,6 @@ services:
       dockerfile: Dockerfile-dev
     volumes:
       - ./ruby:/app
-      - /app/vendor
     depends_on:
       - mysql
     links:
