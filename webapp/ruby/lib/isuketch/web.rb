@@ -2,7 +2,6 @@ require 'json'
 require 'time'
 
 require 'mysql2'
-require 'mysql2-cs-bind'
 require 'sinatra/base'
 
 module Isuketch
@@ -42,21 +41,21 @@ module Isuketch
       end
 
       def get_room(room_id)
-        db.xquery(%|
+        db.prepare(%|
           SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at`
           FROM `rooms`
           WHERE `id` = ?
-        |, room_id).first
+        |).execute(room_id).first
       end
 
       def get_strokes(room_id, greater_than_id)
-        db.xquery(%|
+        db.prepare(%|
           SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at`
           FROM `strokes`
           WHERE `room_id` = ?
             AND `id` > ?
           ORDER BY `id` ASC;
-        |, room_id, greater_than_id)
+        |).execute(room_id, greater_than_id)
       end
 
       def to_room_json(room)
@@ -101,53 +100,53 @@ module Isuketch
       end
 
       def check_token(csrf_token)
-        db.xquery(%|
+        db.prepare(%|
           SELECT `id`, `csrf_token`, `created_at` FROM `tokens`
           WHERE `csrf_token` = ?
             AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY
-        |, csrf_token).first
+        |).execute(csrf_token).first
       end
 
       def get_stroke_points(stroke_id)
-        db.xquery(%|
+        db.prepare(%|
           SELECT `id`, `stroke_id`, `x`, `y`
           FROM `points`
           WHERE `stroke_id` = ?
           ORDER BY `id` ASC
-        |, stroke_id)
+        |).execute(stroke_id)
       end
 
       def get_watcher_count(room_id)
-        db.xquery(%|
+        db.prepare(%|
           SELECT COUNT(*) AS `watcher_count`
           FROM `room_watchers`
           WHERE `room_id` = ?
             AND `updated_at` > CURRENT_TIMESTAMP(6) - INTERVAL 3 SECOND
-        |, room_id).first[:watcher_count].to_i
+        |).execute(room_id).first[:watcher_count].to_i
       end
 
       def update_room_watcher(room_id, csrf_token)
-        db.xquery(%|
+        db.prepare(%|
           INSERT INTO `room_watchers` (`room_id`, `token_id`)
           VALUES (?, ?)
           ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP(6)
-        |, room_id, csrf_token)
+        |).execute(room_id, csrf_token)
       end
     end
 
     post '/api/csrf_token' do
-      db.xquery(%|
+      db.query(%|
         INSERT INTO `tokens` (`csrf_token`)
         VALUES
         (SHA2(CONCAT(RAND(), UUID_SHORT()), 256))
       |)
 
       id = db.last_id
-      token = db.xquery(%|
+      token = db.prepare(%|
         SELECT `id`, `csrf_token`, `created_at`
         FROM `tokens`
         WHERE `id` = ?
-      |, id).first
+      |).execute(id).first
 
       content_type :json
       JSON.generate(
@@ -156,7 +155,7 @@ module Isuketch
     end
 
     get '/api/rooms' do
-      results = db.xquery(%|
+      results = db.query(%|
         SELECT `room_id`, MAX(`id`) AS `max_id`
         FROM `strokes`
         GROUP BY `room_id`
@@ -193,29 +192,29 @@ module Isuketch
 
       room_id = nil
       begin
-        db.xquery(%|BEGIN|)
+        db.query(%|BEGIN|)
 
-        db.xquery(%|
+        db.prepare(%|
           INSERT INTO `rooms`
           (`name`, `canvas_width`, `canvas_height`)
           VALUES
           (?, ?, ?)
-        |, posted_room[:name], posted_room[:canvas_width], posted_room[:canvas_height])
+        |).execute(posted_room[:name], posted_room[:canvas_width], posted_room[:canvas_height])
         room_id = db.last_id
 
-        db.xquery(%|
+        db.prepare(%|
           INSERT INTO `room_owners`
           (`room_id`, `token_id`)
           VALUES
           (?, ?)
-        |, room_id, token[:id])
+        |).execute(room_id, token[:id])
       rescue
-        db.xquery(%|ROLLBACK|)
+        db.query(%|ROLLBACK|)
         halt(500, {'Content-Type' => 'application/json'}, JSON.generate(
           error: 'エラーが発生しました。'
         ))
       else
-        db.xquery(%|COMMIT|)
+        db.query(%|COMMIT|)
       end
 
       room = get_room(room_id)
@@ -270,11 +269,11 @@ module Isuketch
 
       stroke_count = get_strokes(room[:id], 0).count
       if stroke_count == 0
-        count = db.xquery(%|
+        count = db.prepare(%|
           SELECT COUNT(*) as cnt FROM `room_owners`
           WHERE `room_id` = ?
             AND `token_id` = ?
-        |, room[:id], token[:id]).first[:cnt].to_i
+        |).execute(room[:id], token[:id]).first[:cnt].to_i
         if count == 0
           halt(400, {'Content-Type' => 'application/json'}, JSON.generate(
             error: '他人の作成した部屋に1画目を描くことはできません'
@@ -284,38 +283,38 @@ module Isuketch
 
       stroke_id = nil
       begin
-        db.xquery(%| BEGIN |)
+        db.query(%| BEGIN |)
 
-        db.xquery(%|
+        db.prepare(%|
           INSERT INTO `strokes`
           (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)
           VALUES
           (?, ?, ?, ?, ?, ?)
-        |, room[:id], posted_stroke[:width], posted_stroke[:red], posted_stroke[:green], posted_stroke[:blue], posted_stroke[:alpha])
+        |).execute(room[:id], posted_stroke[:width], posted_stroke[:red], posted_stroke[:green], posted_stroke[:blue], posted_stroke[:alpha])
         stroke_id = db.last_id
 
         posted_stroke[:points].each do |point|
-          db.xquery(%|
+          db.prepare(%|
             INSERT INTO `points`
             (`stroke_id`, `x`, `y`)
             VALUES
             (?, ?, ?)
-          |, stroke_id, point[:x], point[:y])
+          |).execute(stroke_id, point[:x], point[:y])
         end
       rescue
-        db.xquery(%| ROLLBACK |)
+        db.query(%| ROLLBACK |)
         halt(500, {'Content-Type' => 'application/json'}, JSON.generate(
           error: 'エラーが発生しました。'
         ))
       else
-        db.xquery(%| COMMIT |)
+        db.query(%| COMMIT |)
       end
 
-      stroke = db.xquery(%|
+      stroke = db.prepare(%|
         SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at`
         FROM `strokes`
         WHERE `id`= ?
-      |, stroke_id).first
+      |).execute(stroke_id).first
       stroke[:points] = get_stroke_points(stroke_id)
 
       content_type :json
