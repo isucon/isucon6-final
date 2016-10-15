@@ -111,7 +111,7 @@ const getWatcherCount = async (dbh, roomId) => {
   let sql = 'SELECT COUNT(*) AS `watcher_count` FROM `room_watchers`';
   sql +=    ' WHERE `room_id` = ? AND `updated_at` > CURRENT_TIMESTAMP(6) - INTERVAL 3 SECOND';
   const result = await selectOne(dbh, sql, [roomId]);
-  return result['watcher_count'];
+  return result.watcher_count;
 };
 
 const updateRoomWatcher = async (dbh, roomId, tokenId) => {
@@ -242,15 +242,15 @@ router.get('/api/rooms/:id', async (ctx, next) => {
     return;
   }
 
-  const strokes = await getStrokes(dbh, room['id'], 0);
+  const strokes = await getStrokes(dbh, room.id, 0);
   let i = 0;
   for ( const stroke of strokes ) {
-    strokes[i]['points'] = await getStrokePoints(dbh, stroke['id']);
+    strokes[i].points = await getStrokePoints(dbh, stroke.id);
     i++;
   }
 
-  room['strokes'] = strokes;
-  room['watcher_count'] = await getWatcherCount(dbh, room['id']);
+  room.strokes = strokes;
+  room.watcher_count = await getWatcherCount(dbh, room.id);
 
   ctx.body = {
     room: typeCastRoomData(room),
