@@ -10,4 +10,4 @@ RUN bundle install --jobs 4
 
 COPY . /app
 
-CMD bundle exec rackup --port 5000 config.ru
+CMD bundle exec thin start --port 5000 -A rack -R config.ru
