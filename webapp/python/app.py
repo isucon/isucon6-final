@@ -232,7 +232,7 @@ def get_api_rooms_id(id):
 
     if room is None:
         res = jsonify({'error': 'この部屋は存在しません。'})
-        res.status__code = 500
+        res.status_code = 500
         return res
 
     strokes = get_strokes(db, room['id'], 0)
