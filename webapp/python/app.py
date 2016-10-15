@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import json
 import os
-from datetime import timezone
+from datetime import timedelta, tzinfo
 import time
 
 import MySQLdb.cursors
@@ -52,9 +52,20 @@ def type_cast_point_data(data):
     }
 
 
+class UTC(tzinfo):
+    def utcoffset(self, dt):
+        return timedelta(0)
+
+    def tzname(self, dt):
+        return "UTC"
+
+    def dst(self, dt):
+        return timedelta(0)
+
+
 def to_RFC3339_micro(date):
     # RFC3339では+00:00のときはZにするという仕様だが、pythonは準拠していないため
-    return date.replace(tzinfo=timezone.utc).isoformat().replace('+00:00', 'Z')
+    return date.replace(tzinfo=UTC()).isoformat().replace('+00:00', 'Z')
 
 
 def type_cast_stroke_data(data):
