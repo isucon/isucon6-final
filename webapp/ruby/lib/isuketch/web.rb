@@ -231,5 +231,83 @@ module Isuketch
         room: to_room_json(room)
       )
     end
+
+    post '/api/strokes/rooms/:id' do |id|
+      token = check_token(request.env['HTTP_X_CSRF_TOKEN'])
+      unless token
+        halt(400, {'Content-Type' => 'application/json'}, JSON.generate(
+          error: 'トークンエラー。ページを再読み込みしてください。'
+        ))
+      end
+
+      room = get_room(id)
+      unless room
+        halt(404, ['Content-Type'], JSON.generate(
+          error: 'この部屋は存在しません。'
+        ))
+      end
+
+      posted_stroke = JSON.load(request.body)
+      if !posted_stroke[:width] || !posted_stroke[:points]
+        halt(400, {'Content-Type' => 'application/json'}, JSON.generate(
+          error: 'リクエストが正しくありません。'
+        ))
+      end
+
+      stroke_count = get_strokes(room[:id], 0).count
+      if stroke_count == 0
+        count = db.xquery(%|
+          SELECT COUNT(*) as cnt FROM `room_owners`
+          WHERE `room_id` = ?
+            AND `token_id` = ?
+        |, room[:id], token[:id])
+        if count == 0
+          halt(400, {'Content-Type' => 'application/json'}, JSON.generate(
+            error: '他人の作成した部屋に1画目を描くことはできません'
+          ))
+        end
+      end
+
+      stroke_id = nil
+      begin
+        db.xquery(%| BEGIN |)
+
+        db.xquery(%|
+          INSERT INTO `strokes`
+          (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)
+          VALUES
+          (?, ?, ?, ?, ?, ?)
+        |, room[:id], posted_stroke[:width], posted_stroke[:red], posted_stroke[:green], posted_stroke[:blue], posted_stroke[:alpha])
+        stroke_id = db.last_id
+
+        posted_stroke[:points].each do |point|
+          db.xquery(%|
+            INSERT INTO `points`
+            (`stroke_id`, `x`, `y`)
+            VALUES
+            (?, ?, ?)
+          |, stroke_id, point[:x], point[:y])
+        end
+      rescue
+        db.xquery(%| ROLLBACK |)
+        halt(500, {'Content-Type' => 'application/json'}, JSON.generate(
+          error: 'エラーが発生しました。'
+        ))
+      else
+        db.xquery(%| COMMIT |)
+      end
+    end
+
+    stroke = db.xquery(%|
+      SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at`
+      FROM `strokes`
+      WHERE `id`= ?
+    |, stroke_id)
+    stroke[:points] = get_stroke_points(stroke_id)
+
+    content_type :json
+    JSON.generate(
+      stroke: to_stroke_json(stroke)
+    )
   end
 end
