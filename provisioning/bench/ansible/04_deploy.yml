@@ -27,7 +27,11 @@
         owner=root
         group=root
         mode=644
+      notify: reload systemctl
     - name: enable bench worker
       service: name=isucon6-worker state=running enabled=true
+  handlers:
+    - name: reload systemctl
+      command: systemctl daemon-reload
   vars_files:
     - ../../external_vars.yml
