@@ -71,14 +71,28 @@ func makeOrigins(urls string) ([]string, error) {
 }
 
 func initialCheck(origins []string) {
-	scenario.CSRFTokenRefreshed(origins)
-	scenario.StrokeReflectedToTop(origins)
-	scenario.RoomWithoutStrokeNotShownAtTop(origins)
-	scenario.CantDrawFirstStrokeOnSomeoneElsesRoom(origins)
-	scenario.TopPageContent(origins)
-	scenario.APIAndHTMLMustBeConsistent(origins)
-	scenario.CheckStaticFiles(origins)
-	scenario.WatcherCountIncreases(origins)
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		scenario.CSRFTokenRefreshed(origins)
+		scenario.StrokeReflectedToTop(origins)
+		scenario.RoomWithoutStrokeNotShownAtTop(origins)
+		scenario.CantDrawFirstStrokeOnSomeoneElsesRoom(origins)
+		scenario.TopPageContent(origins)
+		scenario.APIAndHTMLMustBeConsistent(origins)
+		scenario.CheckStaticFiles(origins)
+	}()
+
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		scenario.WatcherCountIncreases(origins)
+	}()
+	wg.Wait()
 }
 
 func benchmark(origins []string) {
