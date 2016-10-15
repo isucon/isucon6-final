@@ -118,6 +118,14 @@ module Isuketch
             AND `updated_at` > CURRENT_TIMESTAMP(6) - INTERVAL 3 SECOND
         |, room_id).first[:watcher_count].to_i
       end
+
+      def update_room_watcher(room_id, csrf_token)
+        db.xquery(%|
+          INSERT INTO `room_watchers` (`room_id`, `token_id`)
+          VALUES (?, ?)
+          ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP(6)
+        |, room_id, csrf_token)
+      end
     end
 
     post '/api/csrf_token' do
@@ -309,5 +317,53 @@ module Isuketch
       )
     end
 
+    get '/api/stream/rooms/:id', provides: 'text/event-stream' do |id|
+      stream do |writer|
+        token = check_token(request.params['HTTP_X_CSRF_TOKEN'])
+        unless token
+          logger.warn("---> mismatched token")
+          writer << ("event:bad_request\n" + "data:トークンエラー。ページを再読み込みしてください。\n\n")
+          writer.close
+          next
+        end
+
+        room = get_room(id)
+        unless room
+          writer << ("event:bad_request\n" + "data:この部屋は存在しません\n\n")
+          writer.close
+          next
+        end
+
+        update_room_watcher(room[:id], token[:id])
+        watcher_count = get_watcher_count(room[:id])
+
+        writer << ("retry:500\n\n" + "event:watcher_count\n" + "data:#{watcher_count}\n\n")
+
+        last_stroke_id = 0
+        if request.env['HTTP_LAST_EVENT_ID']
+          last_stroke_id = request.env['HTTP_LAST_EVENT_ID'].to_i
+        end
+
+        5.downto(0) do |i|
+          sleep 0.5
+
+          strokes = get_strokes(room[:id], last_stroke_id)
+          strokes.each do |stroke|
+            stroke[:points] = get_stroke_points(stroke[:id])
+            writer << ("id:#{stroke[:id]}\n\n" + "event:stroke\n" + "data:#{JSON.generate(to_stroke_json(stroke))}\n\n")
+            last_stroke_id = stroke[:id]
+          end
+
+          update_room_watcher(room[:id], token[:id])
+          new_watcher_count = get_watcher_count(room[:id])
+          if new_watcher_count != watcher_count
+            watcher_count = new_watcher_count
+            writer << ("event:watcher_count\n" + "data:#{watcher_count}\n\n")
+          end
+        end
+
+        writer.close
+      end
+    end
   end
 end
