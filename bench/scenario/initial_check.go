@@ -90,6 +90,8 @@ func StrokeReflectedToTop(origins []string) {
 		return
 	}
 
+	noNano := 0
+
 	// SVGに反映される
 	for _, seedStroke := range seedStrokes[1:] {
 		stroke2 := seed.FluctuateStroke(seedStroke)
@@ -107,6 +109,14 @@ func StrokeReflectedToTop(origins []string) {
 			if math.Abs(float64(stroke.Points[j].X)-float64(p.X)) > 0.1 || math.Abs(float64(stroke.Points[j].Y)-float64(p.Y)) > 0.1 {
 				fmt.Println(stroke.Points[j].X, p.X, stroke.Points[j].Y, p.Y)
 				fails.Critical("投稿が反映されていません（x,yの値が改変されています）", nil)
+				return
+			}
+		}
+
+		if stroke.CreatedAt.Nanosecond() == 0 {
+			noNano++
+			if noNano > 2 {
+				fails.Critical("秒以下の時刻が記録されていません", nil)
 				return
 			}
 		}
