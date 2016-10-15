@@ -2,11 +2,11 @@
 Description = isucon6 qualifier portal
 
 [Service]
-WorkingDirectory = /home/isucon/isu6qportal
+WorkingDirectory = /home/isucon/isu6fportal
 LimitNOFILE=1006500
 LimitNPROC=1006500
 
-ExecStart  = /home/isucon/.local/perl/bin/start_server --port=8080 -- /home/isucon/isu6qportal/portal -database-dsn=root:root@/isu6qportal_day0
+ExecStart  = /home/isucon/.local/perl/bin/start_server --port=8080 -- /home/isucon/isu6fportal/portal -database-dsn=root:root@/isu6fportal_day0
 ExecReload = /bin/kill -HUP $MAINPID
 
 Restart = always

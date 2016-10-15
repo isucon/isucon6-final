@@ -2,12 +2,12 @@
   gather_facts: no
   become: yes
   tasks:
-    - name: isu6qportal (systemd)
-      copy: src=../files/isu6qportal.service dest=/etc/systemd/system/isu6qportal.service owner=root mode=644
+    - name: isu6fportal (systemd)
+      copy: src=../files/isu6fportal.service dest=/etc/systemd/system/isu6fportal.service owner=root mode=644
       register: service
     - name: systemctl daemon-reload
       command: systemctl daemon-reload
       when: service.changed
-    - name: restart isu6qportal
-      service: name=isu6qportal state=restarted enabled=true
+    - name: restart isu6fportal
+      service: name=isu6fportal state=restarted enabled=true
       when: service.changed

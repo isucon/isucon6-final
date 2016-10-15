@@ -12,14 +12,14 @@
       notify:
         - restart mysql
     - service: name=mysql state=running enabled=true
-    - file: path=/home/isucon/isu6qportal/db owner=isucon group=isucon mode=755 state=directory recurse=yes
-    - copy: src=../../../portal/db/schema.sql dest=/home/isucon/isu6qportal/db/schema.sql
+    - file: path=/home/isucon/isu6fportal/db owner=isucon group=isucon mode=755 state=directory recurse=yes
+    - copy: src=../../../portal/db/schema.sql dest=/home/isucon/isu6fportal/db/schema.sql
     - shell: mysql_tzinfo_to_sql /usr/share/zoneinfo | mysql -uroot -proot mysql
     - shell: |
         for d in $(seq 0 2); do
-          mysql -uroot -proot -e "CREATE DATABASE isu6qportal_day$d"
-          mysql -uroot -proot isu6qportal_day$d < /home/isucon/isu6qportal/db/schema.sql
-          mysql -uroot -proot isu6qportal_day$d -e "REPLACE INTO setting (name, json) VALUES ('day', '$d')";
+          mysql -uroot -proot -e "CREATE DATABASE isu6fportal_day$d"
+          mysql -uroot -proot isu6fportal_day$d < /home/isucon/isu6fportal/db/schema.sql
+          mysql -uroot -proot isu6fportal_day$d -e "REPLACE INTO setting (name, json) VALUES ('day', '$d')";
         done
   handlers:
     - name: restart mysql
