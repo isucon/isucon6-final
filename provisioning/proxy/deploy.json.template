@@ -10,7 +10,7 @@
       }
     },
     "vmName": {
-      "defaultValue": "i6fportal",
+      "defaultValue": "isucon6-portal",
       "type": "String",
       "metadata": {
         "description": "vm instance name"
@@ -20,7 +20,7 @@
   "variables": {
     "adminUsername": "isucon",
     "location": "[resourceGroup().location]",
-    "commonName": "isucon6final",
+    "commonName": "isucon6qualifier",
     "storageAccountsName": "[concat(uniqueString(resourceGroup().id), 'storage')]"
   },
   "resources": [
@@ -32,7 +32,7 @@
       "tags": {},
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_DS2_v2"
+          "vmSize": "Standard_F2"
         },
         "storageProfile": {
           "imageReference": {
@@ -53,6 +53,7 @@
         "osProfile": {
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[variables('adminUsername')]",
+          "customData": "",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {

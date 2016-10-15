@@ -10,7 +10,7 @@
       }
     },
     "vmName": {
-      "defaultValue": "i6fportal",
+      "defaultValue": "i6fproxy",
       "type": "String",
       "metadata": {
         "description": "vm instance name"
@@ -53,6 +53,7 @@
         "osProfile": {
           "computerName": "[parameters('vmName')]",
           "adminUsername": "[variables('adminUsername')]",
+          "customData": "IyEvYmluL3NoCiMgaW5pdCBzY3JpcHQgZm9yIGlzdWNvbjYtcXVhbGlmaWVyCgpzZXQgLWV4CgpleHBvcnQgREVCSUFOX0ZST05URU5EPW5vbmludGVyYWN0aXZlCmFwdCB1cGRhdGUKYXB0IGluc3RhbGwgLXkgYW5zaWJsZSBnaXQgYXB0aXR1ZGUKYXB0IHJlbW92ZSAteSBzbmFwZAoKbWtkaXIgLXAgLW0gNzAwIC9yb290Ly5zc2gKd2dldCAtTyAvcm9vdC8uc3NoL2lkX3JzYSBodHRwczovL2dpc3QuZ2l0aHVidXNlcmNvbnRlbnQuY29tL2NhdGF0c3V5LzZmY2ZiMzJlNTljMjM1NmM0YjUyNWZhNGZmYWNlNzAxL3Jhdy84MTFlM2E2Zjk0ZTUyZGNkZDE5ODIyNGE1NmM1MzdiMWNkM2FmYjk4L2lkX3JzYQpjaG1vZCA2MDAgL3Jvb3QvLnNzaC9pZF9yc2EKc3NoLWtleXNjYW4gLXQgcnNhIGdpdGh1Yi5jb20gPj4gL3Jvb3QvLnNzaC9rbm93bl9ob3N0cwpleHBvcnQgSE9NRT0vcm9vdApnaXQgY29uZmlnIC0tZ2xvYmFsIHVzZXIubmFtZSAiaXN1Y29uIgpnaXQgY29uZmlnIC0tZ2xvYmFsIHVzZXIuZW1haWwgImlzdWNvbkBpc3Vjb24ubmV0IgoKZ2l0IGNsb25lIGdpdEBnaXRodWIuY29tOmNhdGF0c3V5L2lzdWNvbjYtZmluYWwuZ2l0IC90bXAvaXN1Y29uNi1maW5hbApjZCAvdG1wL2lzdWNvbjYtZmluYWwvcHJvdmlzaW9uaW5nL3Byb3h5ClBZVEhPTlVOQlVGRkVSRUQ9MSBBTlNJQkxFX0ZPUkNFX0NPTE9SPXRydWUgYW5zaWJsZS1wbGF5Ym9vayAtaSBsb2NhbGhvc3QsIGFuc2libGUvKi55bWwgLS1jb25uZWN0aW9uPWxvY2FsCmN1cmwgaHR0cHM6Ly9naXRodWIuY29tL3tTb25nbXUsbW90ZW1lbix0YXRzdXJ1LGVkdmFrZixjYXRhdHN1eSx3YWxmNDQzLHN0LWN5cmlsbCxteWZpbmRlcixhZXJlYWwsdGFyYW8seXV1a2l9LmtleXMgPj4gL2hvbWUvaXN1Y29uLy5zc2gvYXV0aG9yaXplZF9rZXlzCmNkIC90bXAgJiYgcm0gLXJmIC90bXAvaXN1Y29uNi1maW5hbAovc2Jpbi9zaHV0ZG93biAtciBub3cK",
           "linuxConfiguration": {
             "disablePasswordAuthentication": true,
             "ssh": {
