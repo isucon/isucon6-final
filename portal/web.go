@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os/exec"
 	"sort"
 	"strconv"
 	"strings"
@@ -615,14 +616,20 @@ func serveUpdateTeam(w http.ResponseWriter, req *http.Request) error {
 		}
 	}
 
-	// TODO: proxyにチームのIPアドレスを通知する
-
 	_, err = db.Exec("UPDATE teams SET instance_name = ?, ip_address = ? WHERE id = ?", instanceName, ipAddress, team.ID)
 	if err != nil {
 		return err
 	}
 
-	// TODO: IPアドレスの反映に時間がかかることを考えてこのへんで3秒程度待つか？
+	// proxyにチームのIPアドレスを通知する
+	err = exec.Command(`/usr/local/bin/consul`, `event`, `-name`, `nginx_reload`, `-node`, `proxy`).Run()
+	if err != nil {
+		log.Printf("consul: %v", err)
+		return err
+	}
+
+	// IPアドレスの反映に時間がかかることを考えてこのへんで3秒待つ
+	time.Sleep(3 * time.Second)
 
 	http.Redirect(w, req, "/", http.StatusFound)
 	return nil
