@@ -47,7 +47,7 @@ func serveMessages(w http.ResponseWriter, req *http.Request) error {
 		Messages []Message
 	}
 
-	return templates["messages.tmpl"].Execute(w, viewParamsDebugMessages{viewParamsLayout{nil, day}, msgs})
+	return templates["messages.tmpl"].Execute(w, viewParamsDebugMessages{viewParamsLayout{nil}, msgs})
 }
 
 func serveFixRanking(w http.ResponseWriter, req *http.Request) error {
