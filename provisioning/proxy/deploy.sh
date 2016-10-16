@@ -5,7 +5,7 @@ set -e
 RESOURCE_GROUP="${RESOURCE_GROUP:-isucon6-final}"
 LOCATION="${LOCATION:-japaneast}"
 SSH_PUBLIC_KEY="${SSH_PUBLIC_KEY:-`cat ~/.ssh/id_rsa.pub`}"
-PREFIX="${PREFIX:-prefix}"
+PREFIX="${PREFIX:-isucon6f}"
 VM_COUNT="${VM_COUNT:-1}"
 
 # azure login

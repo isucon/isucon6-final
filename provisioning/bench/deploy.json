@@ -10,7 +10,7 @@
       }
     },
     "prefix": {
-      "defaultValue": "prefix",
+      "defaultValue": "isucon6f",
       "type": "String",
       "metadata": {
         "description": "prefix name for bench"
