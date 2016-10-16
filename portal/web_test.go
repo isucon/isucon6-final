@@ -59,14 +59,10 @@ func newTestClient(t *testing.T) *testHTTPClient {
 }
 
 func TestLogin(t *testing.T) {
-	resp, err := http.Get(s.URL)
-	require.NoError(t, err)
-	require.Equal(t, "/login", resp.Request.URL.Path)
-
 	jar, _ := cookiejar.New(nil)
 	cli := &http.Client{Jar: jar}
 
-	resp, err = cli.PostForm(s.URL+"/login", url.Values{"team_id": {"26"}, "password": {"p6aYuUempoticryg"}})
+	resp, err := cli.PostForm(s.URL+"/login", url.Values{"team_id": {"26"}, "password": {"p6aYuUempoticryg"}})
 	require.NoError(t, err)
 	require.Equal(t, "/", resp.Request.URL.Path)
 }
@@ -254,7 +250,7 @@ func TestUpdateTeam(t *testing.T) {
 	body = readAll(resp.Body)
 	assert.Contains(t, body, `# team11`)
 	assert.Contains(t, body, `listen 10011;`)
-	assert.Contains(t, body, `proxy_pass 0.0.0.0;`)
+	assert.Contains(t, body, `proxy_pass 0.0.0.0:443;`)
 }
 
 func TestUpdateProxies(t *testing.T) {
