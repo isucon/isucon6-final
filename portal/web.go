@@ -157,11 +157,6 @@ func serveIndex(w http.ResponseWriter, req *http.Request) error {
 }
 
 func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message string) error {
-	if getContestStatus() == contestStatusEnded {
-		http.Error(w, "Today's final has ended", http.StatusForbidden)
-		return nil
-	}
-
 	team, err := loadTeamFromSession(req)
 	if err != nil {
 		return err
