@@ -75,6 +75,20 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
+  ruby:
+    build:
+      context: ./ruby
+      dockerfile: Dockerfile
+    depends_on:
+      - mysql
+    links:
+      - mysql
+    environment:
+      ISUCON_ENV: production
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: isucon
+      MYSQL_PASS: isucon
   react_go:
     extends:
       file: docker-compose-react.yml
@@ -135,3 +149,15 @@ services:
       API: http://nodejs:80
     ports:
       - "10005:443"
+  react_ruby:
+    extends:
+      file: docker-compose-react.yml
+      service: react
+    depends_on:
+      - ruby
+    links:
+      - ruby
+    environment:
+      API: http://ruby:5000
+    ports:
+      - "10006:443"
