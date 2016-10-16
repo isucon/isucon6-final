@@ -46,9 +46,9 @@ Host isucon6f-portal
 ## ローカルで開発する
 
 ```
-mysql -uroot -e 'DROP DATABASE IF EXISTS isu6fportal_day0;'
-mysql -uroot -e 'CREATE DATABASE isu6fportal_day0;'
-mysql -uroot -Disu6fportal_day0 < db/schema.sql
+mysql -uroot -e 'DROP DATABASE IF EXISTS isu6fportal;'
+mysql -uroot -e 'CREATE DATABASE isu6fportal;'
+mysql -uroot -Disu6fportal < db/schema.sql
 cat data/teams.tsv | go run cmd/importteams/main.go
 ```
 
@@ -56,7 +56,7 @@ cat data/teams.tsv | go run cmd/importteams/main.go
 
 ```
 make
-./portal -database-dsn="root:@/isu6fportal_day0"
+./portal -database-dsn="root:@/isu6fportal"
 ```
 
 テストは上記のコマンドでMySQLを初期化した後に、
