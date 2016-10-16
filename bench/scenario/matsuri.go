@@ -39,6 +39,7 @@ func Matsuri(origins []string, timeout int) {
 	postedStrokes := make([]Stroke, 0)
 
 	go func() {
+		return
 		// 2秒おきにstrokeをPOSTする
 		for {
 			for _, seedStroke := range seedStrokes {
@@ -104,6 +105,8 @@ func Matsuri(origins []string, timeout int) {
 	//fmt.Println("done")
 
 	// TODO: watcher_countが正しいか
+
+	return
 
 	for _, w := range watchers {
 		for i, strokeLog := range w.StrokeLogs {

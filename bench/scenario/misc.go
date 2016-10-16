@@ -22,6 +22,7 @@ func randomOrigin(origins []string) string {
 }
 
 func fetchCSRFToken(s *session.Session, path string) (string, bool) {
+	return "", true
 	var token string
 
 	ok := action.Get(s, path, action.OK(func(body io.Reader, l *fails.Logger) bool {
@@ -149,6 +150,10 @@ func loadImages(s *session.Session, images []string) bool {
 }
 
 func makeRoom(s *session.Session, token string) (*Room, bool) {
+	return &Room{
+		ID: 1001,
+	}, true
+
 	postBody, _ := json.Marshal(struct {
 		Name         string `json:"name"`
 		CanvasWidth  int    `json:"canvas_width"`

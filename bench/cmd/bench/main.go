@@ -43,7 +43,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, err.Error())
 	}
 
-	initialCheck(origins)
+	//initialCheck(origins)
 
 	// 初期チェックのみモードではない、かつ、この時点でcriticalが出ていなければ負荷をかけにいく
 	if !InitialCheckOnly && !fails.GetIsCritical() {
@@ -125,7 +125,7 @@ L:
 			}()
 		case <-drawOnRandomRoomCh:
 			go func() {
-				scenario.DrawOnRandomRoom(origins)
+				//scenario.DrawOnRandomRoom(origins)
 				time.Sleep(500 * time.Millisecond)
 				drawOnRandomRoomCh <- struct{}{}
 			}()

@@ -17,9 +17,13 @@ func LoadIndexPage(origins []string) bool {
 	s := session.New(randomOrigin(origins))
 	defer s.Bye()
 
-	var images []string
+	images := []string{}
+	for i := 0; i < 100; i++ {
+		images = append(images, "/img/"+strconv.Itoa(1000-i))
+	}
 
 	ok := action.Get(s, "/", action.OK(func(body io.Reader, l *fails.Logger) bool {
+		return true
 		doc, ok := makeDocument(body, l)
 		if !ok {
 			return false
@@ -52,6 +56,8 @@ func DrawOnRandomRoom(origins []string) {
 	var rooms []Room
 
 	ok := action.Get(s, "/api/rooms", action.OK(func(body io.Reader, l *fails.Logger) bool {
+		return true
+
 		var res Response
 		err := json.NewDecoder(body).Decode(&res)
 		if err != nil {
@@ -69,7 +75,9 @@ func DrawOnRandomRoom(origins []string) {
 		return
 	}
 
-	room := rooms[rand.Intn(80)+20] // 上の方はスキップしてちょっと後ろの方を見ることにする
+	//room := rooms[rand.Intn(80)+20] // 上の方はスキップしてちょっと後ろの方を見ることにする
+
+	room := Room{ID: 1000}
 
 	roomURL := "/rooms/" + strconv.FormatInt(room.ID, 10)
 
