@@ -43,6 +43,13 @@ proxyを減らす場合は以下の手順が必要
 
   * 減らすインスタンス上で`consul leave`と打つ
 
+#### proxy全台をconsulで操作したい
+
+  * proxy全台のnginxを起動したい
+    * `consul exec -node proxy "sudo systemctl start nginx"`
+  * consulのイベントを発行する
+    * `consul event -name="nginx_reload" -node="proxy"`
+
 ### Azure-CLIを使う方法
 
 #### install
