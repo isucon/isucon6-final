@@ -9,25 +9,37 @@
         "description": "ssh public key for isucon user"
       }
     },
-    "vmName": {
-      "defaultValue": "isucon6-bench",
+    "prefix": {
+      "defaultValue": "prefix",
       "type": "String",
       "metadata": {
-        "description": "vm instance name"
+        "description": "prefix name for bench"
+      }
+    },
+    "vmCount": {
+      "defaultValue": 1,
+      "type": "int",
+      "metadata": {
+        "description": "vm count for bench"
       }
     }
   },
   "variables": {
     "adminUsername": "isucon",
+    "vmName": "[concat(parameters('prefix'), '-bench')]",
     "location": "[resourceGroup().location]",
-    "commonName": "isucon6qualifier",
-    "storageAccountsName": "[concat(uniqueString(resourceGroup().id), 'storage')]"
+    "commonName": "isucon6final",
+    "storageAccountsName": "[uniqueString(concat(resourceGroup().id, parameters('prefix')))]"
   },
   "resources": [
     {
       "type": "Microsoft.Compute/virtualMachines",
-      "name": "[parameters('vmName')]",
+      "name": "[concat(variables('vmName'), copyIndex(1))]",
       "apiVersion": "2015-06-15",
+      "copy": {
+        "name": "virtualMachines",
+        "count": "[parameters('vmCount')]"
+      },
       "location": "[variables('location')]",
       "tags": {},
       "properties": {
@@ -42,16 +54,16 @@
             "version": "latest"
           },
           "osDisk": {
-            "name": "[concat(parameters('vmName'), '-os')]",
+            "name": "[concat(variables('vmName'), copyIndex(1))]",
             "createOption": "FromImage",
             "vhd": {
-              "uri": "[concat('https', '://', variables('storageAccountsName'), '.blob.core.windows.net', '/', variables('commonName'), '/', parameters('vmName'), '-os.vhd')]"
+              "uri": "[concat('https', '://', variables('storageAccountsName'), '.blob.core.windows.net', '/', variables('commonName'), '/', variables('vmName'), copyIndex(1), '.vhd')]"
             },
             "caching": "None"
           }
         },
         "osProfile": {
-          "computerName": "[parameters('vmName')]",
+          "computerName": "[concat(variables('vmName'), copyIndex(1))]",
           "adminUsername": "[variables('adminUsername')]",
           "customData": "",
           "linuxConfiguration": {
@@ -70,7 +82,7 @@
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[resourceId('Microsoft.Network/networkInterfaces', parameters('vmName'))]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmName'), copyIndex(1)))]"
             }
           ]
         }
@@ -78,24 +90,27 @@
       "resources": [],
       "dependsOn": [
         "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountsName'))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', parameters('vmName'))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('vmName'), copyIndex(1)))]"
       ]
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[parameters('vmName')]",
+      "name": "[concat(variables('vmName'), copyIndex(1))]",
       "apiVersion": "2016-03-30",
+      "copy": {
+        "name": "virtualMachines",
+        "count": "[parameters('vmCount')]"
+      },
       "location": "[variables('location')]",
       "tags": {},
       "properties": {
         "ipConfigurations": [
           {
-            "name": "[variables('commonName')]",
+            "name": "[concat(variables('vmName'), copyIndex(1))]",
             "properties": {
-              "privateIPAddress": "10.0.1.5",
               "privateIPAllocationMethod": "Dynamic",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('vmName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmName'), copyIndex(1)))]"
               },
               "subnet": {
                 "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('commonName')), '/subnets/', variables('commonName'))]"
@@ -110,14 +125,18 @@
       },
       "resources": [],
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('vmName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('vmName'), copyIndex(1)))]",
         "[resourceId('Microsoft.Network/virtualNetworks', variables('commonName'))]"
       ]
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[parameters('vmName')]",
+      "name": "[concat(variables('vmName'), copyIndex(1))]",
       "apiVersion": "2016-03-30",
+      "copy": {
+        "name": "virtualMachines",
+        "count": "[parameters('vmCount')]"
+      },
       "location": "[variables('location')]",
       "tags": {},
       "properties": {
@@ -149,7 +168,7 @@
               "addressPrefix": "10.0.1.0/24"
             },
             "networkSecurityGroup": {
-              "id": "[resourceId('Microsoft.Network/networkSecurityGroups', parameters('vmName'))]"
+              "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('vmName'))]"
             }
           }
         ]
@@ -160,7 +179,7 @@
     {
       "apiVersion": "2016-03-30",
       "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[parameters('vmName')]",
+      "name": "[variables('vmName')]",
       "location": "[resourceGroup().location]",
       "properties": {
         "securityRules": [
