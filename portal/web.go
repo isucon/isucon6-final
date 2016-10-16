@@ -2,20 +2,16 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"flag"
-	"fmt"
 	"html/template"
 	"log"
 	"net"
 	"net/http"
 	"os/exec"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/catatsuy/isucon6-final/portal/job"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
@@ -25,7 +21,6 @@ import (
 var (
 	databaseDSN = flag.String("database-dsn", "root:root@/isu6fportal_day0", "database `dsn`")
 	debugMode   = flag.Bool("debug", false, "enable debug mode")
-	day         = 0
 )
 
 var db *sql.DB
@@ -36,11 +31,6 @@ var locJST *time.Location
 const (
 	sessionName      = "isu6f"
 	sessionKeyTeamID = "team-id"
-)
-
-const (
-	rankingPickLatest = 20
-	rankingPickBest   = 20
 )
 
 func parseTemplateAsset(t *template.Template, name string) error {
@@ -97,15 +87,7 @@ func initWeb() error {
 		return err
 	}
 
-	// ホントはJSONだけど整数値しか入ってないことを知ってるのでショートカット
-	// err = db.QueryRow("SELECT CONVERT(json,SIGNED) FROM setting WHERE name = 'day'").Scan(&day)
-	// if err != nil {
-	// 	return errors.Wrap(err, "SELECT CONVERT(json,SIGNED) FROM setting WHERE name = 'day'")
-	// }
-
-	// 日によってDBを分けるので、万一 teams.id が被ってたら
-	// 前日のセッションでログイン状態になってしまう
-	sessionStore = sessions.NewCookieStore([]byte(fmt.Sprintf(":beers:%d", day)))
+	sessionStore = sessions.NewCookieStore([]byte(":beers:"))
 
 	return nil
 }
@@ -127,18 +109,6 @@ type Team struct {
 	Name         string
 	IPAddr       string
 	InstanceName string
-}
-
-type Score struct {
-	Team   Team
-	Latest int64
-	Best   int64
-	At     time.Time
-}
-
-type PlotLine struct {
-	Name string         `json:"name"`
-	Data map[string]int `json:"data"`
 }
 
 func loadTeam(id uint64) (*Team, error) {
@@ -190,18 +160,6 @@ func loadTeamFromSession(req *http.Request) (*Team, error) {
 	return team, errors.Wrapf(err, "loadTeam(id=%#v)", teamID)
 }
 
-type byLatest []*Score
-
-func (ss byLatest) Len() int           { return len(ss) }
-func (ss byLatest) Less(i, j int) bool { return ss[i].Latest > ss[j].Latest }
-func (ss byLatest) Swap(i, j int)      { ss[i], ss[j] = ss[j], ss[i] }
-
-type byBest []*Score
-
-func (ss byBest) Len() int           { return len(ss) }
-func (ss byBest) Less(i, j int) bool { return ss[i].Best > ss[j].Best }
-func (ss byBest) Swap(i, j int)      { ss[i], ss[j] = ss[j], ss[i] }
-
 type queuedJob struct {
 	TeamID int
 	Status string
@@ -209,23 +167,15 @@ type queuedJob struct {
 
 type viewParamsLayout struct {
 	Team *Team
-	Day  int
-}
-
-type latestResult struct {
-	Output *job.Output
-	At     time.Time
-	Score  *Score
 }
 
 type viewParamsIndex struct {
 	viewParamsLayout
-	Ranking        []*Score
-	RankingIsFixed bool
-	PlotData       []PlotLine
-	Jobs           []queuedJob
-	LatestResult   latestResult
-	Messages       []Message
+	PlotLines    []PlotLine
+	LatestScores []LatestScore
+	TeamResults  []TeamResult
+	Jobs         []queuedJob
+	Messages     []Message
 }
 
 type viewParamsLogin struct {
@@ -235,179 +185,6 @@ type viewParamsLogin struct {
 
 func serveIndex(w http.ResponseWriter, req *http.Request) error {
 	return serveIndexWithMessage(w, req, "")
-}
-
-func buildLeaderboard(team *Team) ([]*Score, *Score, bool, error) {
-	// team_scores_snapshot にデータが入ってたらそっちを使う
-	// ラスト1時間でランキングの更新を止めるための措置
-	// データは手動でいれる :P
-	ranking, myScore, err := buildLeaderboardFromTable(team, true)
-	if err == nil && ranking != nil && len(ranking) > 0 {
-		return ranking, myScore, true, nil
-	} else if err != nil {
-		log.Printf("buildLeaderboardFromTable: %v", err)
-	}
-
-	ranking, myScore, err = buildLeaderboardFromTable(team, false)
-	return ranking, myScore, false, nil
-}
-
-func buildLeaderboardFromTable(team *Team, useSnapshot bool) ([]*Score, *Score, error) {
-	// ランキングを作る。
-	// 現在のスコアのトップ rankingPickLatest と最高スコアのトップ rankingPickBest と自チーム
-	table := "team_scores"
-	if useSnapshot {
-		table = "team_scores_snapshot"
-
-	}
-
-	var (
-		allScores     = []*Score{}
-		scoreByTeamID = map[int]*Score{}
-	)
-
-	rows, err := db.Query(`
-		SELECT teams.id,teams.name,team_scores.latest_score,team_scores.best_score,team_scores.updated_at
-		FROM ` + table + ` AS team_scores
-		  JOIN teams
-		  ON team_scores.team_id = teams.id
-		WHERE teams.category <> 'official'
-	`)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		var score Score
-		err := rows.Scan(&score.Team.ID, &score.Team.Name, &score.Latest, &score.Best, &score.At)
-		if err != nil {
-			return nil, nil, err
-		}
-		allScores = append(allScores, &score)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, nil, err
-	}
-
-	// まず自チームのスコアのみを追加。17時を超えていても自チームだけは常に最新にする
-	if useSnapshot {
-		if len(allScores) == 0 {
-			// スナップショットテーブルが空のときはさっさと処理を終わる
-			return []*Score{}, nil, nil
-		}
-
-		// スナップショットの場合も自分のスコアだけは最新を使う
-		if team.ID == 9999 {
-			// 運営チームがランキングに入ってたら混乱するので入れない
-		} else {
-			var score Score
-			err := db.QueryRow(`
-				SELECT teams.id,teams.name,team_scores.latest_score,team_scores.best_score,team_scores.updated_at
-				FROM team_scores
-				  JOIN teams
-				  ON team_scores.team_id = teams.id
-				WHERE teams.id = ?
-			`, team.ID).Scan(&score.Team.ID, &score.Team.Name, &score.Latest, &score.Best, &score.At)
-			if err != nil {
-				return nil, nil, err
-			}
-
-			scoreByTeamID[score.Team.ID] = &score
-		}
-	} else {
-		for _, score := range allScores {
-			if score.Team.ID == team.ID {
-				scoreByTeamID[score.Team.ID] = score
-			}
-		}
-	}
-
-	// 次に自チーム以外のスコアを追加
-	sort.Sort(byLatest(allScores))
-	for _, s := range allScores {
-		//if i >= rankingPickLatest {
-		//	break
-		//}
-		if s.Team.ID != team.ID {
-			scoreByTeamID[s.Team.ID] = s
-		}
-	}
-
-	// sort.Sort(byBest(allScores))
-	// for i, s := range allScores {
-	// 	if i >= rankingPickBest {
-	// 		break
-	// 	}
-	// 	scoreByTeamID[s.Team.ID] = s
-	// }
-
-	ranking := make([]*Score, 0, len(scoreByTeamID))
-	for _, s := range scoreByTeamID {
-		ranking = append(ranking, s)
-	}
-
-	// 最後に、最新のスコアでソート
-	sort.Sort(byLatest(ranking))
-
-	return ranking, scoreByTeamID[team.ID], nil
-}
-
-func buildPlotLine(score *Score) (*PlotLine, error) {
-	plotLine := PlotLine{}
-	plotLine.Name = score.Team.Name
-	plotLine.Data = make(map[string]int)
-
-	// 17時になったらsnapshotを使うが、自チームのscoreには最新が入ってる
-	// 自チーム以外の最新scoreがプロットに出てしまわないように、created_atでも絞り込む
-	rows, err := db.Query(`
-		SELECT score, created_at FROM scores
-		WHERE team_id = ? AND created_at <= ?
-	  ORDER BY id ASC
-	`, score.Team.ID, score.At)
-	if err != nil {
-		return nil, err
-	}
-
-	defer rows.Close()
-
-	for rows.Next() {
-		var (
-			T time.Time
-			S int
-		)
-
-		err := rows.Scan(&S, &T)
-		if err != nil {
-			return nil, err
-		}
-
-		plotLine.Data[T.Format("2006-01-02T15:04:05")] = S
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return &plotLine, nil
-}
-
-func buildPlotData(ranking []*Score) ([]PlotLine, error) {
-	plotData := make([]PlotLine, 0)
-
-	if len(ranking) == 0 {
-		return plotData, nil
-	}
-
-	for _, score := range ranking {
-		plotLine, err := buildPlotLine(score)
-		if err != nil {
-			return nil, err
-		}
-		plotData = append(plotData, *plotLine)
-	}
-
-	return plotData, nil
 }
 
 func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message string) error {
@@ -426,12 +203,12 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 		return nil
 	}
 
-	ranking, myScore, rankingIsFixed, err := buildLeaderboard(team)
+	plotLines, latestScores, err := getResults(db, team.ID, time.Now()) // TODO: ランキング固定時刻
 	if err != nil {
 		return err
 	}
 
-	plotData, err := buildPlotData(ranking)
+	teamResults, err := getTeamResults(db, team.ID)
 	if err != nil {
 		return err
 	}
@@ -464,33 +241,6 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 		}
 	}
 
-	// 自分チームの最新状況を取得
-	var (
-		latestScore     *job.Output
-		latestScoreAt   time.Time
-		latestScoreJSON string
-	)
-	err = db.QueryRow(`
-		SELECT IFNULL(result_json, ''),updated_at FROM queues
-		WHERE team_id = ?
-		  AND status = 'done'
-		ORDER BY updated_at DESC
-		LIMIT 1
-	`, team.ID).Scan(&latestScoreJSON, &latestScoreAt)
-	switch err {
-	case sql.ErrNoRows:
-		// nop
-	case nil:
-		var res job.Output
-		err := json.Unmarshal([]byte(latestScoreJSON), &res)
-		if err != nil {
-			return err
-		}
-		latestScore = &res
-	default:
-		return err
-	}
-
 	messages, err := getMessages()
 	if err != nil {
 		return err
@@ -501,16 +251,11 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 
 	return templates["index.tmpl"].Execute(
 		w, viewParamsIndex{
-			viewParamsLayout{team, day},
-			ranking,
-			rankingIsFixed,
-			plotData,
+			viewParamsLayout{team},
+			plotLines,
+			latestScores,
+			teamResults,
 			jobs,
-			latestResult{
-				latestScore,
-				latestScoreAt,
-				myScore,
-			},
 			messages,
 		},
 	)
@@ -528,7 +273,7 @@ func serveLogin(w http.ResponseWriter, req *http.Request) error {
 	}
 
 	if req.Method == "GET" {
-		return templates["login.tmpl"].Execute(w, viewParamsLogin{viewParamsLayout{team, day}, ""})
+		return templates["login.tmpl"].Execute(w, viewParamsLogin{viewParamsLayout{team}, ""})
 	}
 
 	var (
@@ -541,7 +286,7 @@ func serveLogin(w http.ResponseWriter, req *http.Request) error {
 	err = row.Scan(&teamID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return templates["login.tmpl"].Execute(w, viewParamsLogin{viewParamsLayout{team, day}, "Wrong id/password pair"})
+			return templates["login.tmpl"].Execute(w, viewParamsLogin{viewParamsLayout{team}, "Wrong id/password pair"})
 		} else {
 			return err
 		}
@@ -647,29 +392,29 @@ func serveUpdateTeam(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
-func serveDebugLeaderboard(w http.ResponseWriter, req *http.Request) error {
-	// ここは常に最新のを使う
-	ranking, _, err := buildLeaderboardFromTable(&Team{}, false)
-	if err != nil {
-		return err
-	}
-
-	plotData, err := buildPlotData(ranking)
-	if err != nil {
-		return err
-	}
-
-	type viewParamsDebugLeaderboard struct {
-		viewParamsLayout
-		Ranking  []*Score
-		PlotData []PlotLine
-	}
-
-	return templates["debug-leaderboard.tmpl"].Execute(
-		w, viewParamsDebugLeaderboard{
-			viewParamsLayout{nil, day},
-			ranking,
-			plotData,
-		},
-	)
-}
+//func serveDebugLeaderboard(w http.ResponseWriter, req *http.Request) error {
+//	// ここは常に最新のを使う
+//	ranking, _, err := buildLeaderboardFromTable(&Team{}, false)
+//	if err != nil {
+//		return err
+//	}
+//
+//	plotData, err := buildPlotData(ranking)
+//	if err != nil {
+//		return err
+//	}
+//
+//	type viewParamsDebugLeaderboard struct {
+//		viewParamsLayout
+//		Ranking  []*Score
+//		PlotData []PlotLine
+//	}
+//
+//	return templates["debug-leaderboard.tmpl"].Execute(
+//		w, viewParamsDebugLeaderboard{
+//			viewParamsLayout{nil},
+//			ranking,
+//			plotData,
+//		},
+//	)
+//}

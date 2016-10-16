@@ -49,8 +49,7 @@ Host isucon6f-portal
 mysql -uroot -e 'DROP DATABASE IF EXISTS isu6fportal_day0;'
 mysql -uroot -e 'CREATE DATABASE isu6fportal_day0;'
 mysql -uroot -Disu6fportal_day0 < db/schema.sql
-mysql -uroot -Disu6fportal_day1 < db/schema.sql
-cat data/teams.tsv | go run cmd/importteams/main.go -dsn-base="root:@"
+cat data/teams.tsv | go run cmd/importteams/main.go
 ```
 
 これでチームデータと運営のデータが入るので、以下のコマンドでポータルを起動。

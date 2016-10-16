@@ -96,7 +96,7 @@ func serveDebugQueue(w http.ResponseWriter, req *http.Request) error {
 		items = append(items, &item)
 	}
 
-	return templates["debug-queue.tmpl"].Execute(w, viewParamsDebugQueue{viewParamsLayout{nil, day}, items})
+	return templates["debug-queue.tmpl"].Execute(w, viewParamsDebugQueue{viewParamsLayout{nil}, items})
 }
 
 func serveDebugProxies(w http.ResponseWriter, req *http.Request) error {
@@ -110,5 +110,44 @@ func serveDebugProxies(w http.ResponseWriter, req *http.Request) error {
 		Addrs []string
 	}
 
-	return templates["debug-proxies.tmpl"].Execute(w, viewParamsDebugProxies{viewParamsLayout{nil, day}, addrs})
+	return templates["debug-proxies.tmpl"].Execute(w, viewParamsDebugProxies{viewParamsLayout{nil}, addrs})
+}
+
+func serveDebugMessages(w http.ResponseWriter, req *http.Request) error {
+	if req.Method == http.MethodPost {
+		var msgs []Message
+
+		err := req.ParseForm()
+		if err != nil {
+			return err
+		}
+		l := len(req.PostForm["kind"])
+		if l != len(req.PostForm["kind"]) {
+			return errHTTP(http.StatusBadRequest)
+		}
+		for i := 0; i < l; i++ {
+			kind := req.PostForm["kind"][i]
+			message := req.PostForm["message"][i]
+			if message != "" {
+				msgs = append(msgs, Message{Kind: kind, Message: message})
+			}
+		}
+		err = updateMessages(msgs)
+		if err != nil {
+			return err
+		}
+	}
+
+	msgs, err := getMessages()
+	msgs = append(msgs, Message{})
+	if err != nil {
+		return err
+	}
+
+	type viewParamsDebugMessages struct {
+		viewParamsLayout
+		Messages []Message
+	}
+
+	return templates["debug-messages.tmpl"].Execute(w, viewParamsDebugMessages{viewParamsLayout{nil}, msgs})
 }

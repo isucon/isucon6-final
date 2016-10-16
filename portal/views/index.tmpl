@@ -29,44 +29,13 @@
 </div>
 {{end}}
 
-{{if .LatestResult.Output}}
-<div class="row">
-  <h2>自チームの最新結果</h2>
-  <table class="table">
-    <tr>
-      <th>Status</th><td>{{if .LatestResult.Output.Pass}}PASS{{else}}FAIL{{end}}</td>
-    </tr>
-    <tr>
-      <th>Score</th><td>{{.LatestResult.Output.Score}}</td>
-    </tr>
-    <tr>
-      <th>Best</th><td>{{if .LatestResult.Score}}{{.LatestResult.Score.Best}}{{else}}-{{end}}</td>
-    </tr>
-    <tr>
-      <th>Messages</th>
-      <td>
-        <ul>
-          {{range .LatestResult.Output.Messages}}
-          <li>{{.}}</li>
-          {{end}}
-        </ul>
-      </td>
-    </tr>
-    <tr>
-      <th>Time</th>
-      <td>{{.LatestResult.At}}</td>
-    </tr>
-  </table>
-</div>
-{{end}}
-
 <div class="row">
   <h2>リーダーボード</h2>
 
   <div id="plot" style="height: 300px;"></div>
   <script>
     Highcharts.setOptions({useUTC: false});
-    new Chartkick.LineChart("plot", {{.PlotData}}, {min: 0});
+    new Chartkick.LineChart("plot", {{.PlotLines}}, {min: 0});
   </script>
 
   <table class="table table-striped">
@@ -79,19 +48,62 @@
       </tr>
     </thead>
     <tbody>
-      {{range $index, $score := .Ranking}}
-        {{if (ne $score.Team.ID 9999) }}
-          <tr {{if $.Team}}{{if (eq $score.Team.ID $.Team.ID)}}class="warning"{{end}}{{end}}>
-            <td>{{plusOne $index}}</td>
-            <td>{{if (eq "👼" $score.Team.Name)}}<img src="//cdn.jsdelivr.net/emojione/assets/png/1f607.png?v=2.2.6" style="width:1.5em;height:1.5em;" alt=":innocent:">{{else}}{{$score.Team.Name}}{{end}}</td>
-            <td>{{$score.Latest}}</td>
-            <td>{{$score.At}}</td>
-          </tr>
-        {{end}}
+      {{range $i, $latestScore := .LatestScores}}
+        <tr {{if $.Team}}{{if (eq $latestScore.TeamID $.Team.ID)}}class="warning"{{end}}{{end}}>
+          <td>{{plusOne $i}}</td>
+          <td>{{if (eq "👼" $latestScore.TeamName)}}<img src="//cdn.jsdelivr.net/emojione/assets/png/1f607.png?v=2.2.6" style="width:1.5em;height:1.5em;" alt=":innocent:">{{else}}{{$latestScore.TeamName}}{{end}}</td>
+          <td>{{$latestScore.Score}}</td>
+          <td>{{$latestScore.At}}</td>
+        </tr>
       {{end}}
     </tbody>
   </table>
 </div>
+
+{{if $.Team}}
+<div class="row">
+  <h2>あなたのチームの履歴</h2>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>PASS/FAIL</th>
+        <th>Score</th>
+        <th>Message</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{range $i, $r := .TeamResults}}
+        <tr>
+          <td>{{$r.At}}</td>
+          <td>{{if $r.Pass}}PASS{{else}}FAIL{{end}}</td>
+          <td>{{$r.Score}}</td>
+          <td>
+            {{if $r.Msg}}<button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#msg-{{$r.ID}}">見る</button>{{end}}
+            <!-- Modal -->
+            <div class="modal fade" id="msg-{{$r.ID}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+              <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">{{$r.At}} [{{if $r.Pass}}PASS{{else}}FAIL{{end}}] {{$r.Score}}</h4>
+                  </div>
+                  <div class="modal-body">
+                    <pre><code>{{$r.Msg}}</code></pre>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>
+      {{end}}
+    </tbody>
+  </table>
+</div>
+{{end}}
 
 <div class="row">
   <h2>運営向け情報</h2>
