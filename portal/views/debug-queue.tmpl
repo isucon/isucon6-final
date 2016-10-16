@@ -6,22 +6,41 @@
         <th>ID</th>
         <th>Team</th>
         <th>Status</th>
-        <th>IP addr</th>
         <th>Bench node</th>
-        <th>Result</th>
-        <th>Time</th>
+        <th>CreatedAt</th>
+        <th>UpdatedAt</th>
+        <th>stderr</th>
       </tr>
     </thead>
     <tbody>
-      {{range $item := .Items}}
+      {{range $item := .QueueItems}}
       <tr>
           <td>{{$item.ID}}</td>
           <td>{{$item.TeamName}} ({{$item.TeamID}})</td>
           <td>{{$item.Status}}</td>
-          <td>{{$item.IPAddr}}</td>
           <td>{{$item.BenchNode}}</td>
-          <td><code>{{$item.Result}}</code></td>
-          <td>{{$item.Time}}</td>
+          <td>{{$item.CreatedAt}}</td>
+          <td>{{$item.UpdatedAt}}</td>
+          <td>
+            {{if $item.Stderr}}<button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#msg-{{$item.ID}}">見る</button>{{end}}
+            <!-- Modal -->
+            <div class="modal fade" id="msg-{{$item.ID}}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+              <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">{{$item.ID}}</h4>
+                  </div>
+                  <div class="modal-body">
+                    <pre><code>{{$item.Stderr}}</code></pre>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </td>
         </tr>
       {{end}}
     </tbody>

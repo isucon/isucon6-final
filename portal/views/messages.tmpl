@@ -22,14 +22,4 @@
     <button class="btn btn-primary" type="submit">Submit</button>
   </form>
 </div>
-
-<div class="row">
-  <form method="post" action="./fixranking">
-    <h2>ランキングを固定する</h2>
-    <p>残り1時間になったら押して下さい。</p>
-    <p>このボタンを押すと、settingsテーブルにis_ranking_fixedが追加され、messagesテーブルに「自分以外のランキングは更新されません」のようなメッセージが挿入されます。</p>
-    <p>誤って押してしまった場合は両方のテーブルから値を消しましょう。</p>
-    <button class="btn btn-danger" type="submit">固定する</button>
-  </form>
-</div>
 {{end}}

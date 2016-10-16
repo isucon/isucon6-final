@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	databaseDSN = flag.String("database-dsn", "root:root@/isu6fportal_day0", "database `dsn`")
+	databaseDSN = flag.String("database-dsn", "root:root@/isu6fportal", "database `dsn`")
 	debugMode   = flag.Bool("debug", false, "enable debug mode")
 )
 
@@ -92,18 +92,6 @@ func initWeb() error {
 	return nil
 }
 
-func getIsRankingFixed() bool {
-	var l int
-	err := db.QueryRow("SELECT COUNT(*) FROM setting WHERE name = 'is_ranking_fixed'").Scan(&l)
-	if err != nil {
-		panic(err)
-	}
-	if l > 0 {
-		return true
-	}
-	return false
-}
-
 type Team struct {
 	ID           int
 	Name         string
@@ -164,46 +152,27 @@ type viewParamsLayout struct {
 	Team *Team
 }
 
-type viewParamsIndex struct {
-	viewParamsLayout
-	PlotLines    []PlotLine
-	LatestScores []LatestScore
-	TeamResults  []TeamResult
-	Jobs         []QueuedJob
-	Messages     []Message
-}
-
-type viewParamsLogin struct {
-	viewParamsLayout
-	ErrorMessage string
-}
-
 func serveIndex(w http.ResponseWriter, req *http.Request) error {
 	return serveIndexWithMessage(w, req, "")
 }
 
 func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message string) error {
-	if getContestStatus() == contestStatusEnded {
-		http.Error(w, "Today's final has ended", http.StatusForbidden)
-		return nil
-	}
-
 	team, err := loadTeamFromSession(req)
 	if err != nil {
 		return err
 	}
 
-	if team == nil {
-		http.Redirect(w, req, "/login", http.StatusFound)
-		return nil
+	teamID := 0
+	if team != nil {
+		teamID = team.ID
 	}
 
-	plotLines, latestScores, err := getResults(db, team.ID, time.Now()) // TODO: ランキング固定時刻
+	plotLines, latestScores, err := getResults(db, teamID, 10, getRankingFixedAt())
 	if err != nil {
 		return err
 	}
 
-	teamResults, err := getTeamResults(db, team.ID)
+	teamResults, err := getTeamResults(db, teamID)
 	if err != nil {
 		return err
 	}
@@ -223,15 +192,29 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 	}
 
 	return templates["index.tmpl"].Execute(
-		w, viewParamsIndex{
+		w, struct {
+			viewParamsLayout
+			PlotLines      []PlotLine
+			LatestScores   []LatestScore
+			IsRankingFixed bool
+			TeamResults    []TeamResult
+			Jobs           []QueuedJob
+			Messages       []Message
+		}{
 			viewParamsLayout{team},
 			plotLines,
 			latestScores,
+			getRankingFixedAt().Before(time.Now()),
 			teamResults,
 			jobs,
 			messages,
 		},
 	)
+}
+
+type viewParamsLogin struct {
+	viewParamsLayout
+	ErrorMessage string
 }
 
 func serveLogin(w http.ResponseWriter, req *http.Request) error {
@@ -246,7 +229,8 @@ func serveLogin(w http.ResponseWriter, req *http.Request) error {
 	}
 
 	if req.Method == "GET" {
-		return templates["login.tmpl"].Execute(w, viewParamsLogin{viewParamsLayout{team}, ""})
+		return templates["login.tmpl"].Execute(
+			w, viewParamsLogin{viewParamsLayout{team}, ""})
 	}
 
 	var (
@@ -259,7 +243,8 @@ func serveLogin(w http.ResponseWriter, req *http.Request) error {
 	err = row.Scan(&teamID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return templates["login.tmpl"].Execute(w, viewParamsLogin{viewParamsLayout{team}, "Wrong id/password pair"})
+			return templates["login.tmpl"].Execute(
+				w, viewParamsLogin{viewParamsLayout{team}, "Wrong id/password pair"})
 		} else {
 			return err
 		}
@@ -365,29 +350,23 @@ func serveUpdateTeam(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
-//func serveDebugLeaderboard(w http.ResponseWriter, req *http.Request) error {
-//	// ここは常に最新のを使う
-//	ranking, _, err := buildLeaderboardFromTable(&Team{}, false)
-//	if err != nil {
-//		return err
-//	}
-//
-//	plotData, err := buildPlotData(ranking)
-//	if err != nil {
-//		return err
-//	}
-//
-//	type viewParamsDebugLeaderboard struct {
-//		viewParamsLayout
-//		Ranking  []*Score
-//		PlotData []PlotLine
-//	}
-//
-//	return templates["debug-leaderboard.tmpl"].Execute(
-//		w, viewParamsDebugLeaderboard{
-//			viewParamsLayout{nil},
-//			ranking,
-//			plotData,
-//		},
-//	)
-//}
+func serveDebugLeaderboard(w http.ResponseWriter, req *http.Request) error {
+	plotLines, latestScores, err := getResults(db, 0, 26, time.Now()) // ここは常に最新のを使う
+	if err != nil {
+		return err
+	}
+
+	type viewParamsDebugLeaderboard struct {
+		viewParamsLayout
+		PlotLines    []PlotLine
+		LatestScores []LatestScore
+	}
+
+	return templates["debug-leaderboard.tmpl"].Execute(
+		w, viewParamsDebugLeaderboard{
+			viewParamsLayout{nil},
+			plotLines,
+			latestScores,
+		},
+	)
+}

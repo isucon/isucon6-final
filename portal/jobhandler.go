@@ -4,20 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/catatsuy/isucon6-final/portal/job"
 )
-
-func contestFinishTime() time.Time {
-	if *endsAtHour < 0 {
-		return time.Date(2038, time.January, 1, 0, 0, 0, 0, time.UTC)
-	}
-
-	// その日の18時がコンテスト終了日時
-	y, m, d := time.Now().Date()
-	return time.Date(y, m, d, *endsAtHour, 0, 0, 0, locJST)
-}
 
 // serveQueueJob は参加者がベンチマーカのジョブをキューに挿入するエンドポイント。
 func serveQueueJob(w http.ResponseWriter, req *http.Request) error {
