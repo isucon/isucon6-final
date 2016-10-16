@@ -202,7 +202,7 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 		return nil
 	}
 
-	plotLines, latestScores, err := getResults(db, team.ID, time.Now()) // TODO: ランキング固定時刻
+	plotLines, latestScores, err := getResults(db, team.ID, 10, time.Now()) // TODO: ランキング固定時刻
 	if err != nil {
 		return err
 	}
@@ -249,7 +249,7 @@ func serveLogin(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
-	plotLines, latestScores, err := getResults(db, 0, time.Now()) // TODO: ランキング固定時刻
+	plotLines, latestScores, err := getResults(db, 0, 5, time.Now()) // TODO: ランキング固定時刻
 	if err != nil {
 		return err
 	}
@@ -375,29 +375,23 @@ func serveUpdateTeam(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
-//func serveDebugLeaderboard(w http.ResponseWriter, req *http.Request) error {
-//	// ここは常に最新のを使う
-//	ranking, _, err := buildLeaderboardFromTable(&Team{}, false)
-//	if err != nil {
-//		return err
-//	}
-//
-//	plotData, err := buildPlotData(ranking)
-//	if err != nil {
-//		return err
-//	}
-//
-//	type viewParamsDebugLeaderboard struct {
-//		viewParamsLayout
-//		Ranking  []*Score
-//		PlotData []PlotLine
-//	}
-//
-//	return templates["debug-leaderboard.tmpl"].Execute(
-//		w, viewParamsDebugLeaderboard{
-//			viewParamsLayout{nil},
-//			ranking,
-//			plotData,
-//		},
-//	)
-//}
+func serveDebugLeaderboard(w http.ResponseWriter, req *http.Request) error {
+	plotLines, latestScores, err := getResults(db, 0, 26, time.Now()) // ここは常に最新のを使う
+	if err != nil {
+		return err
+	}
+
+	type viewParamsDebugLeaderboard struct {
+		viewParamsLayout
+		PlotLines    []PlotLine
+		LatestScores []LatestScore
+	}
+
+	return templates["debug-leaderboard.tmpl"].Execute(
+		w, viewParamsDebugLeaderboard{
+			viewParamsLayout{nil},
+			plotLines,
+			latestScores,
+		},
+	)
+}

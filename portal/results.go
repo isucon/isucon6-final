@@ -26,7 +26,7 @@ func (ls LatestScores) Swap(i, j int)      { ls[i], ls[j] = ls[j], ls[i] }
 
 // 自分のチームであれば問答無用で、そうでなければオフィシャルユーザーでなくランキング固定の時間より前のデータを取得
 // プロットには成功したスコアしか載せない
-func getResults(db *sql.DB, teamID int, rankingFixAt time.Time) ([]PlotLine, []LatestScore, error) {
+func getResults(db *sql.DB, teamID int, topNum int, rankingFixAt time.Time) ([]PlotLine, []LatestScore, error) {
 	rows, err := db.Query(`
 SELECT teams.id, teams.name, results.score, results.created_at
 FROM results JOIN teams ON results.team_id = teams.id
@@ -84,7 +84,7 @@ ORDER BY results.team_id ASC, results.id ASC
 	sort.Sort(LatestScores(latestScores))
 	topLatestScores := []LatestScore{}
 	for i, ls := range latestScores {
-		if i < 10 {
+		if i < topNum {
 			topLatestScores = append(topLatestScores, ls)
 		}
 	}
