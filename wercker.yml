@@ -19,8 +19,8 @@ build:
           sed -i \
             -e "s:@AZURE_STORAGE_ACCOUNT@:$AZURE_STORAGE_ACCOUNT:g" \
             -e "s:@CONTAINER_NAME@:$WERCKER_GIT_COMMIT:g" \
-            -e "s:@WORKFLOW_ID@:$WORKFLOW_ID:g" \
-            -e "s:@WORKFLOW_KEY@:$WORKFLOW_KEY:g" \
+            -e "s:@WORKSPACE_ID@:$WORKSPACE_ID:g" \
+            -e "s:@WORKSPACE_KEY@:$WORKSPACE_KEY:g" \
             ansible/playbook/roles/app/tasks//main.yml
           tar zcf output/ansible.tar.gz ansible
     - script:
@@ -29,8 +29,8 @@ build:
           sed \
             -e "s:@AZURE_STORAGE_ACCOUNT@:$AZURE_STORAGE_ACCOUNT:g" \
             -e "s:@CONTAINER_NAME@:$WERCKER_GIT_COMMIT:g" \
-            -e "s:@WORKFLOW_ID@:$WORKFLOW_ID:g" \
-            -e "s:@WORKFLOW_KEY@:$WORKFLOW_KEY:g" \
+            -e "s:@WORKSPACE_ID@:$WORKSPACE_ID:g" \
+            -e "s:@WORKSPACE_KEY@:$WORKSPACE_KEY:g" \
             azure/azuredeploy.json > output/azuredeploy.json
     - script:
         name: prepare index.html
@@ -38,8 +38,8 @@ build:
           sed \
             -e "s:@AZURE_STORAGE_ACCOUNT@:$AZURE_STORAGE_ACCOUNT:g" \
             -e "s:@CONTAINER_NAME@:$WERCKER_GIT_COMMIT:g" \
-            -e "s:@WORKFLOW_ID@:$WORKFLOW_ID:g" \
-            -e "s:@WORKFLOW_KEY@:$WORKFLOW_KEY:g" \
+            -e "s:@WORKSPACE_ID@:$WORKSPACE_ID:g" \
+            -e "s:@WORKSPACE_KEY@:$WORKSPACE_KEY:g" \
             azure/index.html > output/index.html
     - script:
         name: upload blob
