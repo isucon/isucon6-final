@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
-	"time"
 )
 
 func expvarHandler(w http.ResponseWriter, r *http.Request) error {
@@ -55,45 +54,14 @@ func expvarHandler(w http.ResponseWriter, r *http.Request) error {
 }
 
 func serveDebugQueue(w http.ResponseWriter, req *http.Request) error {
-	rows, err := db.Query(`
-      SELECT
-        queues.id,team_id,name,status,queues.ip_address,IFNULL(bench_node, ''),IFNULL(result_json, ''),created_at
-      FROM queues
-        LEFT JOIN teams ON queues.team_id = teams.id
-      ORDER BY queues.created_at DESC
-      LIMIT 50
-	`)
+	items, err := getQueueItems(db, 50)
 	if err != nil {
 		return err
 	}
 
-	type queueItem struct {
-		ID        int
-		TeamID    int
-		TeamName  string
-		Status    string
-		IPAddr    string
-		BenchNode string
-		Result    string
-		Time      time.Time
-	}
-
 	type viewParamsDebugQueue struct {
 		viewParamsLayout
-		Items []*queueItem
-	}
-
-	items := []*queueItem{}
-
-	defer rows.Close()
-	for rows.Next() {
-		var item queueItem
-		err := rows.Scan(&item.ID, &item.TeamID, &item.TeamName, &item.Status, &item.IPAddr, &item.BenchNode, &item.Result, &item.Time)
-		if err != nil {
-			return err
-		}
-
-		items = append(items, &item)
+		QueueItems []QueueItem
 	}
 
 	return templates["debug-queue.tmpl"].Execute(w, viewParamsDebugQueue{viewParamsLayout{nil}, items})

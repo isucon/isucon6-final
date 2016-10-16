@@ -6,6 +6,8 @@ import (
 	"log"
 	"strings"
 
+	"time"
+
 	"github.com/catatsuy/isucon6-final/portal/job"
 	"github.com/pkg/errors"
 )
@@ -172,4 +174,45 @@ func getQueuedJobs(db *sql.DB) ([]QueuedJob, error) {
 	}
 
 	return jobs, nil
+}
+
+type QueueItem struct {
+	ID        int
+	TeamID    int
+	TeamName  string
+	Status    string
+	BenchNode string
+	Stderr    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+// 終わってないのも終わってるのも含めてキューを取得
+func getQueueItems(db *sql.DB, limit int) ([]QueueItem, error) {
+	rows, err := db.Query(`
+      SELECT
+        queues.id,team_id,name,status,IFNULL(bench_node, ''),IFNULL(stderr, ''),created_at,updated_at
+      FROM queues
+        LEFT JOIN teams ON queues.team_id = teams.id
+      ORDER BY queues.created_at DESC
+      LIMIT ?
+	`, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	items := []QueueItem{}
+
+	defer rows.Close()
+	for rows.Next() {
+		var item QueueItem
+		err := rows.Scan(&item.ID, &item.TeamID, &item.TeamName, &item.Status, &item.BenchNode, &item.Stderr, &item.CreatedAt, &item.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, item)
+	}
+
+	return items, nil
 }
