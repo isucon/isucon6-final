@@ -116,6 +116,26 @@
           "dependsOn": [
             "[resourceId('Microsoft.Compute/virtualMachines', variables('vms')[copyIndex()].name)]"
           ]
+        },
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('vms')[copyIndex()].name, '/LogAnalytics')]",
+          "apiVersion": "2015-06-15",
+          "location": "[variables('location')]",
+          "properties": {
+            "publisher": "Microsoft.EnterpriseCloud.Monitoring",
+            "type": "OmsAgentForLinux",
+            "typeHandlerVersion": "1.0",
+            "settings": {
+              "workspaceId": "@WORKSPACE_ID@"
+            },
+            "protectedSettings": {
+              "workspaceKey": "@WORKSPACE_KEY@"
+            }
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', variables('vms')[copyIndex()].name)]"
+          ]
         }
       ],
       "dependsOn": [
