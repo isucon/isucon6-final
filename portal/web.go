@@ -62,7 +62,7 @@ func initWeb() error {
 	const templatesRoot = "views/"
 
 	for _, file := range []string{
-		"index.tmpl", "login.tmpl", "debug-queue.tmpl", "debug-leaderboard.tmpl", "debug-proxies.tmpl", "messages.tmpl",
+		"index.tmpl", "login.tmpl", "debug-queue.tmpl", "debug-leaderboard.tmpl", "debug-proxies.tmpl", "messages.tmpl", "fixranking.tmpl",
 	} {
 		t := template.New(file).Funcs(template.FuncMap{
 			"contestEnded": func() bool {
@@ -92,18 +92,6 @@ func initWeb() error {
 	sessionStore = sessions.NewCookieStore([]byte(":beers:"))
 
 	return nil
-}
-
-func getIsRankingFixed() bool {
-	var l int
-	err := db.QueryRow("SELECT COUNT(*) FROM setting WHERE name = 'is_ranking_fixed'").Scan(&l)
-	if err != nil {
-		panic(err)
-	}
-	if l > 0 {
-		return true
-	}
-	return false
 }
 
 type Team struct {

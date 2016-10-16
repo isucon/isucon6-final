@@ -1,0 +1,17 @@
+{{define "content"}}
+<div class="row">
+<div class="row">
+  <form method="post">
+    <h2>ランキングを固定する</h2>
+    <p>残り1時間になったら押して下さい。</p>
+    <p>このボタンを押すと、fixrankingテーブルとmessagesテーブルにレコードが追加されます。</p>
+    <p>誤って押してしまった場合は両方のテーブルテーブルから値を消しましょう。</p>
+    {{if .IsFixed}}
+      <p style="color:red;font-weight:bold">ランキングは既に固定されています</p>
+    {{else}}
+      <button class="btn btn-danger" type="submit">ランキングを固定する</button>
+    {{end}}
+  </form>
+</div>
+{{end}}
+
