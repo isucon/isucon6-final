@@ -104,7 +104,7 @@ module Isuketch
           SELECT `id`, `csrf_token`, `created_at` FROM `tokens`
           WHERE `csrf_token` = ?
             AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY
-        |).execute(csrf_token).first
+        |).execute(csrf_token).to_a.first
       end
 
       def get_stroke_points(stroke_id)
