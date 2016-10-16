@@ -160,11 +160,6 @@ func loadTeamFromSession(req *http.Request) (*Team, error) {
 	return team, errors.Wrapf(err, "loadTeam(id=%#v)", teamID)
 }
 
-type queuedJob struct {
-	TeamID int
-	Status string
-}
-
 type viewParamsLayout struct {
 	Team *Team
 }
@@ -174,7 +169,7 @@ type viewParamsIndex struct {
 	PlotLines    []PlotLine
 	LatestScores []LatestScore
 	TeamResults  []TeamResult
-	Jobs         []queuedJob
+	Jobs         []QueuedJob
 	Messages     []Message
 }
 
@@ -214,31 +209,9 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 	}
 
 	// キューをゲット
-	jobs := []queuedJob{}
-	if getContestStatus() == contestStatusStarted {
-		rows, err := db.Query(`
-			SELECT team_id, status
-			FROM queues
-			WHERE status IN ('waiting', 'running')
-			  AND team_id <> 9999
-			ORDER BY created_at ASC
-		`)
-		if err != nil {
-			return err
-		}
-		for rows.Next() {
-			var job queuedJob
-			err := rows.Scan(&job.TeamID, &job.Status)
-			if err != nil {
-				rows.Close()
-				return err
-			}
-			jobs = append(jobs, job)
-		}
-		rows.Close()
-		if err := rows.Err(); err != nil {
-			return err
-		}
+	jobs, err := getQueuedJobs(db)
+	if err != nil {
+		return err
 	}
 
 	messages, err := getMessages()

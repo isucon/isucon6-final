@@ -136,3 +136,40 @@ VALUES (?, ?, ?, ?, ?)
 	}
 	return nil
 }
+
+type QueuedJob struct {
+	TeamID int
+	Status string
+}
+
+// まだ終わってないキューを取得
+func getQueuedJobs(db *sql.DB) ([]QueuedJob, error) {
+	jobs := []QueuedJob{}
+	if getContestStatus() == contestStatusStarted {
+		rows, err := db.Query(`
+			SELECT team_id, status
+			FROM queues
+			WHERE status IN ('waiting', 'running')
+			  AND team_id <> 9999
+			ORDER BY created_at ASC
+		`)
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			var job QueuedJob
+			err := rows.Scan(&job.TeamID, &job.Status)
+			if err != nil {
+				rows.Close()
+				return nil, err
+			}
+			jobs = append(jobs, job)
+		}
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
+	}
+
+	return jobs, nil
+}
