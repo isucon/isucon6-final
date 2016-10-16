@@ -108,11 +108,6 @@ func Matsuri(origins []string, timeout int) {
 	for _, w := range watchers {
 		for i, strokeLog := range w.StrokeLogs {
 			postTime := postTimes[strokeLog.Stroke.ID]
-			timeTaken := strokeLog.ReceivedTime.Sub(postTime).Seconds()
-
-			if timeTaken < 2 {
-				score.Increment(StrokeReceiveScore)
-			}
 
 			if i >= len(postedStrokes) {
 				// 普通は起こらないはず
@@ -125,6 +120,12 @@ func Matsuri(origins []string, timeout int) {
 			if len(strokeLog.Points) != len(postedStrokes[i].Points) {
 				fails.Critical("streamされたstrokeが間違っています", nil)
 				break
+			}
+
+			timeTaken := strokeLog.ReceivedTime.Sub(postTime).Seconds()
+
+			if timeTaken < 2 {
+				score.Increment(StrokeReceiveScore)
 			}
 		}
 	}
