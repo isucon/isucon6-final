@@ -101,9 +101,9 @@ module Isuketch
 
       def select_one(sql, *params)
         rs = db.prepare(sql).execute(*params)
-        row = rs.first
+        rs.first
+      ensure
         rs.free
-        row
       end
 
       def check_token(csrf_token)
