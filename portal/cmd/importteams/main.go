@@ -84,7 +84,7 @@ func main() {
 	}
 
 	// 運営アカウントいれる
-	_, err = db.Exec("REPLACE INTO teams (id, name, password, category, azure_resource_group) VALUES (?, ?, ?, ?, ?)", operatorTeamID, "運営", operatorPassword, "general", "")
+	_, err = db.Exec("REPLACE INTO teams (id, name, password, category, azure_resource_group) VALUES (?, ?, ?, ?, ?)", operatorTeamID, "運営", operatorPassword, "official", "")
 	if err != nil {
 		log.Fatal(err)
 	}
