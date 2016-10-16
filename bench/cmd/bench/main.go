@@ -118,7 +118,7 @@ L:
 				if ok {
 					time.Sleep(100 * time.Millisecond)
 				} else {
-					fmt.Fprint(os.Stderr, "LoadIndexPage failed. waiting for 500 ms.")
+					fmt.Fprintln(os.Stderr, "LoadIndexPage failed. waiting for 500 ms.")
 					time.Sleep(500 * time.Millisecond)
 				}
 				loadIndexPageCh <- struct{}{}
