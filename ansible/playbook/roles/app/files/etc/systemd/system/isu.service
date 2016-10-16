@@ -4,7 +4,7 @@ Requires=docker.service
 After=docker.service
 
 [Service]
-Restart=always
+Restart=on-failure
 User=isucon
 Group=isucon
 ExecStart=/usr/local/bin/docker-compose -f /home/isucon/webapp/docker-compose.yml up
