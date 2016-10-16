@@ -60,17 +60,26 @@ func Matsuri(origins []string, timeout int) {
 	watchers := make([]*RoomWatcher, 0)
 
 	for {
-		// watcherIncreaseInterval秒おきに、まだ退室していないwatcherの数と同数の人数が入室する
+		// watcherIncreaseInterval秒おきに、 (まだ退室していないwatcherの数 - 既に退室したwatcherの数) の人数が入室する
 
 		n := 0
+		penalty := 0
 		for _, w := range watchers {
 			if len(w.StrokeLogs) > 0 && len(w.EndCh) == 0 { // 既に最初のStrokeLogを1つ以上受け取ってる、かつ、まだ退室してない
 				n++
 			}
+			if len(w.EndCh) > 0 {
+				penalty++
+			}
 		}
-		if n == 0 { // ゼロならinitialWatcherNum人が入室する（特に初回）
+
+		// 既に退室した人数をペナルティとする
+		n = n - penalty
+
+		if n <= 0 { // ゼロならinitialWatcherNum人が入室する（特に初回）
 			n = initialWatcherNum
 		}
+
 		for i := 0; i < n; i++ {
 			watchers = append(watchers, NewRoomWatcher(randomOrigin(origins), room.ID))
 		}
@@ -99,11 +108,6 @@ func Matsuri(origins []string, timeout int) {
 	for _, w := range watchers {
 		for i, strokeLog := range w.StrokeLogs {
 			postTime := postTimes[strokeLog.Stroke.ID]
-			timeTaken := strokeLog.ReceivedTime.Sub(postTime).Seconds()
-
-			if timeTaken < 2 {
-				score.Increment(StrokeReceiveScore)
-			}
 
 			if i >= len(postedStrokes) {
 				// 普通は起こらないはず
@@ -116,6 +120,12 @@ func Matsuri(origins []string, timeout int) {
 			if len(strokeLog.Points) != len(postedStrokes[i].Points) {
 				fails.Critical("streamされたstrokeが間違っています", nil)
 				break
+			}
+
+			timeTaken := strokeLog.ReceivedTime.Sub(postTime).Seconds()
+
+			if timeTaken < 2 {
+				score.Increment(StrokeReceiveScore)
 			}
 		}
 	}

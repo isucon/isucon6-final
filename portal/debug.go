@@ -96,7 +96,7 @@ func serveDebugQueue(w http.ResponseWriter, req *http.Request) error {
 		items = append(items, &item)
 	}
 
-	return templates["debug-queue.tmpl"].Execute(w, viewParamsDebugQueue{viewParamsLayout{nil, day}, items})
+	return templates["debug-queue.tmpl"].Execute(w, viewParamsDebugQueue{viewParamsLayout{nil}, items})
 }
 
 func serveDebugProxies(w http.ResponseWriter, req *http.Request) error {
@@ -110,7 +110,7 @@ func serveDebugProxies(w http.ResponseWriter, req *http.Request) error {
 		Addrs []string
 	}
 
-	return templates["debug-proxies.tmpl"].Execute(w, viewParamsDebugProxies{viewParamsLayout{nil, day}, addrs})
+	return templates["debug-proxies.tmpl"].Execute(w, viewParamsDebugProxies{viewParamsLayout{nil}, addrs})
 }
 
 func serveDebugMessages(w http.ResponseWriter, req *http.Request) error {
@@ -149,5 +149,5 @@ func serveDebugMessages(w http.ResponseWriter, req *http.Request) error {
 		Messages []Message
 	}
 
-	return templates["debug-messages.tmpl"].Execute(w, viewParamsDebugMessages{viewParamsLayout{nil, day}, msgs})
+	return templates["debug-messages.tmpl"].Execute(w, viewParamsDebugMessages{viewParamsLayout{nil}, msgs})
 }

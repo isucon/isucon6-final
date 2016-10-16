@@ -2,9 +2,9 @@ package main
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/catatsuy/isucon6-final/portal/job"
 	"github.com/pkg/errors"
@@ -84,9 +84,6 @@ func dequeueJob(benchNode string) (*job.Job, error) {
 }
 
 func doneJob(res *job.Result) error {
-	b, _ := json.Marshal(res.Output)
-	resultJSON := string(b)
-
 	log.Printf("doneJob: job=%#v output=%#v", res.Job, res.Output)
 
 	tx, err := db.Begin()
@@ -94,11 +91,12 @@ func doneJob(res *job.Result) error {
 		return errors.Wrap(err, "doneJob failed when beginning tx")
 	}
 	ret, err := tx.Exec(`
-    UPDATE queues SET status = 'done', result_json = ?, stderr = ?
-    WHERE
-      id = ?         AND
-      team_id = ?    AND status = 'running'`,
-		resultJSON,
+UPDATE queues
+SET status = 'done', stderr = ?
+WHERE id = ?
+AND team_id = ?
+AND status = 'running'
+      `,
 		res.Stderr,
 		res.Job.ID,
 		res.Job.TeamID,
@@ -117,25 +115,19 @@ func doneJob(res *job.Result) error {
 		return fmt.Errorf("doneJob failed. invalid affected rows=%d", affected)
 	}
 
+	pass := 0
 	if res.Output.Pass {
-		_, err = tx.Exec("INSERT INTO scores (team_id, score) VALUES (?, ?)", res.Job.TeamID, res.Output.Score)
-		if err != nil {
-			tx.Rollback()
-			return errors.Wrap(err, "INSERT INTO scores")
-		}
-		_, err = tx.Exec(`
-			INSERT INTO team_scores (team_id, latest_score, best_score)
-			VALUES (?, ?, ?)
-			ON DUPLICATE KEY UPDATE
-			best_score = GREATEST(best_score, VALUES(best_score)),
-			latest_score = VALUES(latest_score)
-		`,
-			res.Job.TeamID, res.Output.Score, res.Output.Score,
-		)
-		if err != nil {
-			tx.Rollback()
-			return errors.Wrap(err, "INSERT INTO team_scores")
-		}
+		pass = 1
+	}
+	_, err = tx.Exec(`
+INSERT INTO results (team_id, queue_id, pass, score, messages)
+VALUES (?, ?, ?, ?, ?)
+	`,
+		res.Job.TeamID, res.Job.ID, pass, res.Output.Score, strings.Join(res.Output.Messages, "\n"),
+	)
+	if err != nil {
+		tx.Rollback()
+		return errors.Wrap(err, "INSERT INTO results")
 	}
 
 	err = tx.Commit()
@@ -143,4 +135,41 @@ func doneJob(res *job.Result) error {
 		return errors.Wrap(err, "doneJob failed when commiting tx")
 	}
 	return nil
+}
+
+type QueuedJob struct {
+	TeamID int
+	Status string
+}
+
+// まだ終わってないキューを取得
+func getQueuedJobs(db *sql.DB) ([]QueuedJob, error) {
+	jobs := []QueuedJob{}
+	if getContestStatus() == contestStatusStarted {
+		rows, err := db.Query(`
+			SELECT team_id, status
+			FROM queues
+			WHERE status IN ('waiting', 'running')
+			  AND team_id <> 9999
+			ORDER BY created_at ASC
+		`)
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			var job QueuedJob
+			err := rows.Scan(&job.TeamID, &job.Status)
+			if err != nil {
+				rows.Close()
+				return nil, err
+			}
+			jobs = append(jobs, job)
+		}
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			return nil, err
+		}
+	}
+
+	return jobs, nil
 }

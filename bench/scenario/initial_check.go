@@ -440,14 +440,16 @@ func WatcherCountIncreases(origins []string) {
 
 	var wg sync.WaitGroup
 
-	for i := 0; i < 6; i++ { // チェックする部屋を6部屋決める
-		room := rooms[20+rand.Intn(20)+i*10]
+	pad := rand.Intn(20)
 
+	for i := 0; i < 6; i++ { // チェックする部屋を6部屋決める
 		for j := 0; j < i; j++ { // それぞれの部屋にi人がwatcherが参加する
 			wg.Add(1)
 
 			go func(i, j int) {
 				defer wg.Done()
+
+				room := rooms[20+pad+i*10]
 
 				w := NewRoomWatcher(randomOrigin(origins), room.ID)
 
@@ -463,7 +465,7 @@ func WatcherCountIncreases(origins []string) {
 					}
 				}
 				if c != i {
-					fails.Critical("正しいwatcher_countが送られていません", fmt.Errorf("expected: %d, actual: %d", i, c))
+					fails.Critical("正しいwatcher_countが送られていません", fmt.Errorf("room: %d, expected: %d, actual: %d", room.ID, i, c))
 				}
 			}(i, j)
 		}
