@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	"fmt"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
@@ -175,6 +177,8 @@ type viewParamsIndex struct {
 
 type viewParamsLogin struct {
 	viewParamsLayout
+	PlotLines    []PlotLine
+	LatestScores []LatestScore
 	ErrorMessage string
 }
 
@@ -245,8 +249,14 @@ func serveLogin(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
+	plotLines, latestScores, err := getResults(db, 0, time.Now()) // TODO: ランキング固定時刻
+	if err != nil {
+		return err
+	}
+
 	if req.Method == "GET" {
-		return templates["login.tmpl"].Execute(w, viewParamsLogin{viewParamsLayout{team}, ""})
+		fmt.Println(plotLines, latestScores)
+		return templates["login.tmpl"].Execute(w, viewParamsLogin{viewParamsLayout{team}, plotLines, latestScores, ""})
 	}
 
 	var (
@@ -259,7 +269,7 @@ func serveLogin(w http.ResponseWriter, req *http.Request) error {
 	err = row.Scan(&teamID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return templates["login.tmpl"].Execute(w, viewParamsLogin{viewParamsLayout{team}, "Wrong id/password pair"})
+			return templates["login.tmpl"].Execute(w, viewParamsLogin{viewParamsLayout{team}, plotLines, latestScores, "Wrong id/password pair"})
 		} else {
 			return err
 		}
