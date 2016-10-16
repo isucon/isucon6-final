@@ -258,6 +258,21 @@ func TopPageContent(origins []string) {
 			return false
 		}
 
+		reactRootNode := doc.Find("[data-react-checksum]")
+		reactChecksum := reactRootNode.AttrOr("data-react-checksum", "")
+		markup, err := reactRootNode.Html()
+		if err != nil {
+			l.Critical("トップページの内容が正しくありません",
+				fmt.Errorf("data-react-checksumがありません"))
+			return false
+		}
+		calculatedChecksum := Adler32([]byte("<div data-reactroot=\"\" data-reactid=\"1\">" + markup + "</div>"))
+		if fmt.Sprintf("%d", calculatedChecksum) != reactChecksum {
+			l.Critical("トップページの内容が正しくありません",
+				fmt.Errorf("data-react-checksumが一致しません (%s, %s)", reactChecksum, calculatedChecksum))
+			return false
+		}
+
 		script := doc.Find("body script").First().Text()
 		if !strings.HasPrefix(script, "__ASYNC_PROPS__ = ") {
 			l.Critical("__ASYNC_PROPS__がありません", nil)
@@ -265,7 +280,7 @@ func TopPageContent(origins []string) {
 		}
 
 		var res []Response
-		err := json.Unmarshal([]byte(strings.TrimLeft(script, "__ASYNC_PROPS__ = ")), &res)
+		err = json.Unmarshal([]byte(strings.TrimLeft(script, "__ASYNC_PROPS__ = ")), &res)
 		if err != nil {
 			l.Critical("__ASYNC_PROPS__が正しくありません", err)
 			return false
