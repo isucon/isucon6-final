@@ -190,7 +190,15 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 		return nil
 	}
 
-	plotLines, latestScores, err := getResults(db, team.ID, 10, time.Now()) // TODO: ランキング固定時刻
+	fixedAt, err := getRankingFixedAt(db)
+	if err != nil {
+		return err
+	}
+	if fixedAt.IsZero() {
+		fixedAt = time.Now() // ランキングがまだ固定されていなければ、最新までのデータを習得
+	}
+
+	plotLines, latestScores, err := getResults(db, team.ID, 10, fixedAt)
 	if err != nil {
 		return err
 	}
@@ -237,7 +245,15 @@ func serveLogin(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
-	plotLines, latestScores, err := getResults(db, 0, 5, time.Now()) // TODO: ランキング固定時刻
+	fixedAt, err := getRankingFixedAt(db)
+	if err != nil {
+		return err
+	}
+	if fixedAt.IsZero() {
+		fixedAt = time.Now() // ランキングがまだ固定されていなければ、最新までのデータを習得
+	}
+
+	plotLines, latestScores, err := getResults(db, 0, 5, fixedAt)
 	if err != nil {
 		return err
 	}
