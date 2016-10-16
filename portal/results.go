@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"sort"
 	"time"
 )
@@ -70,7 +69,6 @@ ORDER BY results.team_id ASC, results.id ASC
 			plotLine = PlotLine{TeamName: TeamName, Data: make(map[string]int64)}
 		}
 		plotLine.Data[At.Format("2006-01-02T15:04:05")] = Score
-		fmt.Println(plotLine)
 
 		latestScore = LatestScore{TeamID: TeamID, TeamName: TeamName, Score: Score, At: At}
 	}
