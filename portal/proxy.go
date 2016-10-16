@@ -84,8 +84,8 @@ func serveProxyNginxConf(w http.ResponseWriter, req *http.Request) error {
 			conf += fmt.Sprintf(`
 # team%d
 server {
-	listen %d;
-	proxy_pass %s;
+  listen %d;
+  proxy_pass %s:443;
 }`,
 				ID, teamIDToPortNum(ID), IPAddr)
 		}
