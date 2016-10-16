@@ -21,7 +21,7 @@ const (
 )
 
 func main() {
-	dbName := flag.String("db-day0", "isu6fportal_day0", "`database` name for day 0")
+	dbName := flag.String("db", "isu6fportal", "`database` name")
 	user := flag.String("u", "root", "user name")
 	pass := flag.String("p", "", "password")
 	host := flag.String("h", "", "host")
@@ -84,7 +84,7 @@ func main() {
 	}
 
 	// 運営アカウントいれる
-	_, err = db.Exec("REPLACE INTO teams (id, name, password, category, azure_resource_group) VALUES (?, ?, ?, ?, ?)", operatorTeamID, "運営", operatorPassword, "general", "")
+	_, err = db.Exec("REPLACE INTO teams (id, name, password, category, azure_resource_group) VALUES (?, ?, ?, ?, ?)", operatorTeamID, "運営", operatorPassword, "official", "")
 	if err != nil {
 		log.Fatal(err)
 	}

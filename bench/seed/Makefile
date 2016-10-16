@@ -3,5 +3,3 @@ bindata.go: data/*.json
 
 test: bindata.go
 	go test
-
-.PHONY: bindata.go

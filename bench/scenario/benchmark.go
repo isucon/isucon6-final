@@ -13,7 +13,7 @@ import (
 )
 
 // トップページと画像に負荷をかける
-func LoadIndexPage(origins []string) {
+func LoadIndexPage(origins []string) bool {
 	s := session.New(randomOrigin(origins))
 	defer s.Bye()
 
@@ -32,13 +32,20 @@ func LoadIndexPage(origins []string) {
 		return true
 	}))
 	if !ok {
-		return
+		return false
 	}
 
 	// assetで失敗しても画像はリクエストかける
-	_ = loadStaticFiles(s, false /*checkHash*/)
+	ok = loadStaticFiles(s, false /*checkHash*/)
+	if !ok {
+		return false
+	}
 
-	_ = loadImages(s, images)
+	ok = loadImages(s, images)
+	if !ok {
+		return false
+	}
+	return true
 }
 
 // /api/rooms にリクエストして、その中の一つの部屋を開いてstrokeをPOST

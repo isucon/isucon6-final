@@ -109,6 +109,17 @@ func getContestStatus() contestStatus {
 	return contestStatusStarted
 }
 
+func getRankingFixedAt() time.Time {
+	now := time.Now()
+	y, m, d := now.Date()
+
+	if *endsAtHour >= 0 {
+		endsAt := time.Date(y, m, d, *endsAtHour, 0, 0, 0, locJST)
+		return endsAt.Add(-time.Hour) // ends-atが指定されていればその1時間前にする
+	}
+	return time.Date(2038, 1, 1, 0, 0, 0, 0, locJST)
+}
+
 func buildMux() *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.Handle("/", handler(serveIndex))
@@ -126,7 +137,7 @@ func buildMux() *http.ServeMux {
 	mux.Handle("/"+pathPrefixInternal+"debug/queue", handler(serveDebugQueue))
 	mux.Handle("/"+pathPrefixInternal+"debug/leaderboard", handler(serveDebugLeaderboard))
 	mux.Handle("/"+pathPrefixInternal+"debug/proxies", handler(serveDebugProxies))
-	mux.Handle("/"+pathPrefixInternal+"debug/messages", handler(serveDebugMessages))
+	mux.Handle("/"+pathPrefixInternal+"messages", handler(serveMessages))
 
 	return mux
 }

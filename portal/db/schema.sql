@@ -1,9 +1,3 @@
-CREATE TABLE IF NOT EXISTS setting (
-    name VARCHAR(128) NOT NULL,
-    json TEXT NOT NULL,
-    PRIMARY KEY (name)
-) DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE IF NOT EXISTS teams (
     id INT UNSIGNED NOT NULL,
     name VARCHAR(128) NOT NULL,
@@ -16,26 +10,16 @@ CREATE TABLE IF NOT EXISTS teams (
     UNIQUE KEY (name)
 ) DEFAULT CHARSET=utf8mb4;
 
--- 各チームの最新・最高スコア（Pass したもののみ）
-CREATE TABLE IF NOT EXISTS team_scores (
-    team_id INT UNSIGNED NOT NULL, -- teams.id
-    latest_score BIGINT NOT NULL,
-    best_score BIGINT NOT NULL,
-    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (team_id)
-) DEFAULT CHARSET=utf8mb4;
-
-CREATE TABLE team_scores_snapshot LIKE team_scores;
-
--- 各チームのスコア（Pass したもののみ）
-CREATE TABLE IF NOT EXISTS scores (
+CREATE TABLE IF NOT EXISTS results (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     team_id INT UNSIGNED NOT NULL, -- teams.id
+    queue_id INT UNSIGNED NOT NULL, -- queues.id
+    pass TINYINT UNSIGNED NOT NULL,
     score BIGINT NOT NULL,
+    messages MEDIUMTEXT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    KEY (team_id, created_at),
-    KEY (created_at)
+    KEY team_id (team_id)
 ) DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS queues (
@@ -43,7 +27,6 @@ CREATE TABLE IF NOT EXISTS queues (
     team_id INT NOT NULL,
     status ENUM('waiting', 'running', 'done', 'aborted') NOT NULL DEFAULT 'waiting',
     bench_node VARCHAR(64) DEFAULT NULL,
-    result_json MEDIUMTEXT,
     stderr MEDIUMTEXT,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

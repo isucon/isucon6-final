@@ -1,11 +1,53 @@
 package main
 
-import "html/template"
+import (
+	"html/template"
+	"net/http"
+)
 
 type Message struct {
 	Message     string
 	MessageHTML template.HTML
 	Kind        string
+}
+
+func serveMessages(w http.ResponseWriter, req *http.Request) error {
+	if req.Method == http.MethodPost {
+		var msgs []Message
+
+		err := req.ParseForm()
+		if err != nil {
+			return err
+		}
+		l := len(req.PostForm["kind"])
+		if l != len(req.PostForm["kind"]) {
+			return errHTTP(http.StatusBadRequest)
+		}
+		for i := 0; i < l; i++ {
+			kind := req.PostForm["kind"][i]
+			message := req.PostForm["message"][i]
+			if message != "" {
+				msgs = append(msgs, Message{Kind: kind, Message: message})
+			}
+		}
+		err = updateMessages(msgs)
+		if err != nil {
+			return err
+		}
+	}
+
+	msgs, err := getMessages()
+	msgs = append(msgs, Message{})
+	if err != nil {
+		return err
+	}
+
+	type viewParamsDebugMessages struct {
+		viewParamsLayout
+		Messages []Message
+	}
+
+	return templates["messages.tmpl"].Execute(w, viewParamsDebugMessages{viewParamsLayout{nil}, msgs})
 }
 
 func getMessages() ([]Message, error) {
