@@ -62,11 +62,11 @@ ORDER BY results.team_id ASC, results.id ASC
 		}
 
 		if lastTeamID != TeamID {
-			lastTeamID = TeamID
 			if lastTeamID != 0 {
 				plotLines = append(plotLines, plotLine)
 				latestScores = append(latestScores, latestScore)
 			}
+			lastTeamID = TeamID
 			plotLine = PlotLine{TeamName: TeamName, Data: make(map[string]int64)}
 		}
 		plotLine.Data[At.Format("2006-01-02T15:04:05")] = Score
