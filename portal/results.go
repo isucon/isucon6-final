@@ -16,6 +16,7 @@ type LatestScore struct {
 	TeamID   int
 	TeamName string
 	Score    int64
+	At       time.Time
 }
 
 type LatestScores []LatestScore
@@ -71,7 +72,7 @@ ORDER BY results.team_id ASC, results.id ASC
 		plotLine.Data[At.Format("2006-01-02T15:04:05")] = Score
 		fmt.Println(plotLine)
 
-		latestScore = LatestScore{TeamID: TeamID, TeamName: TeamName, Score: Score}
+		latestScore = LatestScore{TeamID: TeamID, TeamName: TeamName, Score: Score, At: At}
 	}
 	if err := rows.Err(); err != nil {
 		return nil, nil, err
