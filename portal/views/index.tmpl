@@ -32,6 +32,10 @@
 <div class="row">
   <h2>リーダーボード</h2>
 
+  {{if .IsRankingFixed}}
+    <p class="alert alert-warning">競技残り1時間を切りました。自チームを除き、スコアの表示は固定されています。</p>
+  {{end}}
+
   <div id="plot" style="height: 300px;"></div>
   <script>
     Highcharts.setOptions({useUTC: false});
@@ -105,6 +109,7 @@
 </div>
 {{end}}
 
+{{if .Team}}
 <div class="row">
   <h2>運営向け情報</h2>
   <form action="/team" method="POST">
@@ -121,5 +126,6 @@
     </div>
   </form>
 </div>
+{{end}}
 
 {{end}}

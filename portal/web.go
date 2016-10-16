@@ -12,8 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"fmt"
-
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
@@ -62,7 +60,7 @@ func initWeb() error {
 	const templatesRoot = "views/"
 
 	for _, file := range []string{
-		"index.tmpl", "login.tmpl", "debug-queue.tmpl", "debug-leaderboard.tmpl", "debug-proxies.tmpl", "messages.tmpl", "fixranking.tmpl",
+		"index.tmpl", "login.tmpl", "debug-queue.tmpl", "debug-leaderboard.tmpl", "debug-proxies.tmpl", "messages.tmpl",
 	} {
 		t := template.New(file).Funcs(template.FuncMap{
 			"contestEnded": func() bool {
@@ -154,22 +152,6 @@ type viewParamsLayout struct {
 	Team *Team
 }
 
-type viewParamsIndex struct {
-	viewParamsLayout
-	PlotLines    []PlotLine
-	LatestScores []LatestScore
-	TeamResults  []TeamResult
-	Jobs         []QueuedJob
-	Messages     []Message
-}
-
-type viewParamsLogin struct {
-	viewParamsLayout
-	PlotLines    []PlotLine
-	LatestScores []LatestScore
-	ErrorMessage string
-}
-
 func serveIndex(w http.ResponseWriter, req *http.Request) error {
 	return serveIndexWithMessage(w, req, "")
 }
@@ -185,25 +167,17 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 		return err
 	}
 
-	if team == nil {
-		http.Redirect(w, req, "/login", http.StatusFound)
-		return nil
+	teamID := 0
+	if team != nil {
+		teamID = team.ID
 	}
 
-	fixedAt, err := getRankingFixedAt(db)
-	if err != nil {
-		return err
-	}
-	if fixedAt.IsZero() {
-		fixedAt = time.Now() // ランキングがまだ固定されていなければ、最新までのデータを習得
-	}
-
-	plotLines, latestScores, err := getResults(db, team.ID, 10, fixedAt)
+	plotLines, latestScores, err := getResults(db, teamID, 10, getRankingFixedAt())
 	if err != nil {
 		return err
 	}
 
-	teamResults, err := getTeamResults(db, team.ID)
+	teamResults, err := getTeamResults(db, teamID)
 	if err != nil {
 		return err
 	}
@@ -223,15 +197,29 @@ func serveIndexWithMessage(w http.ResponseWriter, req *http.Request, message str
 	}
 
 	return templates["index.tmpl"].Execute(
-		w, viewParamsIndex{
+		w, struct {
+			viewParamsLayout
+			PlotLines      []PlotLine
+			LatestScores   []LatestScore
+			IsRankingFixed bool
+			TeamResults    []TeamResult
+			Jobs           []QueuedJob
+			Messages       []Message
+		}{
 			viewParamsLayout{team},
 			plotLines,
 			latestScores,
+			getRankingFixedAt().Before(time.Now()),
 			teamResults,
 			jobs,
 			messages,
 		},
 	)
+}
+
+type viewParamsLogin struct {
+	viewParamsLayout
+	ErrorMessage string
 }
 
 func serveLogin(w http.ResponseWriter, req *http.Request) error {
@@ -245,22 +233,9 @@ func serveLogin(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
-	fixedAt, err := getRankingFixedAt(db)
-	if err != nil {
-		return err
-	}
-	if fixedAt.IsZero() {
-		fixedAt = time.Now() // ランキングがまだ固定されていなければ、最新までのデータを習得
-	}
-
-	plotLines, latestScores, err := getResults(db, 0, 5, fixedAt)
-	if err != nil {
-		return err
-	}
-
 	if req.Method == "GET" {
-		fmt.Println(plotLines, latestScores)
-		return templates["login.tmpl"].Execute(w, viewParamsLogin{viewParamsLayout{team}, plotLines, latestScores, ""})
+		return templates["login.tmpl"].Execute(
+			w, viewParamsLogin{viewParamsLayout{team}, ""})
 	}
 
 	var (
@@ -273,7 +248,8 @@ func serveLogin(w http.ResponseWriter, req *http.Request) error {
 	err = row.Scan(&teamID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return templates["login.tmpl"].Execute(w, viewParamsLogin{viewParamsLayout{team}, plotLines, latestScores, "Wrong id/password pair"})
+			return templates["login.tmpl"].Execute(
+				w, viewParamsLogin{viewParamsLayout{team}, "Wrong id/password pair"})
 		} else {
 			return err
 		}
