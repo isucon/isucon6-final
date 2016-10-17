@@ -32,6 +32,7 @@ func loadStaticFiles(s *session.Session, checkHash bool) bool {
 			defer wg.Done()
 
 			ok := action.Get(s, asset.Path, action.OK(func(body io.Reader, l *fails.Logger) bool {
+				return true
 				content, err := ioutil.ReadAll(body)
 				if err != nil {
 					l.Add("ファイルの読み込みに失敗しました", err)

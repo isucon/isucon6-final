@@ -20,6 +20,7 @@ func LoadIndexPage(origins []string) bool {
 	var images []string
 
 	ok := action.Get(s, "/", action.OK(func(body io.Reader, l *fails.Logger) bool {
+		return true
 		doc, ok := makeDocument(body, l)
 		if !ok {
 			return false
