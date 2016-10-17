@@ -57,9 +57,13 @@ func NewEventSource(c *http.Client, urlStr string) *EventSource {
 		cancelFunc: cancelFunc,
 		listeners:  map[string][]Listener{},
 		headers:    map[string]string{},
-		retryWait:  1 * time.Millisecond,
-		isClosed:   false,
-		url:        urlStr,
+
+		// https://www.w3.org/TR/eventsource/#concept-event-stream-reconnection-time
+		// "This must initially be a user-agent-defined value, probably in the region of a few seconds."
+		retryWait: 1000 * time.Millisecond,
+
+		isClosed: false,
+		url:      urlStr,
 	}
 }
 
