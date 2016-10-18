@@ -36,6 +36,8 @@ func main() {
 const (
 	exitCodeOK = iota
 	exitCodeErr
+
+	maxStderrLen = 10000
 )
 
 func (cli *CLI) Run(args []string) int {
@@ -167,6 +169,10 @@ func (cli *CLI) start(portalHost, benchPath string) int {
 		err = json.Unmarshal([]byte(out), &o)
 		if err != nil {
 			log.Printf("bench failed: %#v, err: %s\n", j, err.Error())
+		}
+		if len(stderr) > maxStderrLen {
+			// stderrが大きすぎたら削る
+			stderr = stderr[:maxStderrLen]
 		}
 		res := &job.Result{
 			Job:    j,
