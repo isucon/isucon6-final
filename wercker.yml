@@ -12,7 +12,7 @@ build:
     - script:
         name: parepare webapp 
         code: |
-          tar zcf output/webapp.tar.gz --exclude=.gitignore webapp
+          tar zcf output/webapp.tar.gz --exclude=.gitignore --exclude=docker-compose-all*.yml webapp
     - script:
         name: parepare ansible 
         code: |
