@@ -20,10 +20,6 @@
     src=/home/isucon/webapp/docker-compose-php.yml
     dest=/home/isucon/webapp/docker-compose.yml
     state=link
-- name: remove .gitignore
-  file:
-    path=/home/isucon/webapp/.gitignore
-    state=absent
 - name: docker pull
   command: docker pull {{ item }}
   become_user: isucon
