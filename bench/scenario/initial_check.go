@@ -455,14 +455,14 @@ func WatcherCountIncreases(origins []string) {
 
 	pad := rand.Intn(20)
 
-	for i := 0; i < 6; i++ { // チェックする部屋を6部屋決める
+	for i := 0; i < 5; i++ { // チェックする部屋を5部屋とする
 		for j := 0; j < i; j++ { // それぞれの部屋にi人がwatcherが参加する
 			wg.Add(1)
 
 			go func(i, j int) {
 				defer wg.Done()
 
-				room := rooms[20+pad+i*10]
+				room := rooms[30+pad+i*10]
 
 				w := NewRoomWatcher(randomOrigin(origins), room.ID)
 
