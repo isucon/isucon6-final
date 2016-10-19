@@ -308,7 +308,7 @@ router.get('/api/stream/rooms/:id', async (ctx, next) => {
         loop--;
         const strokes = await getStrokes(dbh, room.id, lastStrokeId);
         for (const stroke of strokes) {
-          await getStrokePoints(dbh, stroke.id);
+          stroke.points = await getStrokePoints(dbh, stroke.id);
           ctx.body.write(
             `id:${stroke.id}\n\n` +
             "event:stroke\n" +
