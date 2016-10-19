@@ -31,7 +31,7 @@
     "subnetAddressPrefix": "10.6.1.0/24",
     "storageAccountsName": "[concat(uniqueString(resourceGroup().id), 'storage')]",
     "vmDiskType": "Standard",
-    "vmSize": "Standard_DS2_v2",
+    "vmSize": "Standard_DS3_v2",
     "vms": [
       {
         "name": "[concat(parameters('prefix'), '-isu01')]",
