@@ -39,7 +39,7 @@ func StrokeReflectedToTop(origins []string) {
 	}
 
 	t2 := time.Now()
-	if room.CreatedAt.After(t2.Add(-500*time.Millisecond)) || room.CreatedAt.Before(t1.Add(500*time.Millisecond)) {
+	if room.CreatedAt.After(t2.Add(500*time.Millisecond)) || room.CreatedAt.Before(t1.Add(-500*time.Millisecond)) {
 		fails.Critical("作成した部屋のcreated_atが正しくありません",
 			fmt.Errorf("should be %s < %s < %s",
 				t1.Format(time.RFC3339Nano),
@@ -56,7 +56,7 @@ func StrokeReflectedToTop(origins []string) {
 	}
 
 	t3 := time.Now()
-	if stroke.CreatedAt.After(t3.Add(-500*time.Millisecond)) || stroke.CreatedAt.Before(t2.Add(500*time.Millisecond)) {
+	if stroke.CreatedAt.After(t3.Add(500*time.Millisecond)) || stroke.CreatedAt.Before(t2.Add(-500*time.Millisecond)) {
 		fails.Critical("作成した部屋のcreated_atが正しくありません",
 			fmt.Errorf("should be %s < %s < %s",
 				t2.Format(time.RFC3339Nano),
