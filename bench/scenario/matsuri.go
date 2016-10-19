@@ -36,7 +36,7 @@ func Matsuri(origins []string, timeout int) {
 
 	start := time.Now()
 
-	postedStrokes := make([]Stroke, 0)
+	postedStrokes := make(map[int64]Stroke)
 
 	go func() {
 		// 2秒おきにstrokeをPOSTする
@@ -47,7 +47,7 @@ func Matsuri(origins []string, timeout int) {
 				stroke, ok := drawStroke(s, token, room.ID, seed.FluctuateStroke(seedStroke))
 				if ok {
 					postTimes[stroke.ID] = postTime
-					postedStrokes = append(postedStrokes, *stroke)
+					postedStrokes[stroke.ID] = *stroke
 				}
 				time.Sleep(2 * time.Second)
 				if time.Now().Sub(start).Seconds() > float64(timeout) {
@@ -103,29 +103,26 @@ func Matsuri(origins []string, timeout int) {
 	}
 	//fmt.Println("done")
 
-	// TODO: watcher_countが正しいか
-
 	for _, w := range watchers {
-		for i, strokeLog := range w.StrokeLogs {
-			postTime := postTimes[strokeLog.Stroke.ID]
+		for _, strokeLog := range w.StrokeLogs {
+			if postedStroke, ok := postedStrokes[strokeLog.Stroke.ID]; ok {
+				if len(postedStroke.Points) != len(strokeLog.Points) {
+					fails.Add("streamされたstrokeが間違っています", nil)
+				} else {
+					if postTime, ok := postTimes[strokeLog.Stroke.ID]; ok {
+						timeTaken := strokeLog.ReceivedTime.Sub(postTime).Seconds()
 
-			if i >= len(postedStrokes) {
-				// 普通は起こらないはず
-				break
-			}
-			if strokeLog.ID != postedStrokes[i].ID {
-				fails.Critical("streamされたstrokeに抜け・狂いがあります", nil)
-				break
-			}
-			if len(strokeLog.Points) != len(postedStrokes[i].Points) {
-				fails.Critical("streamされたstrokeが間違っています", nil)
-				break
-			}
-
-			timeTaken := strokeLog.ReceivedTime.Sub(postTime).Seconds()
-
-			if timeTaken < 2 {
-				score.Increment(StrokeReceiveScore)
+						if timeTaken < 2 {
+							score.Increment(StrokeReceiveScore)
+						} else {
+							// 2秒以上かかって届いた。スコア増えない。5秒以上かかった場合はそこで退室したはず。
+						}
+					} else {
+						// POSTしてないstrokeが届いた。普通はありえない
+					}
+				}
+			} else {
+				// POSTしてないstrokeが届いた。普通はありえない
 			}
 		}
 	}
