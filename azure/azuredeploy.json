@@ -143,19 +143,23 @@
     },
     {
       "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('vms')[0].name]",
+      "name": "[variables('vms')[copyIndex()].name]",
       "apiVersion": "2016-03-30",
+      "copy": {
+        "name": "networkInterfaces",
+        "count": "[length(variables('vms'))]"
+      },
       "location": "[variables('location')]",
       "tags": {},
       "properties": {
         "ipConfigurations": [
           {
-            "name": "[variables('vms')[0].name]",
+            "name": "[variables('vms')[copyIndex()].name]",
             "properties": {
               "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[variables('vms')[0].ipAddress]",
+              "privateIPAddress": "[variables('vms')[copyIndex()].ipAddress]",
               "publicIPAddress": {
-                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('commonName'))]"
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', variables('vms')[copyIndex()].name)]"
               },
               "subnet": {
                 "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('commonName')), '/subnets/', variables('commonName'))]"
@@ -170,36 +174,7 @@
       },
       "resources": [],
       "dependsOn": [
-        "[resourceId('Microsoft.Network/publicIPAddresses', variables('commonName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('commonName'))]"
-      ]
-    },
-    {
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[variables('vms')[1].name]",
-      "apiVersion": "2016-03-30",
-      "location": "[variables('location')]",
-      "tags": {},
-      "properties": {
-        "ipConfigurations": [
-          {
-            "name": "[variables('vms')[1].name]",
-            "properties": {
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[variables('vms')[1].ipAddress]",
-              "subnet": {
-                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('commonName')), '/subnets/', variables('commonName'))]"
-              }
-            }
-          }
-        ],
-        "dnsSettings": {
-          "dnsServers": []
-        },
-        "enableIPForwarding": false
-      },
-      "resources": [],
-      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', variables('vms')[copyIndex()].name)]",
         "[resourceId('Microsoft.Network/virtualNetworks', variables('commonName'))]"
       ]
     },
@@ -244,8 +219,12 @@
     },
     {
       "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[variables('commonName')]",
+      "name": "[variables('vms')[copyIndex()].name]",
       "apiVersion": "2016-03-30",
+      "copy": {
+        "name": "networkInterfaces",
+        "count": "[length(variables('vms'))]"
+      },
       "location": "[variables('location')]",
       "tags": {},
       "properties": {
