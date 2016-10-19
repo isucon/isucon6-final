@@ -56,7 +56,8 @@
         dest=/etc/systemd/system/nginx.service
         owner=root
         mode=644
-      notify: reload systemctl
+    - name: daemon-reload systemctl
+      command: systemctl daemon-reload
     - name: nginx service enabled
       service: name=nginx state=started enabled=yes
     - name: place reload script
