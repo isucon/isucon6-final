@@ -63,18 +63,13 @@ func Matsuri(origins []string, timeout int) {
 		// watcherIncreaseInterval秒おきに、 (まだ退室していないwatcherの数 - 既に退室したwatcherの数) の人数が入室する
 
 		n := 0
-		penalty := 0
 		for _, w := range watchers {
-			if len(w.StrokeLogs) > 0 && len(w.EndCh) == 0 { // 既に最初のStrokeLogを1つ以上受け取ってる、かつ、まだ退室してない
+			if len(w.StrokeLogs) > 0 && len(w.EndCh) == 0 { // 既にStrokeLogを1つ以上受け取ってる、かつ、まだ退室してないwatcherと同数のwatcherが入室する
 				n++
-			}
-			if len(w.EndCh) > 0 {
-				penalty++
+			} else { // ただし、既に退室した人数をペナルティとする
+				n--
 			}
 		}
-
-		// 既に退室した人数をペナルティとする
-		n = n - penalty
 
 		if n <= 0 { // ゼロならinitialWatcherNum人が入室する（特に初回）
 			n = initialWatcherNum
