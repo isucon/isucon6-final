@@ -480,7 +480,14 @@ func WatcherCountIncreases(origins []string) {
 					}
 				}
 				if c != i {
-					fails.Critical("正しいwatcher_countが送られていません", fmt.Errorf("room: %d, expected: %d, actual: %d", room.ID, i, c))
+					fails.Critical("正しいwatcher_countが送られていません",
+						fmt.Errorf("room: %d, expected: %d, actual: %d", room.ID, i, c))
+				}
+
+				// 入室前のstrokeも含めてすべて送られる
+				if len(w.StrokeLogs) != room.StrokeCount {
+					fails.Critical("正しいstrokeが送られていません",
+						fmt.Errorf("rooom: %d, expected: %d, actual: %d", room.ID, room.StrokeCount, len(w.StrokeLogs)))
 				}
 			}(i, j)
 		}
