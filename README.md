@@ -4,29 +4,30 @@
 
 ### portal
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fgist.githubusercontent.com%2Fcatatsuy%2F231661330222701bf1ca976d9412d8df%2Fraw%2F135bd621c4164ca1436620b425f71d6516728c3b%2Fportal.json" target="_blank">
-  <img src="http://azuredeploy.net/deploybutton.png"/>
-</a>
+最初に起動する必要がある。
+
+  * [/provisioning/portal/deploy.sh](/provisioning/portal/deploy.sh)を適切な環境変数を渡して実行
+    * VM名にはportalと含む
+  * portalディレクトリ以下で `make portal_linux_amd64` `make importteams_linux_amd64` をする
+  * 立てたサーバーにsshできるように`~/.ssh/config`に書く
+  * [/provisioning/portal/](/provisioning/portal/)ディレクトリ以下で`production`というファイル名で、`~/.ssh/config`に設定したホスト名を書いておく
+  * `ansible-playbook -i production ansible/*.yml`を実行する
+
+### bench
+
+  * `provisioning/external_vars.yml`の`portal_private_ip`をportalのprivate ipにする
+    * VM名にはbenchと含む
+  * [/provisioning/bench/deploy.sh](/provisioning/bench/deploy.sh)を適切な環境変数を渡して実行
+  * benchディレクトリ以下で `make isucon6f` をする
+  * 立てたサーバーにsshできるように`~/.ssh/config`に書く
+  * [/provisioning/bench/](/provisioning/bench/)ディレクトリ以下で`production`というファイル名で、`~/.ssh/config`に設定したホスト名を書いておく
+  * `ansible-playbook -i production ansible/*.yml`を実行する
 
 ### proxy
 
-`provisioning/external_vars.yml`の`portal_private_ip`をportalのprivate ipにする。これをしないとセットアップに失敗する。
-
-`provisioning/proxy`ディレクトリ以下で、以下のような`prodution`というファイル名のものを作る。`~/.ssh/config`を作る必要があるのと、__azure上でVMを作る際に名前にproxyという名前が含まれている必要がある（重要）__。
-
-```
-[build_servers]
-isu6f-proxy01
-isu6f-proxy02
-isu6f-proxy03
-```
-
-以下のコマンドを実行する。
-
-```
-cd provisioning/proxy
-ansible-playbook -i production playbook/*.yml
-```
+  * `provisioning/external_vars.yml`の`portal_private_ip`をportalのprivate ipにする
+    * VM名にはproxyと含む（必須）
+  * [/provisioning/proxy/deploy.sh](/provisioning/proxy/deploy.sh)を適切な環境変数を渡して実行
 
 proxyは以下のような挙動をする。
 
