@@ -44,6 +44,24 @@
         "hostname": "isu02",
         "ipAddress": "10.6.1.5",
         "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && curl -sL https://@AZURE_STORAGE_ACCOUNT@.blob.core.windows.net/@CONTAINER_NAME@/ansible.tar.gz | tar zxf - && ( cd ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local -t base playbook/setup.yml ) && rm -rf ansible"
+      },
+      {
+        "name": "[concat(parameters('prefix'), '-isu03')]",
+        "hostname": "isu03",
+        "ipAddress": "10.6.1.6",
+        "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && curl -sL https://@AZURE_STORAGE_ACCOUNT@.blob.core.windows.net/@CONTAINER_NAME@/ansible.tar.gz | tar zxf - && ( cd ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local -t base playbook/setup.yml ) && rm -rf ansible"
+      },
+      {
+        "name": "[concat(parameters('prefix'), '-isu04')]",
+        "hostname": "isu04",
+        "ipAddress": "10.6.1.7",
+        "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && curl -sL https://@AZURE_STORAGE_ACCOUNT@.blob.core.windows.net/@CONTAINER_NAME@/ansible.tar.gz | tar zxf - && ( cd ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local -t base playbook/setup.yml ) && rm -rf ansible"
+      },
+      {
+        "name": "[concat(parameters('prefix'), '-isu05')]",
+        "hostname": "isu05",
+        "ipAddress": "10.6.1.8",
+        "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && curl -sL https://@AZURE_STORAGE_ACCOUNT@.blob.core.windows.net/@CONTAINER_NAME@/ansible.tar.gz | tar zxf - && ( cd ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local -t base playbook/setup.yml ) && rm -rf ansible"
       }
     ]
   },
