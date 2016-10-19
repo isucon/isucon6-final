@@ -10,4 +10,4 @@ RUN bundle install --jobs 4
 
 COPY . /app
 
-CMD bundle exec thin start --port 5000 -A rack -R config.ru -e production
+CMD bundle exec thin start --port 80 -A rack -R config.ru -e production

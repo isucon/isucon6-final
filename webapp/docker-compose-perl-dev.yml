@@ -30,6 +30,6 @@ services:
     links:
       - perl_dev
     environment:
-      API: http://perl_dev:5000
+      API: http://perl_dev:80
     ports:
       - "443:443"

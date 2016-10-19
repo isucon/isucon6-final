@@ -8,4 +8,4 @@ WORKDIR /app
 COPY Gemfile Gemfile.lock /app/
 RUN bundle install --jobs 4
 
-CMD bundle exec thin start --port 5000 -A rack -R config.ru
+CMD bundle exec thin start --port 80 -A rack -R config.ru

@@ -10,4 +10,4 @@ RUN carton install --deployment
 
 COPY . /app
 
-CMD carton exec -- plackup -s Starlet -E production
+CMD carton exec -- plackup -p 80 -s Starlet -E production

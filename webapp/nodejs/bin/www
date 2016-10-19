@@ -13,7 +13,7 @@ var http = require('http');
  */
 
 var app = http.createServer(app.callback());
-var port = normalizePort(process.env.PORT || '5000');
+var port = normalizePort(process.env.PORT || '80');
 app.listen(port);
 app.on('error', onError);
 app.on('listening', onListening);

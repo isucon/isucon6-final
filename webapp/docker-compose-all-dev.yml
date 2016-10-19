@@ -87,8 +87,6 @@ services:
       MYSQL_PORT: 3306
       MYSQL_USER: isucon
       MYSQL_PASS: isucon
-    ports:
-      - "80:80"
   ruby_dev:
     build:
       context: ./ruby
@@ -126,7 +124,7 @@ services:
     links:
       - perl_dev
     environment:
-      API: http://perl_dev:5000
+      API: http://perl_dev:80
     ports:
       - "10002:443"
   react_python_dev:
@@ -174,6 +172,6 @@ services:
     links:
       - ruby_dev
     environment:
-      API: http://ruby_dev:5000
+      API: http://ruby_dev:80
     ports:
       - "10006:443"

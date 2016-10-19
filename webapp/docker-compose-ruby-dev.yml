@@ -29,6 +29,6 @@ services:
     links:
       - ruby_dev
     environment:
-      API: http://ruby_dev:5000
+      API: http://ruby_dev:80
     ports:
       - "443:443"

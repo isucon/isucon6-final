@@ -27,6 +27,6 @@ services:
     links:
       - perl
     environment:
-      API: http://perl:5000
+      API: http://perl:80
     ports:
       - "443:443"

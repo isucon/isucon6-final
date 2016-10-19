@@ -110,7 +110,7 @@ services:
     links:
       - perl
     environment:
-      API: http://perl:5000
+      API: http://perl:80
     ports:
       - "10002:443"
   react_python:
@@ -158,6 +158,6 @@ services:
     links:
       - ruby
     environment:
-      API: http://ruby:5000
+      API: http://ruby:80
     ports:
       - "10006:443"
