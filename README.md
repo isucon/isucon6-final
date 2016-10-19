@@ -13,6 +13,11 @@
   * [/provisioning/portal/](/provisioning/portal/)ディレクトリ以下で`production`というファイル名で、`~/.ssh/config`に設定したホスト名を書いておく
   * `ansible-playbook -i production ansible/*.yml`を実行する
 
+デプロイしたい場合
+
+  * portalディレクトリ以下で `make portal_linux_amd64` をする
+  * `ansible-playbook -i production ansible/*deploy.yml`を実行する
+
 ### bench
 
   * `provisioning/external_vars.yml`の`portal_private_ip`をportalのprivate ipにする
@@ -22,6 +27,11 @@
   * 立てたサーバーにsshできるように`~/.ssh/config`に書く
   * [/provisioning/bench/](/provisioning/bench/)ディレクトリ以下で`production`というファイル名で、`~/.ssh/config`に設定したホスト名を書いておく
   * `ansible-playbook -i production ansible/*.yml`を実行する
+
+デプロイしたい場合
+
+  * benchディレクトリ以下で `make isucon6f` をする
+  * `ansible-playbook -i production ansible/*deploy.yml`を実行する
 
 ### proxy
 
