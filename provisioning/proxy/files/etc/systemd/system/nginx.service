@@ -3,6 +3,7 @@ Description=The NGINX HTTP and reverse proxy server
 After=syslog.target network.target remote-fs.target nss-lookup.target
 
 [Service]
+Restart=on-failure
 Type=forking
 PIDFile=/run/nginx.pid
 ExecStartPre=/usr/sbin/nginx -t
