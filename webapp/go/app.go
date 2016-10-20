@@ -328,13 +328,13 @@ func postAPIRooms(w http.ResponseWriter, r *http.Request) {
 
 func getAPIRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) {
 	idStr := pat.Param(ctx, "id")
-	id, err := strconv.Atoi(idStr)
+	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		outputErrorMsg(w, http.StatusNotFound, "この部屋は存在しません。")
 		return
 	}
 
-	room, err := getRoom(int64(id))
+	room, err := getRoom(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			outputErrorMsg(w, http.StatusNotFound, "この部屋は存在しません。")
@@ -379,7 +379,7 @@ func getAPIStreamRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Req
 	w.Header().Set("Content-Type", "text/event-stream")
 
 	idStr := pat.Param(ctx, "id")
-	id, err := strconv.Atoi(idStr)
+	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return
 	}
@@ -395,7 +395,7 @@ func getAPIStreamRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	room, err := getRoom(int64(id))
+	room, err := getRoom(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			printAndFlush(w, "event:bad_request\n"+"data:この部屋は存在しません\n\n")
@@ -422,12 +422,12 @@ func getAPIStreamRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Req
 	var lastStrokeID int64
 	lastEventIDStr := r.Header.Get("Last-Event-ID")
 	if lastEventIDStr != "" {
-		lastEventID, err := strconv.Atoi(lastEventIDStr)
+		lastEventID, err := strconv.ParseInt(lastEventIDStr, 10, 64)
 		if err != nil {
 			outputError(w, err)
 			return
 		}
-		lastStrokeID = int64(lastEventID)
+		lastStrokeID = lastEventID
 	}
 
 	loop := 6
@@ -483,13 +483,13 @@ func postAPIStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.R
 	}
 
 	idStr := pat.Param(ctx, "id")
-	id, err := strconv.Atoi(idStr)
+	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		outputErrorMsg(w, http.StatusNotFound, "この部屋は存在しません。")
 		return
 	}
 
-	room, err := getRoom(int64(id))
+	room, err := getRoom(id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			outputErrorMsg(w, http.StatusNotFound, "この部屋は存在しません。")
