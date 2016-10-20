@@ -20,12 +20,13 @@ import (
 	"io"
 	"log"
 	"net"
-	"github.com/catatsuy/isucon6-final/bench/http/httptrace"
 	"net/url"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/catatsuy/isucon6-final/bench/http/httptrace"
 
 	"golang.org/x/net/lex/httplex"
 )
@@ -197,14 +198,15 @@ func (t *Transport) onceSetNextProtoDefaults() {
 		// Transport.
 		return
 	}
-	if t.TLSClientConfig != nil || t.Dial != nil || t.DialTLS != nil {
-		// Be conservative and don't automatically enable
-		// http2 if they've specified a custom TLS config or
-		// custom dialers. Let them opt-in themselves via
-		// http2.ConfigureTransport so we don't surprise them
-		// by modifying their tls.Config. Issue 14275.
-		return
-	}
+	// patch: I want to overwrite TLSClientConfig and use http2
+	// if t.TLSClientConfig != nil || t.Dial != nil || t.DialTLS != nil {
+	// 	// Be conservative and don't automatically enable
+	// 	// http2 if they've specified a custom TLS config or
+	// 	// custom dialers. Let them opt-in themselves via
+	// 	// http2.ConfigureTransport so we don't surprise them
+	// 	// by modifying their tls.Config. Issue 14275.
+	// 	return
+	// }
 	t2, err := http2configureTransport(t)
 	if err != nil {
 		log.Printf("Error enabling Transport HTTP/2 support: %v", err)
