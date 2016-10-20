@@ -12,6 +12,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"reflect"
@@ -20,8 +21,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 const fakeHopHeader = "X-Fake-Hop-Header-For-Test"

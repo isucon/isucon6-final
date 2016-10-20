@@ -9,9 +9,8 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"testing"
-
-	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 var sizeTests = []struct {

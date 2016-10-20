@@ -8,8 +8,7 @@ package httputil
 
 import (
 	"io"
-
-	"github.com/catatsuy/isucon6-final/bench/http/internal"
+	"net/http/internal"
 )
 
 // NewChunkedReader returns a new chunkedReader that translates the data read from r

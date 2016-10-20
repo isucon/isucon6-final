@@ -14,6 +14,7 @@ import (
 	"mime"
 	"mime/multipart"
 	"net"
+	. "net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
@@ -26,8 +27,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	. "github.com/catatsuy/isucon6-final/bench/http"
 )
 
 const (

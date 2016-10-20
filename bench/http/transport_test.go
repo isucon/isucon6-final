@@ -24,9 +24,11 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	. "net/http"
 	"net/http/httptest"
 	"net/http/httptrace"
 	"net/http/httputil"
+	"net/http/internal"
 	"net/url"
 	"os"
 	"reflect"
@@ -36,9 +38,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	. "github.com/catatsuy/isucon6-final/bench/http"
-	"github.com/catatsuy/isucon6-final/bench/http/internal"
 )
 
 // TODO: test 5 pipelined requests with responses: 1) OK, 2) OK, Connection: Close

@@ -9,10 +9,9 @@ import (
 	"errors"
 	"io"
 	"net"
+	"net/http"
 	"net/textproto"
 	"sync"
-
-	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 var (

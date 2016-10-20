@@ -8,12 +8,11 @@ import (
 	"crypto/tls"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 func TestNewRequest(t *testing.T) {

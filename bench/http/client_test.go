@@ -18,6 +18,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
+	. "net/http"
 	"net/http/httptest"
 	"net/url"
 	"strconv"
@@ -25,8 +26,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	. "github.com/catatsuy/isucon6-final/bench/http"
 )
 
 var robotsTxtHandler = HandlerFunc(func(w ResponseWriter, r *Request) {

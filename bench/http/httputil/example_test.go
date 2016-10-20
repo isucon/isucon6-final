@@ -8,12 +8,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"net/http/httptest"
 	"net/http/httputil"
 	"net/url"
 	"strings"
-
-	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 func ExampleDumpRequest() {

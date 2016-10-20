@@ -7,9 +7,8 @@ package httptest
 import (
 	"fmt"
 	"io"
+	"net/http"
 	"testing"
-
-	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 func TestRecorder(t *testing.T) {

@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"os/exec"
@@ -22,8 +23,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 func newRequest(httpreq string) *http.Request {

@@ -10,12 +10,11 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"net/url"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 // onExitFlushLoop is a callback set by tests to detect the state of the

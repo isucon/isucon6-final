@@ -11,11 +11,10 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	. "net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	. "github.com/catatsuy/isucon6-final/bench/http"
 )
 
 func TestNextProtoUpgrade(t *testing.T) {

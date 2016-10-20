@@ -12,11 +12,10 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
+	"net/http"
 	"net/url"
 	"strings"
 	"time"
-
-	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 // One of the copies, say from b to r2, could be avoided by using a more

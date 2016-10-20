@@ -27,7 +27,7 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/net/lex/httplex"
+	"golang_org/x/net/lex/httplex"
 )
 
 // DefaultTransport is the default implementation of Transport and is
@@ -197,15 +197,14 @@ func (t *Transport) onceSetNextProtoDefaults() {
 		// Transport.
 		return
 	}
-	// patch: I want to overwrite TLSClientConfig and use http2
-	// if t.TLSClientConfig != nil || t.Dial != nil || t.DialTLS != nil {
-	// 	// Be conservative and don't automatically enable
-	// 	// http2 if they've specified a custom TLS config or
-	// 	// custom dialers. Let them opt-in themselves via
-	// 	// http2.ConfigureTransport so we don't surprise them
-	// 	// by modifying their tls.Config. Issue 14275.
-	// 	return
-	// }
+	if t.TLSClientConfig != nil || t.Dial != nil || t.DialTLS != nil {
+		// Be conservative and don't automatically enable
+		// http2 if they've specified a custom TLS config or
+		// custom dialers. Let them opt-in themselves via
+		// http2.ConfigureTransport so we don't surprise them
+		// by modifying their tls.Config. Issue 14275.
+		return
+	}
 	t2, err := http2configureTransport(t)
 	if err != nil {
 		log.Printf("Error enabling Transport HTTP/2 support: %v", err)

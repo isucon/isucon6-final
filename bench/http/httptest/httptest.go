@@ -11,9 +11,8 @@ import (
 	"crypto/tls"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"strings"
-
-	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 // NewRequest returns a new incoming server Request, suitable

@@ -10,12 +10,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"runtime"
 	"strings"
 	"testing"
-
-	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 type dumpTest struct {
