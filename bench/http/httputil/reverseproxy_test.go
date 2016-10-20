@@ -12,7 +12,8 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"net/http/httptest"
+	"github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/catatsuy/isucon6-final/bench/http/httptest"
 	"net/url"
 	"reflect"
 	"strconv"
@@ -20,8 +21,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 const fakeHopHeader = "X-Fake-Hop-Header-For-Test"

@@ -20,6 +20,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"github.com/catatsuy/isucon6-final/bench/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,8 +28,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-
-	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 var trailingPort = regexp.MustCompile(`:([0-9]+)$`)

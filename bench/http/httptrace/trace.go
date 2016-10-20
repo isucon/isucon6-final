@@ -8,10 +8,11 @@ package httptrace
 
 import (
 	"context"
-	"internal/nettrace"
 	"net"
 	"reflect"
 	"time"
+
+	"github.com/catatsuy/isucon6-final/bench/http/internal/nettrace"
 )
 
 // unique type to prevent assignment.

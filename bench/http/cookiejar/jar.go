@@ -9,13 +9,12 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"github.com/catatsuy/isucon6-final/bench/http"
 	"net/url"
 	"sort"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 // PublicSuffixList provides the public suffix of a domain. For example:

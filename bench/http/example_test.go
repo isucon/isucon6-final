@@ -9,7 +9,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-
 	"github.com/catatsuy/isucon6-final/bench/http"
 )
 

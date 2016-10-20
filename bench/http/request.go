@@ -18,7 +18,7 @@ import (
 	"io/ioutil"
 	"mime"
 	"mime/multipart"
-	"net/http/httptrace"
+	"github.com/catatsuy/isucon6-final/bench/http/httptrace"
 	"net/textproto"
 	"net/url"
 	"strconv"

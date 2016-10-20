@@ -7,7 +7,6 @@ package httptest
 import (
 	"bytes"
 	"io/ioutil"
-
 	"github.com/catatsuy/isucon6-final/bench/http"
 )
 

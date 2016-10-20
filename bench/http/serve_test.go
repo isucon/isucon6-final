@@ -21,8 +21,10 @@ import (
 	"log"
 	"math/rand"
 	"net"
-	"net/http/httptest"
-	"net/http/httputil"
+	. "github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/catatsuy/isucon6-final/bench/http/httptest"
+	"github.com/catatsuy/isucon6-final/bench/http/httputil"
+	"github.com/catatsuy/isucon6-final/bench/http/internal"
 	"net/url"
 	"os"
 	"os/exec"
@@ -37,9 +39,6 @@ import (
 	"syscall"
 	"testing"
 	"time"
-
-	. "github.com/catatsuy/isucon6-final/bench/http"
-	"github.com/catatsuy/isucon6-final/bench/http/internal"
 )
 
 type dummyAddr string

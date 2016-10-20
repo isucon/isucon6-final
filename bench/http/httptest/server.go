@@ -13,13 +13,12 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/catatsuy/isucon6-final/bench/http/internal"
 	"os"
 	"runtime"
 	"sync"
 	"time"
-
-	"github.com/catatsuy/isucon6-final/bench/http"
-	"github.com/catatsuy/isucon6-final/bench/http/internal"
 )
 
 // A Server is an HTTP server listening on a system-chosen port on the

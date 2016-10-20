@@ -13,13 +13,12 @@ import (
 	"go/ast"
 	"io"
 	"io/ioutil"
+	"github.com/catatsuy/isucon6-final/bench/http/internal"
 	"net/url"
 	"reflect"
 	"regexp"
 	"strings"
 	"testing"
-
-	"github.com/catatsuy/isucon6-final/bench/http/internal"
 )
 
 type respTest struct {

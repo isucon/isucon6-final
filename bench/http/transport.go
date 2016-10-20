@@ -20,12 +20,13 @@ import (
 	"io"
 	"log"
 	"net"
-	"net/http/httptrace"
 	"net/url"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/catatsuy/isucon6-final/bench/http/httptrace"
 
 	"golang.org/x/net/lex/httplex"
 )
