@@ -11,14 +11,14 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"net/http/internal"
+	"github.com/catatsuy/isucon6-final/bench/http/internal"
 	"net/textproto"
 	"sort"
 	"strconv"
 	"strings"
 	"sync"
 
-	"golang_org/x/net/lex/httplex"
+	"golang.org/x/net/lex/httplex"
 )
 
 // ErrLineTooLong is returned when reading request or response bodies

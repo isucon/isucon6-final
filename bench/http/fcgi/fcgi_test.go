@@ -9,7 +9,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
-	"net/http"
+	"github.com/catatsuy/isucon6-final/bench/http"
 	"testing"
 )
 

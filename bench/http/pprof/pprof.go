@@ -10,10 +10,10 @@
 // The handled paths all begin with /debug/pprof/.
 //
 // To use pprof, link this package into your program:
-//	import _ "net/http/pprof"
+//	import _ "github.com/catatsuy/isucon6-final/bench/http/pprof"
 //
 // If your application is not already running an http server, you
-// need to start one. Add "net/http" and "log" to your imports and
+// need to start one. Add "github.com/catatsuy/isucon6-final/bench/http" and "log" to your imports and
 // the following code to your main function:
 //
 // 	go func() {
@@ -53,7 +53,7 @@ import (
 	"html/template"
 	"io"
 	"log"
-	"net/http"
+	"github.com/catatsuy/isucon6-final/bench/http"
 	"os"
 	"runtime"
 	"runtime/pprof"

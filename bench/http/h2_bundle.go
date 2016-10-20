@@ -30,7 +30,7 @@ import (
 	"log"
 	"math"
 	"net"
-	"net/http/httptrace"
+	"github.com/catatsuy/isucon6-final/bench/http/httptrace"
 	"net/textproto"
 	"net/url"
 	"os"
@@ -42,8 +42,8 @@ import (
 	"sync"
 	"time"
 
-	"golang_org/x/net/http2/hpack"
-	"golang_org/x/net/lex/httplex"
+	"golang.org/x/net/http2/hpack"
+	"golang.org/x/net/lex/httplex"
 )
 
 // ClientConnPool manages a pool of HTTP/2 client connections.

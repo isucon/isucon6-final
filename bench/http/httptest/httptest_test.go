@@ -8,7 +8,7 @@ import (
 	"crypto/tls"
 	"io"
 	"io/ioutil"
-	"net/http"
+	"github.com/catatsuy/isucon6-final/bench/http"
 	"net/url"
 	"reflect"
 	"strings"

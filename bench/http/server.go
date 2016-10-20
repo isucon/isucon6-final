@@ -28,7 +28,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"golang_org/x/net/lex/httplex"
+	"golang.org/x/net/lex/httplex"
 )
 
 // Errors used by the HTTP server.
@@ -2331,7 +2331,7 @@ func (s *Server) logf(format string, args ...interface{}) {
 //
 //	import (
 //		"io"
-//		"net/http"
+//		"github.com/catatsuy/isucon6-final/bench/http"
 //		"log"
 //	)
 //
@@ -2361,7 +2361,7 @@ func ListenAndServe(addr string, handler Handler) error {
 //
 //	import (
 //		"log"
-//		"net/http"
+//		"github.com/catatsuy/isucon6-final/bench/http"
 //	)
 //
 //	func handler(w http.ResponseWriter, req *http.Request) {

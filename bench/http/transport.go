@@ -20,14 +20,14 @@ import (
 	"io"
 	"log"
 	"net"
-	"net/http/httptrace"
+	"github.com/catatsuy/isucon6-final/bench/http/httptrace"
 	"net/url"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
-	"golang_org/x/net/lex/httplex"
+	"golang.org/x/net/lex/httplex"
 )
 
 // DefaultTransport is the default implementation of Transport and is

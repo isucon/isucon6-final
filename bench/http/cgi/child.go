@@ -15,7 +15,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
-	"net/http"
+	"github.com/catatsuy/isucon6-final/bench/http"
 	"net/url"
 	"os"
 	"strconv"

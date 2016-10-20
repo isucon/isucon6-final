@@ -7,7 +7,7 @@ package http
 import (
 	"strings"
 
-	"golang_org/x/net/lex/httplex"
+	"golang.org/x/net/lex/httplex"
 )
 
 // maxInt64 is the effective "infinite" value for the Server and

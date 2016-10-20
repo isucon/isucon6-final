@@ -11,8 +11,8 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	. "net/http"
-	"net/http/httptest"
+	. "github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/catatsuy/isucon6-final/bench/http/httptest"
 	"strings"
 	"testing"
 )
