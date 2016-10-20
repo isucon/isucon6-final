@@ -128,7 +128,7 @@ func getRoom(roomID int64) (*Room, error) {
 	query := "SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at` FROM `rooms` WHERE `id` = ?"
 	r := &Room{}
 	err := dbx.Get(r, query, roomID)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		return nil, err
 	}
 	// 空スライスを入れてJSONでnullを返さないように
@@ -336,12 +336,11 @@ func getAPIRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 
 	room, err := getRoom(int64(id))
 	if err != nil {
-		outputError(w, err)
-		return
-	}
-
-	if room == nil {
-		outputErrorMsg(w, http.StatusNotFound, "この部屋は存在しません。")
+		if err == sql.ErrNoRows {
+			outputErrorMsg(w, http.StatusNotFound, "この部屋は存在しません。")
+		} else {
+			outputError(w, err)
+		}
 		return
 	}
 
@@ -398,11 +397,11 @@ func getAPIStreamRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Req
 
 	room, err := getRoom(int64(id))
 	if err != nil {
-		outputError(w, err)
-		return
-	}
-	if room == nil {
-		printAndFlush(w, "event:bad_request\n"+"data:この部屋は存在しません\n\n")
+		if err == sql.ErrNoRows {
+			printAndFlush(w, "event:bad_request\n"+"data:この部屋は存在しません\n\n")
+		} else {
+			outputError(w, err)
+		}
 		return
 	}
 
@@ -492,11 +491,11 @@ func postAPIStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.R
 
 	room, err := getRoom(int64(id))
 	if err != nil {
-		outputError(w, err)
-		return
-	}
-	if room == nil {
-		outputErrorMsg(w, http.StatusNotFound, "この部屋は存在しません。")
+		if err == sql.ErrNoRows {
+			outputErrorMsg(w, http.StatusNotFound, "この部屋は存在しません。")
+		} else {
+			outputError(w, err)
+		}
 		return
 	}
 
