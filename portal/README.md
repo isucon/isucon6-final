@@ -39,12 +39,24 @@ Host isucon6f-portal
 
 秘密のURLです。
 
+```
 user: isucon6f
-pass: X1grZy5vTrIRONRmsTKl@
+pass: X1grZy5vTrIRONRmsTKl
+```
 
 - https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/vars
 - https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/queue
 - https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/leaderboard
+- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/proxy/update
+- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/proxy/nginx.conf
+- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/job/new
+- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/job/result
+- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/vars
+- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/queue
+- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/leaderboard
+- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/proxies
+- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/messages
+
 
 ## ローカルで開発する
 
