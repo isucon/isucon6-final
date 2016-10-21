@@ -101,7 +101,7 @@ func benchmark(origins []string) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			scenario.Matsuri(origins, BenchmarkTimeout-5)
+			//scenario.Matsuri(origins, BenchmarkTimeout-5)
 		}()
 	}
 
@@ -119,13 +119,13 @@ L:
 					time.Sleep(100 * time.Millisecond)
 				} else {
 					fmt.Fprintln(os.Stderr, "LoadIndexPage failed. waiting for 500 ms.")
-					time.Sleep(500 * time.Millisecond)
+					time.Sleep(100 * time.Millisecond)
 				}
 				loadIndexPageCh <- struct{}{}
 			}()
 		case <-drawOnRandomRoomCh:
 			go func() {
-				scenario.DrawOnRandomRoom(origins)
+				//scenario.DrawOnRandomRoom(origins)
 				time.Sleep(500 * time.Millisecond)
 				drawOnRandomRoomCh <- struct{}{}
 			}()
