@@ -8,6 +8,7 @@ package httputil
 
 import (
 	"io"
+
 	"github.com/catatsuy/isucon6-final/bench/http/internal"
 )
 

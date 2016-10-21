@@ -30,7 +30,6 @@ import (
 	"log"
 	"math"
 	"net"
-	"github.com/catatsuy/isucon6-final/bench/http/httptrace"
 	"net/textproto"
 	"net/url"
 	"os"
@@ -41,6 +40,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/catatsuy/isucon6-final/bench/http/httptrace"
 
 	"golang.org/x/net/http2/hpack"
 	"golang.org/x/net/lex/httplex"
