@@ -116,10 +116,10 @@ L:
 			go func() {
 				ok := scenario.LoadIndexPage(origins)
 				if ok {
-					time.Sleep(100 * time.Millisecond)
-				} else {
-					fmt.Fprintln(os.Stderr, "LoadIndexPage failed. waiting for 500 ms.")
 					time.Sleep(500 * time.Millisecond)
+				} else {
+					fmt.Fprintln(os.Stderr, "LoadIndexPage failed. waiting for 1s.")
+					time.Sleep(1000 * time.Millisecond)
 				}
 				loadIndexPageCh <- struct{}{}
 			}()

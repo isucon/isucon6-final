@@ -17,6 +17,16 @@ func LoadIndexPage(origins []string) bool {
 	s := session.New(randomOrigin(origins))
 	defer s.Bye()
 
+	for i := 0; i < 3; i++ {
+		ok := LoadIndexPageWithSession(s)
+		if !ok {
+			return false
+		}
+	}
+	return true
+}
+
+func LoadIndexPageWithSession(s *session.Session) bool {
 	var images []string
 
 	ok := action.Get(s, "/", action.OK(func(body io.Reader, l *fails.Logger) bool {
