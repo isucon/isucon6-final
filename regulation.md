@@ -58,9 +58,6 @@ __サブスクリプションの制限がデフォルトで合計20コアまで�
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fisucon6final.blob.core.windows.net%2Fa226a45ec477bd793248b3af3651942f3dbb65fc%2Fazuredeploy.json" target="_blank">
   <img src="https://azuredeploy.net/deploybutton.png"/>
 </a>
-<a href="http://armviz.io/#/?load=https%3A%2F%2Fisucon6final.blob.core.windows.net%2Fa226a45ec477bd793248b3af3651942f3dbb65fc%2Fazuredeploy.json" target="_blank">
-  <img src="https://armviz.io/visualizebutton.png"/>
-</a>
 
 サーバは5ノード存在するので全て起動していることを確認してください。開始時点で5ノードは全て同じようにセットアップされています。
 
