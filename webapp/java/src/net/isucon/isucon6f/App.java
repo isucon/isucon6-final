@@ -63,7 +63,7 @@ public class App {
                 List<Room> rooms = new ArrayList<>();
                 while (rs.next()) {
                     Room room = getRoom(conn, rs.getInt("room_id"));
-                    room.setStrokeCount(getStrokes(conn, rs.getInt("id"), 0));
+                    room.setStrokeCount(getStrokes(conn, rs.getInt("id"), 0).length);
                     rooms.add(room);
                 }
 
@@ -74,7 +74,6 @@ public class App {
 
             // $app->post('/api/rooms'
             post("/api/rooms", (request, response) -> {
-                // TODO: Implements
                 Token token;
                 Map<String, String> map = new HashMap<String, String>();
                 try {
@@ -108,37 +107,115 @@ public class App {
 
                     conn.commit();
                 } catch (SQLException e) {
-                	logger.warning(e.toString());
+                    logger.warning(e.toString());
                     response.status(500);
                     conn.rollback();
                     map.put("error", "エラーが発生しました。");
                     return map;
                 } finally {
-                	conn.setAutoCommit(true);
+                    conn.setAutoCommit(true);
                 }
                 Map<String, Room> map2 = new HashMap<String, Room>();
                 map2.put("room", getRoom(conn, room_id));
                 return map2;
             }, gson::toJson);
-            
-            get("/api/stream/rooms/[{id}]", (request, response) -> {
-            	response.raw().setContentType("text/event-stream");
-            	
-            	Token token;
-            	try {
-            		token = checkToken(conn, request.params("csrf_token"));
-            	} catch (TokenException e) {
-            		try (OutputStream os = response.raw().getOutputStream()) {
-            			os.write("event:bad_request\ndata:トークンエラー。ページを再読み込みしてください。\n\n".getBytes());
-            			os.flush();
-            		}
-            		return "";
-            	}
-            	
-            	response.raw();
-            	return "";
+
+            get("/api/stream/rooms/:id", (request, response) -> {
+                response.raw().setContentType("text/event-stream");
+
+                Token token;
+                try {
+                    token = checkToken(conn, request.params("csrf_token"));
+                } catch (TokenException e) {
+                    try (OutputStream os = response.raw().getOutputStream()) {
+                        os.write("event:bad_request\ndata:トークンエラー。ページを再読み込みしてください。\n\n".getBytes());
+                        os.flush();
+                    }
+                    return "";
+                }
+                Room room = getRoom(conn, request.params(":id"));
+                if (room == null) {
+                    try (OutputStream os = response.raw().getOutputStream()) {
+                        os.write("event:bad_request\ndata:この部屋は存在しません\n\n".getBytes());
+                        os.flush();
+                        return "";
+                    }
+                }
+
+                updateRoomWatcher(conn, room.id, token.id);
+                int watcher_count = getWatcherCount(conn, room.id);
+                try (OutputStream os = response.raw().getOutputStream()) {
+                    os.write(("retry:500\n\nevent:watcher_count\ndata:" + watcher_count + "\n\n").getBytes());
+                    os.flush();
+                }
+
+                int last_stroke_id = 0;
+                if (!StringUtils.isEmpty(request.headers("Last-Event-ID"))) {
+                    last_stroke_id = (int) Integer.valueOf(request.headers("Last-Event-ID"));
+                }
+
+                int loop = 6;
+                int new_watcher_count = 0;
+                while (loop > 0) {
+                    loop--;
+                    Thread.sleep(500); // 500ms
+
+                    StrokeData[] strokes = getStrokes(conn, room.id, last_stroke_id);
+
+                    for (StrokeData stroke : strokes) {
+                        stroke.setPoints(getStrokePoints(conn, stroke.id));
+                        try (OutputStream os = response.raw().getOutputStream()) {
+                            os.write((
+                                        "id:" + stroke.id + "\n\nevent:stroke\ndata:" + gson.toJson(stroke) + "\n\n"
+                                     ).getBytes());
+                            os.flush();
+                        }
+                        last_stroke_id = stroke.id;        	        	
+                    }
+
+
+                    updateRoomWatcher(conn, room.id, token.id);
+                    new_watcher_count = getWatcherCount(conn, room.id);
+                    if (new_watcher_count != watcher_count) {
+                        watcher_count = new_watcher_count;
+                        try (OutputStream os = response.raw().getOutputStream()) {
+                            os.write(("event:watcher_count\ndata:" + watcher_count + "\n\n").getBytes());
+                            os.flush();
+                        }
+                    }
+                }
+
+                return "";
             });
         }
+    }
+
+    private static Point[] getStrokePoints(Connection conn, int id) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    private static int getWatcherCount(Connection conn, int room_id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS `watcher_count` FROM `room_watchers`"
+            + " WHERE `room_id` = ? AND `updated_at` > CURRENT_TIMESTAMP(6) - INTERVAL 3 SECOND";
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, room_id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.getInt("watcher_count");
+            }
+        }
+    }
+
+    private static void updateRoomWatcher(Connection conn, int room_id, int token_id) throws SQLException {
+        String sql = "INSERT INTO `room_watchers` (`room_id`, `token_id`) VALUES (?, ?)"
+            + " ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP(6)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, room_id);
+            ps.setInt(2, token_id);
+            try (ResultSet rs = ps.executeQuery()) {}
+        }
+        return;
     }
 
     private static Token checkToken(Connection conn, String csrf_token) throws TokenException {
@@ -158,12 +235,16 @@ public class App {
         }
     }
 
-    private static int getStrokes(Connection conn, int int1, int i) {
+    private static StrokeData[] getStrokes(Connection conn, int int1, int i) {
         // TODO Auto-generated method stub
-        return 0;
+        return null;
     }
 
     private static Room getRoom(Connection conn, int room_id) {
+        return getRoom(conn, String.valueOf(room_id));
+    }
+
+    private static Room getRoom(Connection conn, String room_id) {
         String sql = "SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at` FROM `rooms` WHERE `id` = :room_id";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             try (ResultSet rs = ps.executeQuery()) {
