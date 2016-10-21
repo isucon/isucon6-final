@@ -34,7 +34,7 @@ __このページは18時を過ぎると更新が止まり、Enqueueできなく
     * 共同作成者として、Microsoftアカウント isucon6f@gmail.com を招待してください
     * 以下のスクリーンショットのような状態になっていれば成功です（画像はisucon6qになっていますが、isucon6fになります）
 
-![](https://gyazo.com/34fe6f8dadbe42b67b8516c7dc3d33e4)
+![](https://i.gyazo.com/34fe6f8dadbe42b67b8516c7dc3d33e4.png)
 
 上記の手順が完了できていない場合、追試をおこなえず、無条件で失格となります。
 
