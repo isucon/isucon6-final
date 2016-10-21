@@ -16,46 +16,55 @@ module Isuketch
     end
 
     helpers do
-      def db
-        Thread.current[:db] ||=
-          begin
-            host = ENV['MYSQL_HOST'] || 'localhost'
-            port = ENV['MYSQL_PORT'] || '3306'
-            user = ENV['MYSQL_USER'] || 'root'
-            pass = ENV['MYSQL_PASS'] || ''
-            name = 'isuketch'
-            mysql = Mysql2::Client.new(
-              username: user,
-              password: pass,
-              database: name,
-              host: host,
-              port: port,
-              encoding: 'utf8mb4',
-              init_command: %|
-                SET TIME_ZONE = 'UTC'
-              |,
-            )
-            mysql.query_options.update(symbolize_keys: true)
-            mysql
-          end
+      def get_dbh
+        host = ENV['MYSQL_HOST'] || 'localhost'
+        port = ENV['MYSQL_PORT'] || '3306'
+        user = ENV['MYSQL_USER'] || 'root'
+        pass = ENV['MYSQL_PASS'] || ''
+        name = 'isuketch'
+        mysql = Mysql2::Client.new(
+          username: user,
+          password: pass,
+          database: name,
+          host: host,
+          port: port,
+          encoding: 'utf8mb4',
+          init_command: %|
+            SET TIME_ZONE = 'UTC'
+          |,
+        )
+        mysql.query_options.update(symbolize_keys: true)
+        mysql
       end
 
-      def get_room(room_id)
-        db.prepare(%|
+      def select_one(dbh, sql, binds)
+        select_all(dbh, sql, binds).first
+      end
+
+      def select_all(dbh, sql, binds)
+        stmt = dbh.prepare(sql)
+        result = stmt.execute(*binds)
+        result.to_a
+      ensure
+        stmt.close
+      end
+
+      def get_room(dbh, room_id)
+        select_one(dbh, %|
           SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at`
           FROM `rooms`
           WHERE `id` = ?
-        |).execute(room_id).first
+        |, [room_id])
       end
 
-      def get_strokes(room_id, greater_than_id)
-        db.prepare(%|
+      def get_strokes(dbh, room_id, greater_than_id)
+        select_all(dbh, %|
           SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at`
           FROM `strokes`
           WHERE `room_id` = ?
             AND `id` > ?
           ORDER BY `id` ASC;
-        |).execute(room_id, greater_than_id)
+        |, [room_id, greater_than_id])
       end
 
       def to_room_json(room)
@@ -99,54 +108,58 @@ module Isuketch
         }
       end
 
-      def check_token(csrf_token)
-        db.prepare(%|
+      def check_token(dbh, csrf_token)
+        select_one(dbh, %|
           SELECT `id`, `csrf_token`, `created_at` FROM `tokens`
           WHERE `csrf_token` = ?
             AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY
-        |).execute(csrf_token).first
+        |, [csrf_token])
       end
 
-      def get_stroke_points(stroke_id)
-        db.prepare(%|
+      def get_stroke_points(dbh, stroke_id)
+        select_all(dbh, %|
           SELECT `id`, `stroke_id`, `x`, `y`
           FROM `points`
           WHERE `stroke_id` = ?
           ORDER BY `id` ASC
-        |).execute(stroke_id)
+        |, [stroke_id])
       end
 
-      def get_watcher_count(room_id)
-        db.prepare(%|
+      def get_watcher_count(dbh, room_id)
+        select_one(dbh, %|
           SELECT COUNT(*) AS `watcher_count`
           FROM `room_watchers`
           WHERE `room_id` = ?
             AND `updated_at` > CURRENT_TIMESTAMP(6) - INTERVAL 3 SECOND
-        |).execute(room_id).first[:watcher_count].to_i
+        |, [room_id])[:watcher_count].to_i
       end
 
-      def update_room_watcher(room_id, csrf_token)
-        db.prepare(%|
+      def update_room_watcher(dbh, room_id, csrf_token)
+        stmt = dbh.prepare(%|
           INSERT INTO `room_watchers` (`room_id`, `token_id`)
           VALUES (?, ?)
           ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP(6)
-        |).execute(room_id, csrf_token)
+        |)
+        stmt.execute(room_id, csrf_token)
+      ensure
+        stmt.close
       end
     end
 
     post '/api/csrf_token' do
-      db.query(%|
+      dbh = get_dbh
+      dbh.query(%|
         INSERT INTO `tokens` (`csrf_token`)
         VALUES
         (SHA2(CONCAT(RAND(), UUID_SHORT()), 256))
       |)
 
-      id = db.last_id
-      token = db.prepare(%|
+      id = dbh.last_id
+      token = select_one(dbh, %|
         SELECT `id`, `csrf_token`, `created_at`
         FROM `tokens`
         WHERE `id` = ?
-      |).execute(id).first
+      |, [id])
 
       content_type :json
       JSON.generate(
@@ -155,17 +168,18 @@ module Isuketch
     end
 
     get '/api/rooms' do
-      results = db.query(%|
+      dbh = get_dbh
+      results = select_all(dbh, %|
         SELECT `room_id`, MAX(`id`) AS `max_id`
         FROM `strokes`
         GROUP BY `room_id`
         ORDER BY `max_id` DESC
         LIMIT 100
-      |)
+      |, [])
 
       rooms = results.map {|res|
-        room = get_room(res[:room_id])
-        room[:stroke_count] = get_strokes(room[:id], 0).size
+        room = get_room(dbh, res[:room_id])
+        room[:stroke_count] = get_strokes(dbh, room[:id], 0).size
         room
       }
 
@@ -176,7 +190,8 @@ module Isuketch
     end
 
     post '/api/rooms' do
-      token = check_token(request.env['HTTP_X_CSRF_TOKEN'])
+      dbh = get_dbh
+      token = check_token(dbh, request.env['HTTP_X_CSRF_TOKEN'])
       unless token
         halt(400, {'Content-Type' => 'application/json'}, JSON.generate(
           error: 'トークンエラー。ページを再読み込みしてください。'
@@ -192,32 +207,37 @@ module Isuketch
 
       room_id = nil
       begin
-        db.query(%|BEGIN|)
+        dbh.query(%|BEGIN|)
 
-        db.prepare(%|
+        stmt = dbh.prepare(%|
           INSERT INTO `rooms`
           (`name`, `canvas_width`, `canvas_height`)
           VALUES
           (?, ?, ?)
-        |).execute(posted_room[:name], posted_room[:canvas_width], posted_room[:canvas_height])
-        room_id = db.last_id
+        |)
+        stmt.execute(posted_room[:name], posted_room[:canvas_width], posted_room[:canvas_height])
+        room_id = dbh.last_id
+        stmt.close
 
-        db.prepare(%|
+        stmt = dbh.prepare(%|
           INSERT INTO `room_owners`
           (`room_id`, `token_id`)
           VALUES
           (?, ?)
-        |).execute(room_id, token[:id])
+        |)
+        stmt.execute(room_id, token[:id])
       rescue
-        db.query(%|ROLLBACK|)
+        dbh.query(%|ROLLBACK|)
         halt(500, {'Content-Type' => 'application/json'}, JSON.generate(
           error: 'エラーが発生しました。'
         ))
       else
-        db.query(%|COMMIT|)
+        dbh.query(%|COMMIT|)
+      ensure
+        stmt.close
       end
 
-      room = get_room(room_id)
+      room = get_room(dbh, room_id)
       content_type :json
       JSON.generate(
         room: to_room_json(room)
@@ -225,35 +245,39 @@ module Isuketch
     end
 
     get '/api/rooms/:id' do |id|
-      room = get_room(id)
+      dbh = get_dbh()
+      room = get_room(dbh, id)
       unless room
         halt(404, {'Content-Type' => 'application/json'}, JSON.generate(
           error: 'この部屋は存在しません。'
         ))
       end
 
-      strokes = get_strokes(room[:id], 0)
+      strokes = get_strokes(dbh, room[:id], 0)
       strokes.each do |stroke|
-        stroke[:points] = get_stroke_points(stroke[:id])
+        stroke[:points] = get_stroke_points(dbh, stroke[:id])
       end
       room[:strokes] = strokes
-      room[:watcher_count] = get_watcher_count(room[:id])
+      room[:watcher_count] = get_watcher_count(dbh, room[:id])
 
+      dbh.close
       content_type :json
       JSON.generate(
         room: to_room_json(room)
       )
+
     end
 
     post '/api/strokes/rooms/:id' do |id|
-      token = check_token(request.env['HTTP_X_CSRF_TOKEN'])
+      dbh = get_dbh()
+      token = check_token(dbh, request.env['HTTP_X_CSRF_TOKEN'])
       unless token
         halt(400, {'Content-Type' => 'application/json'}, JSON.generate(
           error: 'トークンエラー。ページを再読み込みしてください。'
         ))
       end
 
-      room = get_room(id)
+      room = get_room(dbh, id)
       unless room
         halt(404, {'Content-Type' => 'application/json'}, JSON.generate(
           error: 'この部屋は存在しません。'
@@ -267,13 +291,13 @@ module Isuketch
         ))
       end
 
-      stroke_count = get_strokes(room[:id], 0).count
+      stroke_count = get_strokes(dbh, room[:id], 0).count
       if stroke_count == 0
-        count = db.prepare(%|
+        count = select_one(dbh, %|
           SELECT COUNT(*) as cnt FROM `room_owners`
           WHERE `room_id` = ?
             AND `token_id` = ?
-        |).execute(room[:id], token[:id]).first[:cnt].to_i
+        |, [room[:id], token[:id]])[:cnt].to_i
         if count == 0
           halt(400, {'Content-Type' => 'application/json'}, JSON.generate(
             error: '他人の作成した部屋に1画目を描くことはできません'
@@ -283,39 +307,43 @@ module Isuketch
 
       stroke_id = nil
       begin
-        db.query(%| BEGIN |)
+        dbh.query(%| BEGIN |)
 
-        db.prepare(%|
+        stmt = dbh.prepare(%|
           INSERT INTO `strokes`
           (`room_id`, `width`, `red`, `green`, `blue`, `alpha`)
           VALUES
           (?, ?, ?, ?, ?, ?)
-        |).execute(room[:id], posted_stroke[:width], posted_stroke[:red], posted_stroke[:green], posted_stroke[:blue], posted_stroke[:alpha])
-        stroke_id = db.last_id
+        |)
+        stmt.execute(room[:id], posted_stroke[:width], posted_stroke[:red], posted_stroke[:green], posted_stroke[:blue], posted_stroke[:alpha])
+        stroke_id = dbh.last_id
+        stmt.close
 
         posted_stroke[:points].each do |point|
-          db.prepare(%|
+          stmt = dbh.prepare(%|
             INSERT INTO `points`
             (`stroke_id`, `x`, `y`)
             VALUES
             (?, ?, ?)
-          |).execute(stroke_id, point[:x], point[:y])
+          |)
+          stmt.execute(stroke_id, point[:x], point[:y])
+          stmt.close
         end
       rescue
-        db.query(%| ROLLBACK |)
+        dbh.query(%| ROLLBACK |)
         halt(500, {'Content-Type' => 'application/json'}, JSON.generate(
           error: 'エラーが発生しました。'
         ))
       else
-        db.query(%| COMMIT |)
+        dbh.query(%| COMMIT |)
       end
 
-      stroke = db.prepare(%|
+      stroke = select_one(dbh, %|
         SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at`
         FROM `strokes`
         WHERE `id`= ?
-      |).execute(stroke_id).first
-      stroke[:points] = get_stroke_points(stroke_id)
+      |, [stroke_id])
+      stroke[:points] = get_stroke_points(dbh, stroke_id)
 
       content_type :json
       JSON.generate(
@@ -325,8 +353,9 @@ module Isuketch
 
     get '/api/stream/rooms/:id', provides: 'text/event-stream' do |id|
       stream do |writer|
-        token = check_token(request.params['HTTP_X_CSRF_TOKEN'])
-        token = check_token(request.params['csrf_token'])
+        dbh = get_dbh
+        token = check_token(dbh, request.params['HTTP_X_CSRF_TOKEN'])
+        token = check_token(dbh, request.params['csrf_token'])
         unless token
           logger.warn("---> mismatched token")
           writer << ("event:bad_request\n" + "data:トークンエラー。ページを再読み込みしてください。\n\n")
@@ -334,15 +363,15 @@ module Isuketch
           next
         end
 
-        room = get_room(id)
+        room = get_room(dbh, id)
         unless room
           writer << ("event:bad_request\n" + "data:この部屋は存在しません\n\n")
           writer.close
           next
         end
 
-        update_room_watcher(room[:id], token[:id])
-        watcher_count = get_watcher_count(room[:id])
+        update_room_watcher(dbh, room[:id], token[:id])
+        watcher_count = get_watcher_count(dbh, room[:id])
 
         writer << ("retry:500\n\n" + "event:watcher_count\n" + "data:#{watcher_count}\n\n")
 
@@ -354,15 +383,15 @@ module Isuketch
         5.downto(0) do |i|
           sleep 0.5
 
-          strokes = get_strokes(room[:id], last_stroke_id)
+          strokes = get_strokes(dbh, room[:id], last_stroke_id)
           strokes.each do |stroke|
-            stroke[:points] = get_stroke_points(stroke[:id])
+            stroke[:points] = get_stroke_points(dbh, stroke[:id])
             writer << ("id:#{stroke[:id]}\n\n" + "event:stroke\n" + "data:#{JSON.generate(to_stroke_json(stroke))}\n\n")
             last_stroke_id = stroke[:id]
           end
 
-          update_room_watcher(room[:id], token[:id])
-          new_watcher_count = get_watcher_count(room[:id])
+          update_room_watcher(dbh, room[:id], token[:id])
+          new_watcher_count = get_watcher_count(dbh, room[:id])
           if new_watcher_count != watcher_count
             watcher_count = new_watcher_count
             writer << ("event:watcher_count\n" + "data:#{watcher_count}\n\n")
