@@ -12,8 +12,6 @@ import (
 	"fmt"
 	"io"
 	"net"
-	"github.com/catatsuy/isucon6-final/bench/http"
-	"github.com/catatsuy/isucon6-final/bench/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -23,6 +21,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/catatsuy/isucon6-final/bench/http/httptest"
 )
 
 func newRequest(httpreq string) *http.Request {

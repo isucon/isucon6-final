@@ -18,12 +18,13 @@ import (
 	"io/ioutil"
 	"mime"
 	"mime/multipart"
-	"github.com/catatsuy/isucon6-final/bench/http/httptrace"
 	"net/textproto"
 	"net/url"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/catatsuy/isucon6-final/bench/http/httptrace"
 )
 
 const (

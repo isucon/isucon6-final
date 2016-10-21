@@ -8,8 +8,9 @@ import (
 	"bufio"
 	"io/ioutil"
 	"net"
-	"github.com/catatsuy/isucon6-final/bench/http"
 	"testing"
+
+	"github.com/catatsuy/isucon6-final/bench/http"
 )
 
 func TestServer(t *testing.T) {

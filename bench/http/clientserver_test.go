@@ -15,9 +15,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net"
-	. "github.com/catatsuy/isucon6-final/bench/http"
-	"github.com/catatsuy/isucon6-final/bench/http/httptest"
-	"github.com/catatsuy/isucon6-final/bench/http/httputil"
 	"net/url"
 	"os"
 	"reflect"
@@ -28,6 +25,10 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+
+	. "github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/catatsuy/isucon6-final/bench/http/httptest"
+	"github.com/catatsuy/isucon6-final/bench/http/httputil"
 )
 
 type clientServerTest struct {

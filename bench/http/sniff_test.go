@@ -10,11 +10,12 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	. "github.com/catatsuy/isucon6-final/bench/http"
 	"reflect"
 	"strconv"
 	"strings"
 	"testing"
+
+	. "github.com/catatsuy/isucon6-final/bench/http"
 )
 
 var sniffTests = []struct {
