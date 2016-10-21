@@ -39,9 +39,9 @@ Host isucon6f-portal
 
 秘密のURLです。認証とかはとくになし
 
-- http://isucon6q.catatsuy.org/mBGWHqBVEjUSKpBF/debug/vars
-- http://isucon6q.catatsuy.org/mBGWHqBVEjUSKpBF/debug/queue
-- http://isucon6q.catatsuy.org/mBGWHqBVEjUSKpBF/debug/leaderboard
+- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/vars
+- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/queue
+- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/leaderboard
 
 ## ローカルで開発する
 
