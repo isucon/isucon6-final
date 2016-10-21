@@ -235,9 +235,16 @@ public class App {
         }
     }
 
-    private static StrokeData[] getStrokes(Connection conn, int int1, int i) {
-        // TODO Auto-generated method stub
-        return null;
+    private static StrokeData[] getStrokes(Connection conn, int room_id, int greater_than_id) throws SQLException {
+        String sql = "SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`"
+            +" WHERE `room_id` = ? AND `id` > ? ORDER BY `id` ASC";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, room_id);
+            ps.setInt(2, greater_than_id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return null;
+            }
+        }
     }
 
     private static Room getRoom(Connection conn, int room_id) {
