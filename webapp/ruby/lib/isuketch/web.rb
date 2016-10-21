@@ -41,11 +41,11 @@ module Isuketch
       end
 
       def get_room(room_id)
-        db.prepare(%|
+        select_one(%|
           SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at`
           FROM `rooms`
           WHERE `id` = ?
-        |).execute(room_id).first
+        |, room_id)
       end
 
       def get_strokes(room_id, greater_than_id)
@@ -99,12 +99,19 @@ module Isuketch
         }
       end
 
+      def select_one(sql, *params)
+        rs = db.prepare(sql).execute(*params)
+        rs.first
+      ensure
+        rs.free
+      end
+
       def check_token(csrf_token)
-        db.prepare(%|
+        select_one(%|
           SELECT `id`, `csrf_token`, `created_at` FROM `tokens`
           WHERE `csrf_token` = ?
             AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY
-        |).execute(csrf_token).first
+        |, csrf_token)
       end
 
       def get_stroke_points(stroke_id)
@@ -117,12 +124,12 @@ module Isuketch
       end
 
       def get_watcher_count(room_id)
-        db.prepare(%|
+        select_one(%|
           SELECT COUNT(*) AS `watcher_count`
           FROM `room_watchers`
           WHERE `room_id` = ?
             AND `updated_at` > CURRENT_TIMESTAMP(6) - INTERVAL 3 SECOND
-        |).execute(room_id).first[:watcher_count].to_i
+        |, room_id)[:watcher_count].to_i
       end
 
       def update_room_watcher(room_id, csrf_token)
@@ -142,11 +149,11 @@ module Isuketch
       |)
 
       id = db.last_id
-      token = db.prepare(%|
+      token = select_one(%|
         SELECT `id`, `csrf_token`, `created_at`
         FROM `tokens`
         WHERE `id` = ?
-      |).execute(id).first
+      |, id)
 
       content_type :json
       JSON.generate(
@@ -269,11 +276,11 @@ module Isuketch
 
       stroke_count = get_strokes(room[:id], 0).count
       if stroke_count == 0
-        count = db.prepare(%|
+        count = select_one(%|
           SELECT COUNT(*) as cnt FROM `room_owners`
           WHERE `room_id` = ?
             AND `token_id` = ?
-        |).execute(room[:id], token[:id]).first[:cnt].to_i
+        |, room[:id], token[:id])[:cnt].to_i
         if count == 0
           halt(400, {'Content-Type' => 'application/json'}, JSON.generate(
             error: '他人の作成した部屋に1画目を描くことはできません'
@@ -310,11 +317,11 @@ module Isuketch
         db.query(%| COMMIT |)
       end
 
-      stroke = db.prepare(%|
+      stroke = select_one(%|
         SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at`
         FROM `strokes`
         WHERE `id`= ?
-      |).execute(stroke_id).first
+      |, stroke_id)
       stroke[:points] = get_stroke_points(stroke_id)
 
       content_type :json
