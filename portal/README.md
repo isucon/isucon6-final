@@ -37,7 +37,10 @@ Host isucon6f-portal
 
 ## 開発・運用むけ情報
 
-秘密のURLです。認証とかはとくになし
+秘密のURLです。
+
+user: isucon6f
+pass: X1grZy5vTrIRONRmsTKl@
 
 - https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/vars
 - https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/queue
