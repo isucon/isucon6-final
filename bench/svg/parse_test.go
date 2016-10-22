@@ -51,3 +51,14 @@ func TestParseWithoutXMLMetaData(t *testing.T) {
 		t.Errorf("want %d, got %d", 1, len(s.PolyLines))
 	}
 }
+
+func TestParseBrokenPoints(t *testing.T) {
+	_, err := Parse([]byte(`
+	<svg baseProfile="full" width="1028" height="768" style="width:1028px;height:768px;background-color:white;" viewBox="0 0 1028 768">
+	<polyline stroke="rgba(128,128,128,0.7)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round" fill="none" points="105 212,405"></polyline>
+	</svg>`))
+
+	if err == nil {
+		t.Errorf("%v", "broken points")
+	}
+}
