@@ -43,7 +43,7 @@ func Parse(data []byte) (*SVG, error) {
 		for _, s := range strings.Split(polyLine.PointsRaw, " ") {
 			ps := strings.Split(s, ",")
 			if len(ps) < 2 {
-				return nil, errors.New("polylineの形式が不正です")
+				return nil, errors.New("svgの形式が不正です")
 			}
 
 			x, err := strconv.ParseFloat(ps[0], 32)
