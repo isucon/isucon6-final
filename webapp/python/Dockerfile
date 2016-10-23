@@ -1,4 +1,4 @@
-FROM python:2-alpine
+FROM python:2.7.12-alpine
 
 WORKDIR /var/www
 
