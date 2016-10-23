@@ -1,6 +1,14 @@
 # ISUCON6 final
 
-## イメージのデプロイ
+## 競技用アプリケーション
+
+DockerだけインストールされていればOS等は問わない。
+
+webapp 以下を競技用マシンの /home/isucon/webapp に置けばセットアップ完成。
+
+起動方法などは webapp/README.md に書いた。
+
+## portal, bench, proxy
 
 ### portal
 
