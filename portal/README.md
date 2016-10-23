@@ -31,9 +31,9 @@ Host isucon6f-portal
 
 ## 運用
 
-終了一時間前あたりで `team_scores_snapshot` テーブルを作るとリーダーボードが固定されます。
+本選終了後はジョブのエンキューやログインができなくなりますが、スコア等は見えます。
 
-    INSERT INTO team_scores_snapshot SELECT * FROM team_scores
+終了後5分ぐらいたったらnginxでBASIC認証をかけ、`-ends-at=-1` で再起動し、各チームでログインしてベンチマークを実行することで追試できます。
 
 ## 開発・運用むけ情報
 
@@ -67,10 +67,3 @@ make
 ./portal -database-dsn="root:@/isu6fportal"
 ```
 
-テストは上記のコマンドでMySQLを初期化した後に、
-
-```
-go test
-```
-
-する。（テスト内で初期化してくれたりはしない）
