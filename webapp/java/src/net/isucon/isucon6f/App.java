@@ -9,9 +9,11 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Connection ;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import spark.utils.StringUtils;
@@ -206,7 +208,10 @@ public class App {
                     return map;
                 }
 
-                if (StringUtils.isEmpty(request.params("width")) || StringUtils.isEmpty(request.params("points"))) {
+                Gson gson2 = new Gson();
+                final PostedStroke postedStroke = gson2.fromJson(request.body(), PostedStroke.class);
+
+                if (StringUtils.isEmpty(postedStroke) || StringUtils.isEmpty(postedStroke.points)) {
                     response.status(400);
                     map.put("error", "リクエストが正しくありません。");
                     return map;
@@ -228,152 +233,140 @@ public class App {
                     }
                 }
 
-                // TODO:
-                /*
-                   conn.setAutoCommit(false);
-                   try {
-                   String sql1 = "INSERT INTO `strokes` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`) VALUES(?, ?, ?, ?, ?, ?)";
-                   try (PreparedStatement ps = conn.prepareStatement(sql1, Statement.RETURN_GENERATED_KEYS)) {
-                   ps.setInt(1, room.id);
-                   ps.setString(2, request.params("width"));
-                   ps.setString(3, request.params("red"));
-                   ps.setString(4, request.params("green"));
-                   ps.setString(5, request.params("blue"));
-                   ps.setString(6, request.params("alpha"));
-                   int id = ps.executeUpdate();
+                conn.setAutoCommit(false);
+                int stroke_id = 0;
+                try {
+                    String sql1 = "INSERT INTO `strokes` (`room_id`, `width`, `red`, `green`, `blue`, `alpha`) VALUES(?, ?, ?, ?, ?, ?)";
+                    try (PreparedStatement ps = conn.prepareStatement(sql1, Statement.RETURN_GENERATED_KEYS)) {
+                        ps.setInt(1, room.id);
+                        ps.setInt(2, postedStroke.width);
+                        ps.setInt(3, postedStroke.red);
+                        ps.setInt(4, postedStroke.green);
+                        ps.setInt(5, postedStroke.blue);
+                        ps.setInt(6, postedStroke.alpha);
+                        stroke_id = ps.executeUpdate();
 
-                   }
-                   } catch (SQLException e) {
+                    } catch (SQLException e) {
 
-                   }
-                   String sql2 = "INSERT INTO `points` (`stroke_id`, `x`, `y`) VALUES (?, ?, ?)";
-                   try (PreparedStatement ps = conn.prepareStatement(sql2)) {
-                   request.params("points");
-                   ps.setString(stroke.id);
-                   ps.setInt(point.x);
-                   ps.setInt(point.y);
-                   ps.executeUpdate();
-                   }
-                   conn.commit();
-                   } catch (Exception e) {
-                   conn.rollback();
-                   logger.warning(e.toString());
-                   response.status(500);
-                   map.put("error", "エラーが発生しました。");
-                   return map;
-                   } finally  {
-                   conn.setAutoCommit(true);
-                   }
-                /*
-                foreach ($postedStroke['points'] as $point) {
-                execute($dbh, $sql, [
-                ':stroke_id' => $stroke_id,
-                ':x' => $point['x'],
-                ':y' => $point['y']
-                ]);
+                    }
+                    String sql2 = "INSERT INTO `points` (`stroke_id`, `x`, `y`) VALUES (?, ?, ?)";
+
+                    for (Point point : postedStroke.points) {
+                        try (PreparedStatement ps = conn.prepareStatement(sql2)) {
+                            request.params("points");
+                            ps.setInt(1, stroke_id);
+                            ps.setDouble(2, point.x);
+                            ps.setDouble(3, point.y);
+                            ps.executeUpdate();
+                        }
+                    }
+                    conn.commit();
+                } catch (Exception e) {
+                    conn.rollback();
+                    logger.warning(e.toString());
+                    response.status(500);
+                    map.put("error", "エラーが発生しました。");
+                    return map;
+                } finally  {
+                    conn.setAutoCommit(true);
                 }
+                try (PreparedStatement ps = conn.prepareStatement(
+                            "SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` "
+                            + "FROM `strokes`  WHERE `id` = ?"
+                            )) {
+                    ps.setInt(1, stroke_id);
+                    StrokeData stroke;
+                    try (ResultSet rs = ps.executeQuery()) {
+                        stroke = new StrokeData(
+                                rs.getInt("id"), rs.getInt("room_id"), rs.getInt("width"),
+                                rs.getInt("red"), rs.getInt("green"), rs.getInt("blue"), rs.getInt("alpha"),
+                                getStrokePoints(conn, stroke_id), rs.getString("created_at"));
+                    }
+                    return stroke;
+                            }
+            });
+        }
+    }
 
-                $dbh->commit();
-                } catch (Exception $e) {
-                $dbh->rollback();
-                $this->logger->error($e->getMessage());
-                return $response->withStatus(500)->withJson(['error' => 'エラーが発生しました。']);
+    private static Point[] getStrokePoints(Connection conn, int room_id) throws SQLException {
+        String sql = "SELECT `id`, `stroke_id`, `x`, `y` FROM `points` WHERE `stroke_id` = ? ORDER BY `id` ASC";
+        List<Point> points = new ArrayList<Point>();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, room_id);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    points.add(new Point(rs.getInt("id"), rs.getInt("stroke_id"), rs.getInt("x"), rs.getInt("y")));
                 }
+            }
+        }
+        return null;
+    }
 
-                $sql = 'SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`';
-                $sql .= ' WHERE `id` = :stroke_id';
-                $stroke = selectOne($dbh, $sql, [':stroke_id' => $stroke_id]);
+    private static int getWatcherCount(Connection conn, int room_id) throws SQLException {
+        String sql = "SELECT COUNT(*) AS `watcher_count` FROM `room_watchers`"
+            + " WHERE `room_id` = ? AND `updated_at` > CURRENT_TIMESTAMP(6) - INTERVAL 3 SECOND";
 
-                $stroke['points'] = getStrokePoints($dbh, $stroke_id);
-
-                return $response->withJson(['stroke' => typeCastStrokeData($stroke)]);
-                */                
-
-                return "";
-    });
-
-}
-}
-
-private static Point[] getStrokePoints(Connection conn, int room_id) throws SQLException {
-    String sql = "SELECT `id`, `stroke_id`, `x`, `y` FROM `points` WHERE `stroke_id` = ? ORDER BY `id` ASC";
-    List<Point> points = new ArrayList<Point>();
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setInt(1, room_id);
-        try (ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                points.add(new Point(rs.getInt("id"), rs.getInt("stroke_id"), rs.getInt("x"), rs.getInt("y")));
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, room_id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.getInt("watcher_count");
             }
         }
     }
-    return null;
-}
 
-private static int getWatcherCount(Connection conn, int room_id) throws SQLException {
-    String sql = "SELECT COUNT(*) AS `watcher_count` FROM `room_watchers`"
-        + " WHERE `room_id` = ? AND `updated_at` > CURRENT_TIMESTAMP(6) - INTERVAL 3 SECOND";
-
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setInt(1, room_id);
-        try (ResultSet rs = ps.executeQuery()) {
-            return rs.getInt("watcher_count");
+    private static void updateRoomWatcher(Connection conn, int room_id, int token_id) throws SQLException {
+        String sql = "INSERT INTO `room_watchers` (`room_id`, `token_id`) VALUES (?, ?)"
+            + " ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP(6)";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, room_id);
+            ps.setInt(2, token_id);
+            try (ResultSet rs = ps.executeQuery()) {}
         }
+        return;
     }
-}
 
-private static void updateRoomWatcher(Connection conn, int room_id, int token_id) throws SQLException {
-    String sql = "INSERT INTO `room_watchers` (`room_id`, `token_id`) VALUES (?, ?)"
-        + " ON DUPLICATE KEY UPDATE `updated_at` = CURRENT_TIMESTAMP(6)";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setInt(1, room_id);
-        ps.setInt(2, token_id);
-        try (ResultSet rs = ps.executeQuery()) {}
-    }
-    return;
-}
-
-private static Token checkToken(Connection conn, String csrf_token) throws TokenException {
-    String sql = "SELECT `id`, `csrf_token`, `created_at` FROM `tokens`"
-        +" WHERE `csrf_token` = ? AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setString(1, csrf_token);
-        try (ResultSet rs = ps.executeQuery()) {
-            if (!rs.isBeforeFirst() ) {    
-                throw new TokenException();
+    private static Token checkToken(Connection conn, String csrf_token) throws TokenException {
+        String sql = "SELECT `id`, `csrf_token`, `created_at` FROM `tokens`"
+            +" WHERE `csrf_token` = ? AND `created_at` > CURRENT_TIMESTAMP(6) - INTERVAL 1 DAY";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, csrf_token);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.isBeforeFirst() ) {    
+                    throw new TokenException();
+                }
+                return new Token(rs.getInt("id"), rs.getString("csrf_token"), rs.getString("created_at"));
             }
-            return new Token(rs.getInt("id"), rs.getString("csrf_token"), rs.getString("created_at"));
-        }
-    } catch (SQLException e) {
-        logger.warning(e.toString());
-        throw new TokenException();
-    }
-}
-
-private static StrokeData[] getStrokes(Connection conn, int room_id, int greater_than_id) throws SQLException {
-    String sql = "SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`"
-        +" WHERE `room_id` = ? AND `id` > ? ORDER BY `id` ASC";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-        ps.setInt(1, room_id);
-        ps.setInt(2, greater_than_id);
-        try (ResultSet rs = ps.executeQuery()) {
-            return null;
+        } catch (SQLException e) {
+            logger.warning(e.toString());
+            throw new TokenException();
         }
     }
-}
 
-private static Room getRoom(Connection conn, int room_id) {
-    return getRoom(conn, String.valueOf(room_id));
-}
-
-private static Room getRoom(Connection conn, String room_id) {
-    String sql = "SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at` FROM `rooms` WHERE `id` = :room_id";
-    try (PreparedStatement ps = conn.prepareStatement(sql)) {
-        try (ResultSet rs = ps.executeQuery()) {
-            return new Room(rs.getInt("id"), rs.getString("name"), rs.getInt("canvas_width"), rs.getInt("canvas_height"), rs.getDate("created_at").toInstant());	
+    private static StrokeData[] getStrokes(Connection conn, int room_id, int greater_than_id) throws SQLException {
+        String sql = "SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`"
+            +" WHERE `room_id` = ? AND `id` > ? ORDER BY `id` ASC";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, room_id);
+            ps.setInt(2, greater_than_id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return null;
+            }
         }
-    } catch (SQLException e) {
-        logger.warning(e.toString());
     }
-    return null;
-}
+
+    private static Room getRoom(Connection conn, int room_id) {
+        return getRoom(conn, String.valueOf(room_id));
+    }
+
+    private static Room getRoom(Connection conn, String room_id) {
+        String sql = "SELECT `id`, `name`, `canvas_width`, `canvas_height`, `created_at` FROM `rooms` WHERE `id` = :room_id";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (ResultSet rs = ps.executeQuery()) {
+                return new Room(rs.getInt("id"), rs.getString("name"), rs.getInt("canvas_width"), rs.getInt("canvas_height"), rs.getDate("created_at").toInstant());	
+            }
+        } catch (SQLException e) {
+            logger.warning(e.toString());
+        }
+        return null;
+    }
 }
