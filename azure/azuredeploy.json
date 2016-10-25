@@ -30,31 +30,31 @@
         "name": "[concat(variables('commonName'), '-isu01')]",
         "hostname": "isu01",
         "ipAddress": "10.6.1.4",
-        "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && mkdir -p /root/.ssh && ssh-keyscan github.com >> /root/.ssh/known_hosts && curl -sL https://gist.github.com/catatsuy/6fcfb32e59c2356c4b525fa4fface701/raw/811e3a6f94e52dcdd198224a56c537b1cd3afb98/id_rsa > /root/.ssh/id_rsa && chmod -R go-rwx /root/.ssh && git clone git@github.com:catatsuy/isucon6-final.git && ( cd isucon6-final/ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local -t app playbook/setup.yml ) && rm -rf isucon6-final"
+        "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && git clone https://github.com/catatsuy/isucon6-final.git && ( cd isucon6-final/ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local -t app playbook/setup.yml ) && rm -rf isucon6-final"
       },
       {
         "name": "[concat(variables('commonName'), '-isu02')]",
         "hostname": "isu02",
         "ipAddress": "10.6.1.5",
-        "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && mkdir -p /root/.ssh && ssh-keyscan github.com >> /root/.ssh/known_hosts && curl -sL https://gist.github.com/catatsuy/6fcfb32e59c2356c4b525fa4fface701/raw/811e3a6f94e52dcdd198224a56c537b1cd3afb98/id_rsa > /root/.ssh/id_rsa && chmod -R go-rwx /root/.ssh && git clone git@github.com:catatsuy/isucon6-final.git && ( cd isucon6-final/ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local -t base playbook/setup.yml ) && rm -rf isucon6-final"
+        "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && git clone https://github.com/catatsuy/isucon6-final.git && ( cd isucon6-final/ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local -t base playbook/setup.yml ) && rm -rf isucon6-final"
       },
       {
         "name": "[concat(variables('commonName'), '-isu03')]",
         "hostname": "isu03",
         "ipAddress": "10.6.1.6",
-        "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && mkdir -p /root/.ssh && ssh-keyscan github.com >> /root/.ssh/known_hosts && curl -sL https://gist.github.com/catatsuy/6fcfb32e59c2356c4b525fa4fface701/raw/811e3a6f94e52dcdd198224a56c537b1cd3afb98/id_rsa > /root/.ssh/id_rsa && chmod -R go-rwx /root/.ssh && git clone git@github.com:catatsuy/isucon6-final.git && ( cd isucon6-final/ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local -t base playbook/setup.yml ) && rm -rf isucon6-final"
+        "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && git clone https://github.com/catatsuy/isucon6-final.git && ( cd isucon6-final/ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local -t base playbook/setup.yml ) && rm -rf isucon6-final"
       },
       {
         "name": "[concat(variables('commonName'), '-isu04')]",
         "hostname": "isu04",
         "ipAddress": "10.6.1.7",
-        "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && mkdir -p /root/.ssh && ssh-keyscan github.com >> /root/.ssh/known_hosts && curl -sL https://gist.github.com/catatsuy/6fcfb32e59c2356c4b525fa4fface701/raw/811e3a6f94e52dcdd198224a56c537b1cd3afb98/id_rsa > /root/.ssh/id_rsa && chmod -R go-rwx /root/.ssh && git clone git@github.com:catatsuy/isucon6-final.git && ( cd isucon6-final/ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local -t base playbook/setup.yml ) && rm -rf isucon6-final"
+        "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && git clone https://github.com/catatsuy/isucon6-final.git && ( cd isucon6-final/ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local -t base playbook/setup.yml ) && rm -rf isucon6-final"
       },
       {
         "name": "[concat(variables('commonName'), '-isu05')]",
         "hostname": "isu05",
         "ipAddress": "10.6.1.8",
-        "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && mkdir -p /root/.ssh && ssh-keyscan github.com >> /root/.ssh/known_hosts && curl -sL https://gist.github.com/catatsuy/6fcfb32e59c2356c4b525fa4fface701/raw/811e3a6f94e52dcdd198224a56c537b1cd3afb98/id_rsa > /root/.ssh/id_rsa && chmod -R go-rwx /root/.ssh && git clone git@github.com:catatsuy/isucon6-final.git && ( cd isucon6-final/ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local -t base playbook/setup.yml ) && rm -rf isucon6-final"
+        "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible curl git && git clone https://github.com/catatsuy/isucon6-final.git && ( cd isucon6-final/ansible && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i development -c local -t base playbook/setup.yml ) && rm -rf isucon6-final"
       }
     ]
   },
