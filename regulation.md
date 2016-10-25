@@ -55,8 +55,8 @@ Azureアカウントに対する各種制限に関しては参加者の責任と
 
 __サブスクリプションの制限がデフォルトで合計20コアまでなので、あらかじめすべてのVMを落とした上で競技用VMを起動する（競技に使うリソースグループだけでなく、同じサブスクリプションの他のリソースグループも）こと。__
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fisucon6final.blob.core.windows.net%2Fa226a45ec477bd793248b3af3651942f3dbb65fc%2Fazuredeploy.json" target="_blank">
-  <img src="https://azuredeploy.net/deploybutton.png"/>
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fisucon%2Fisucon6-final%2Fmaster%2Fazure%2Fazuredeploy.json" target="_blank">
+    <img src="http://azuredeploy.net/deploybutton.png"/>
 </a>
 
 サーバは5ノード存在するので全て起動していることを確認してください。開始時点で5ノードは全て同じようにセットアップされています。
