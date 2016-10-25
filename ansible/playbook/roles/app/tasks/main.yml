@@ -2,7 +2,7 @@
 - name: git clone
   become_user: isucon
   git:
-    repo=https://github.com/catatsuy/isucon6-final.git
+    repo=https://github.com/isucon/isucon6-final.git
     dest=/home/isucon/repos
     accept_hostkey=yes
 - name: remove webapp directory
