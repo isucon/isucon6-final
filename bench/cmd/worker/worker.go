@@ -51,7 +51,7 @@ func (cli *CLI) Run(args []string) int {
 	defaultBenchPath := filepath.Join(h, "isucon6f", "bench")
 	fs := flag.NewFlagSet("isu6q bench worker", flag.ContinueOnError)
 	fs.SetOutput(cli.errStream)
-	fs.StringVar(&portalHost, "portal", "isucon6f:rxmtquuhmrqwdygxzdakhnznuzghsrdz@isucon6q.catatsuy.org", "portal Host")
+	fs.StringVar(&portalHost, "portal", "localhost", "portal Host")
 	fs.StringVar(&benchPath, "bench", defaultBenchPath, "benchmark path")
 
 	if err := fs.Parse(args); err != nil {
@@ -183,6 +183,7 @@ func (cli *CLI) start(portalHost, benchPath string) int {
 		if err != nil {
 			log.Println(err)
 		}
+
 	}
 	return exitCodeOK
 }

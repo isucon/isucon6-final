@@ -44,12 +44,12 @@ user: isucon6f
 pass: X1grZy5vTrIRONRmsTKl
 ```
 
-- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/queue キュー一覧（標準エラー確認など）
-- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/messages トップページ等に表示するメッセージ管理画面
-- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/proxy/nginx.conf proxyが持つnginx.conf
-- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/vars Goのデバッグ情報
-- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/leaderboard 17時以降も更新される管理用リーダーボード
-- https://isucon6f.catatsuy.org/mBGWHqBVEjUSKpBF/debug/proxies 登録されているproxy一覧
+- /mBGWHqBVEjUSKpBF/debug/queue キュー一覧（標準エラー確認など）
+- /mBGWHqBVEjUSKpBF/messages トップページ等に表示するメッセージ管理画面
+- /mBGWHqBVEjUSKpBF/proxy/nginx.conf proxyが持つnginx.conf
+- /mBGWHqBVEjUSKpBF/debug/vars Goのデバッグ情報
+- /mBGWHqBVEjUSKpBF/debug/leaderboard 17時以降も更新される管理用リーダーボード
+- /mBGWHqBVEjUSKpBF/debug/proxies 登録されているproxy一覧
 
 ## ローカルで開発する
 
