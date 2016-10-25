@@ -8,7 +8,7 @@ import (
 
 	"time"
 
-	"github.com/catatsuy/isucon6-final/portal/job"
+	"github.com/isucon/isucon6-final/portal/job"
 	"github.com/pkg/errors"
 )
 

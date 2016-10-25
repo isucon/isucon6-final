@@ -10,10 +10,10 @@
 // The handled paths all begin with /debug/pprof/.
 //
 // To use pprof, link this package into your program:
-//	import _ "github.com/catatsuy/isucon6-final/bench/http/pprof"
+//	import _ "github.com/isucon/isucon6-final/bench/http/pprof"
 //
 // If your application is not already running an http server, you
-// need to start one. Add "github.com/catatsuy/isucon6-final/bench/http" and "log" to your imports and
+// need to start one. Add "github.com/isucon/isucon6-final/bench/http" and "log" to your imports and
 // the following code to your main function:
 //
 // 	go func() {
@@ -61,7 +61,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/isucon/isucon6-final/bench/http"
 )
 
 func init() {

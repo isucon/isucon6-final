@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/isucon/isucon6-final/bench/http"
 )
 
 // onExitFlushLoop is a callback set by tests to detect the state of the

@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/catatsuy/isucon6-final/portal/job"
+	"github.com/isucon/isucon6-final/portal/job"
 )
 
 func TestEnqueueJob(t *testing.T) {

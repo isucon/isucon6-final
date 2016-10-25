@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/catatsuy/isucon6-final/portal/job"
+	"github.com/isucon/isucon6-final/portal/job"
 )
 
 // serveQueueJob は参加者がベンチマーカのジョブをキューに挿入するエンドポイント。

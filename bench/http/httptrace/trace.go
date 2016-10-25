@@ -12,7 +12,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/catatsuy/isucon6-final/bench/http/internal/nettrace"
+	"github.com/isucon/isucon6-final/bench/http/internal/nettrace"
 )
 
 // unique type to prevent assignment.

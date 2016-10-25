@@ -34,11 +34,11 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/catatsuy/isucon6-final/bench/http"
-	"github.com/catatsuy/isucon6-final/bench/http/httptest"
-	"github.com/catatsuy/isucon6-final/bench/http/httptrace"
-	"github.com/catatsuy/isucon6-final/bench/http/httputil"
-	"github.com/catatsuy/isucon6-final/bench/http/internal"
+	. "github.com/isucon/isucon6-final/bench/http"
+	"github.com/isucon/isucon6-final/bench/http/httptest"
+	"github.com/isucon/isucon6-final/bench/http/httptrace"
+	"github.com/isucon/isucon6-final/bench/http/httputil"
+	"github.com/isucon/isucon6-final/bench/http/internal"
 )
 
 // TODO: test 5 pipelined requests with responses: 1) OK, 2) OK, Connection: Close

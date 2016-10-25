@@ -18,7 +18,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/isucon/isucon6-final/bench/http"
 )
 
 // hello world, the web server

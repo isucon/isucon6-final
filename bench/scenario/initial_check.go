@@ -12,10 +12,10 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/catatsuy/isucon6-final/bench/action"
-	"github.com/catatsuy/isucon6-final/bench/fails"
-	"github.com/catatsuy/isucon6-final/bench/seed"
-	"github.com/catatsuy/isucon6-final/bench/session"
+	"github.com/isucon/isucon6-final/bench/action"
+	"github.com/isucon/isucon6-final/bench/fails"
+	"github.com/isucon/isucon6-final/bench/seed"
+	"github.com/isucon/isucon6-final/bench/session"
 )
 
 // 部屋を作って線を描くとトップページに出てくる & 線がSVGに反映される

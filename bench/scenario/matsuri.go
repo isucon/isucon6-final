@@ -3,10 +3,10 @@ package scenario
 import (
 	"time"
 
-	"github.com/catatsuy/isucon6-final/bench/fails"
-	"github.com/catatsuy/isucon6-final/bench/score"
-	"github.com/catatsuy/isucon6-final/bench/seed"
-	"github.com/catatsuy/isucon6-final/bench/session"
+	"github.com/isucon/isucon6-final/bench/fails"
+	"github.com/isucon/isucon6-final/bench/score"
+	"github.com/isucon/isucon6-final/bench/seed"
+	"github.com/isucon/isucon6-final/bench/session"
 )
 
 const (

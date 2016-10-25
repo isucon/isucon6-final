@@ -19,7 +19,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/catatsuy/isucon6-final/bench/http/internal"
+	"github.com/isucon/isucon6-final/bench/http/internal"
 )
 
 type respTest struct {

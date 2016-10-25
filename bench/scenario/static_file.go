@@ -7,9 +7,9 @@ import (
 	"io/ioutil"
 	"sync"
 
-	"github.com/catatsuy/isucon6-final/bench/action"
-	"github.com/catatsuy/isucon6-final/bench/fails"
-	"github.com/catatsuy/isucon6-final/bench/session"
+	"github.com/isucon/isucon6-final/bench/action"
+	"github.com/isucon/isucon6-final/bench/fails"
+	"github.com/isucon/isucon6-final/bench/session"
 )
 
 type StaticFile struct {

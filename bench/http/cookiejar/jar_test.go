@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/isucon/isucon6-final/bench/http"
 )
 
 // tNow is the synthetic current time used as now during testing.

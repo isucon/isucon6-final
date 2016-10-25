@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 
-	"github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/isucon/isucon6-final/bench/http"
 )
 
 func ExampleHijacker() {
