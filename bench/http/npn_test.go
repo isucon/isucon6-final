@@ -14,8 +14,8 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/catatsuy/isucon6-final/bench/http"
-	"github.com/catatsuy/isucon6-final/bench/http/httptest"
+	. "github.com/isucon/isucon6-final/bench/http"
+	"github.com/isucon/isucon6-final/bench/http/httptest"
 )
 
 func TestNextProtoUpgrade(t *testing.T) {

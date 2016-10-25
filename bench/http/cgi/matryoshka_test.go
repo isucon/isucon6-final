@@ -18,8 +18,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/catatsuy/isucon6-final/bench/http"
-	"github.com/catatsuy/isucon6-final/bench/http/httptest"
+	"github.com/isucon/isucon6-final/bench/http"
+	"github.com/isucon/isucon6-final/bench/http/httptest"
 )
 
 // This test is a CGI host (testing host.go) that runs its own binary

@@ -10,11 +10,11 @@ import (
 
 	"errors"
 
-	"github.com/catatsuy/isucon6-final/bench/fails"
-	"github.com/catatsuy/isucon6-final/bench/http"
-	"github.com/catatsuy/isucon6-final/bench/score"
-	"github.com/catatsuy/isucon6-final/bench/session"
-	"github.com/catatsuy/isucon6-final/bench/sse"
+	"github.com/isucon/isucon6-final/bench/fails"
+	"github.com/isucon/isucon6-final/bench/http"
+	"github.com/isucon/isucon6-final/bench/score"
+	"github.com/isucon/isucon6-final/bench/session"
+	"github.com/isucon/isucon6-final/bench/sse"
 )
 
 const (

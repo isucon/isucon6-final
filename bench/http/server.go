@@ -2331,7 +2331,7 @@ func (s *Server) logf(format string, args ...interface{}) {
 //
 //	import (
 //		"io"
-//		"github.com/catatsuy/isucon6-final/bench/http"
+//		"github.com/isucon/isucon6-final/bench/http"
 //		"log"
 //	)
 //
@@ -2361,7 +2361,7 @@ func ListenAndServe(addr string, handler Handler) error {
 //
 //	import (
 //		"log"
-//		"github.com/catatsuy/isucon6-final/bench/http"
+//		"github.com/isucon/isucon6-final/bench/http"
 //	)
 //
 //	func handler(w http.ResponseWriter, req *http.Request) {

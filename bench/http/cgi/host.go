@@ -28,7 +28,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/isucon/isucon6-final/bench/http"
 )
 
 var trailingPort = regexp.MustCompile(`:([0-9]+)$`)

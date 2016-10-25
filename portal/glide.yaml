@@ -1,4 +1,4 @@
-package: github.com/catatsuy/isucon6-final/portal
+package: github.com/isucon/isucon6-final/portal
 import:
 - package: github.com/pkg/errors
   version: v0.7.1

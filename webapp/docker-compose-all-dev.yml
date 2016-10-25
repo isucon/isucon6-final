@@ -9,7 +9,7 @@ services:
       context: ./go
       dockerfile: Dockerfile-dev
     volumes:
-      - ./go:/go/src/github.com/catatsuy/isucon6-final/webapp/go
+      - ./go:/go/src/github.com/isucon/isucon6-final/webapp/go
     depends_on:
       - mysql
     links:

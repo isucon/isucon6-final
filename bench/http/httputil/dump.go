@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/isucon/isucon6-final/bench/http"
 )
 
 // One of the copies, say from b to r2, could be avoided by using a more

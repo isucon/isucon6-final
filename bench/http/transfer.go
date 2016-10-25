@@ -17,7 +17,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/catatsuy/isucon6-final/bench/http/internal"
+	"github.com/isucon/isucon6-final/bench/http/internal"
 
 	"golang.org/x/net/lex/httplex"
 )

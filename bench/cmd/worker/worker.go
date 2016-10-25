@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/Songmu/timeout"
-	"github.com/catatsuy/isucon6-final/portal/job"
+	"github.com/isucon/isucon6-final/portal/job"
 	"github.com/mitchellh/go-homedir"
 )
 

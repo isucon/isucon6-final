@@ -26,7 +26,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/catatsuy/isucon6-final/bench/http/httptrace"
+	"github.com/isucon/isucon6-final/bench/http/httptrace"
 
 	"golang.org/x/net/lex/httplex"
 )

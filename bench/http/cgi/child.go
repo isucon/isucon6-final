@@ -20,7 +20,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/catatsuy/isucon6-final/bench/http"
+	"github.com/isucon/isucon6-final/bench/http"
 )
 
 // Request returns the HTTP request as represented in the current
