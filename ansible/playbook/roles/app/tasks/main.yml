@@ -1,18 +1,19 @@
 ---
-- name: get webapp tarball
-  get_url:
-    url=https://@AZURE_STORAGE_ACCOUNT@.blob.core.windows.net/@CONTAINER_NAME@/webapp.tar.gz
-    dest=/tmp/webapp.tar.gz
-    remote_src=yes
-- name: unarchive webapp directory
+- name: git clone
   become_user: isucon
-  unarchive:
-    src=/tmp/webapp.tar.gz
-    dest=/home/isucon/
-    remote_src=yes
-- name: remove webapp tarball
+  git:
+    repo=https://github.com/isucon/isucon6-final.git
+    dest=/home/isucon/repos
+    accept_hostkey=yes
+- name: remove webapp directory
   file:
-    path=/tmp/webapp.tar.gz
+    path=/home/isucon/webapp/
+    state=absent
+- name: move webapp directory
+  command: "mv /home/isucon/repos/webapp /home/isucon/webapp"
+- name: remove repos directory
+  file:
+    path=/home/isucon/repos/
     state=absent
 - name: symoblic link docker-compose.yml
   become_user: isucon
