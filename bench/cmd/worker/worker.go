@@ -17,6 +17,7 @@ import (
 	"strings"
 	"syscall"
 	"time"
+	"unicode/utf8"
 
 	"github.com/Songmu/timeout"
 	"github.com/isucon/isucon6-final/portal/job"
@@ -170,9 +171,9 @@ func (cli *CLI) start(portalHost, benchPath string) int {
 		if err != nil {
 			log.Printf("bench failed: %#v, err: %s\n", j, err.Error())
 		}
-		if len(stderr) > maxStderrLen {
+		if utf8.RuneCountInString(stderr) > maxStderrLen {
 			// stderrが大きすぎたら削る
-			stderr = stderr[:maxStderrLen]
+			stderr = string([]rune(stderr)[:maxStderrLen])
 		}
 		res := &job.Result{
 			Job:    j,
