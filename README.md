@@ -26,6 +26,15 @@ webapp 以下を競技用マシンの /home/isucon/webapp に置けばセット�
   * portalディレクトリ以下で `make portal_linux_amd64` をする
   * `ansible-playbook -i production ansible/*deploy.yml`を実行する
 
+試しにログインしたい
+
+  * 一般アカウント
+    * user: 1 pass: y8aaZLdAXAXn
+  * 運営アカウント
+    * user: 9999 pass: Btw5R5fskVvXOzT
+
+編集する場合は、[/portal/cmd/importteams/main.go](/portal/cmd/importteams/main.go) と [/portal/data/teams.tsv](/portal/data/teams.tsv) を参照のこと
+
 ### bench
 
   * `provisioning/external_vars.yml`の`portal_private_ip`をportalのprivate ipにする
