@@ -7,10 +7,7 @@
         . /home/isucon/.profile
         go get github.com/jteeuwen/go-bindata/... 
         go get github.com/Masterminds/glide
-        go get github.com/isucon/isucon6-final/bench/fails
-        go get github.com/isucon/isucon6-final/bench/scenario
-        go get github.com/isucon/isucon6-final/bench/score
-        go get github.com/isucon/isucon6-final/portal/job
+        go get github.com/isucon/isucon6-final/bench/...
       args:
         chdir: ../../bench
     - shell: |
