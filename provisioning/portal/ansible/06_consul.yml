@@ -49,6 +49,7 @@
       notify: reload systemctl
     - name: running consul
       service: name=consul state=restarted enabled=true
+    - pause: seconds=5
   handlers:
     - name: reload systemctl
       command: systemctl daemon-reload

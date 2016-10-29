@@ -20,3 +20,4 @@
         - libreadline-dev
         - build-essential
         - libmysqlclient-dev
+        - npm

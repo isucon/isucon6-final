@@ -1,0 +1,26 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: no
+  tasks:
+    - shell: |
+        . /home/isucon/.profile
+        go get github.com/jteeuwen/go-bindata/...
+        go get github.com/Masterminds/glide
+        go get github.com/braintree/manners
+        go get github.com/go-sql-driver/mysql
+        go get github.com/golang/gddo/httputil
+        go get github.com/gorilla/securecookie
+        go get github.com/gorilla/sessions
+        go get github.com/lestrrat/go-server-starter/listener
+        go get github.com/pkg/errors
+    - shell: |
+        . /home/isucon/.profile
+        make portal_linux_amd64
+      args:
+        chdir: ../../portal
+    - shell: |
+        . /home/isucon/.profile
+        make importteams_linux_amd64
+      args:
+        chdir: ../../portal

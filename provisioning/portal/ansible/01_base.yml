@@ -6,7 +6,7 @@
     - group: name=isucon
     - user: name=isucon groups=isucon
     - file: path=/home/isucon owner=isucon group=isucon mode=755 state=directory
-    - copy: src=/usr/share/zoneinfo/Asia/Tokyo dest=/etc/localtime
+    - file: src=/usr/share/zoneinfo/Asia/Tokyo path=/etc/localtime state=link
     - name: set timezone
       copy: dest=/etc/timezone owner=root group=root mode=0644 content="Asia/Tokyo\n"
       notify: update timezone
