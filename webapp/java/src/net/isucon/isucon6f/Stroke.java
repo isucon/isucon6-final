@@ -2,13 +2,13 @@ package net.isucon.isucon6f;
 
 import java.util.Arrays;
 
-public class StrokeData {
+public class Stroke {
     public final int id, room_id, width, red, green, blue;
     public final double alpha;
     private final Point[] points;
     public final String created_at;
 
-    public StrokeData(int id, int room_id, int width, int red, int green, int blue, double alpha, Point[] points, String created_at) {
+    public Stroke(int id, int room_id, int width, int red, int green, int blue, double alpha, Point[] points, String created_at) {
         this.id = id;
         this.room_id = room_id;
         this.width = width;

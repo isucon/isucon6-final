@@ -9,11 +9,9 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Connection ;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.logging.Logger;
 
 import spark.utils.StringUtils;
@@ -163,9 +161,9 @@ public class App {
                     loop--;
                     Thread.sleep(500); // 500ms
 
-                    StrokeData[] strokes = getStrokes(conn, room.id, last_stroke_id);
+                    Stroke[] strokes = getStrokes(conn, room.id, last_stroke_id);
 
-                    for (StrokeData stroke : strokes) {
+                    for (Stroke stroke : strokes) {
                         stroke.setPoints(getStrokePoints(conn, stroke.id));
                         try (OutputStream os = response.raw().getOutputStream()) {
                             os.write((
@@ -209,9 +207,9 @@ public class App {
                 }
 
                 Gson gson2 = new Gson();
-                final PostedStroke postedStroke = gson2.fromJson(request.body(), PostedStroke.class);
+                final Stroke postedStroke = gson2.fromJson(request.body(), Stroke.class);
 
-                if (StringUtils.isEmpty(postedStroke) || StringUtils.isEmpty(postedStroke.points)) {
+                if (StringUtils.isEmpty(postedStroke) || StringUtils.isEmpty(postedStroke.getPoints())) {
                     response.status(400);
                     map.put("error", "リクエストが正しくありません。");
                     return map;
@@ -243,7 +241,7 @@ public class App {
                         ps.setInt(3, postedStroke.red);
                         ps.setInt(4, postedStroke.green);
                         ps.setInt(5, postedStroke.blue);
-                        ps.setInt(6, postedStroke.alpha);
+                        ps.setFloat(6, (float) postedStroke.alpha);
                         stroke_id = ps.executeUpdate();
 
                     } catch (SQLException e) {
@@ -251,7 +249,7 @@ public class App {
                     }
                     String sql2 = "INSERT INTO `points` (`stroke_id`, `x`, `y`) VALUES (?, ?, ?)";
 
-                    for (Point point : postedStroke.points) {
+                    for (Point point : postedStroke.getPoints()) {
                         try (PreparedStatement ps = conn.prepareStatement(sql2)) {
                             request.params("points");
                             ps.setInt(1, stroke_id);
@@ -275,9 +273,9 @@ public class App {
                             + "FROM `strokes`  WHERE `id` = ?"
                             )) {
                     ps.setInt(1, stroke_id);
-                    StrokeData stroke;
+                    Stroke stroke;
                     try (ResultSet rs = ps.executeQuery()) {
-                        stroke = new StrokeData(
+                        stroke = new Stroke(
                                 rs.getInt("id"), rs.getInt("room_id"), rs.getInt("width"),
                                 rs.getInt("red"), rs.getInt("green"), rs.getInt("blue"), rs.getInt("alpha"),
                                 getStrokePoints(conn, stroke_id), rs.getString("created_at"));
@@ -342,7 +340,7 @@ public class App {
         }
     }
 
-    private static StrokeData[] getStrokes(Connection conn, int room_id, int greater_than_id) throws SQLException {
+    private static Stroke[] getStrokes(Connection conn, int room_id, int greater_than_id) throws SQLException {
         String sql = "SELECT `id`, `room_id`, `width`, `red`, `green`, `blue`, `alpha`, `created_at` FROM `strokes`"
             +" WHERE `room_id` = ? AND `id` > ? ORDER BY `id` ASC";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
