@@ -2,6 +2,11 @@
 
 ## 競技用アプリケーション
 
+### Azureへのデプロイ
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fgithub.com%2Fisucon%2Fisucon6-final%2Fraw%2Fmaster%2Fazure%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fgithub.com%2Fisucon%2Fisucon6-final%2Fraw%2Fmaster%2Fprovisioning%2Fdeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
+
 DockerだけインストールされていればOS等は問わない。
 
 webapp 以下を競技用マシンの /home/isucon/webapp に置けばセットアップ完成。
@@ -9,6 +14,9 @@ webapp 以下を競技用マシンの /home/isucon/webapp に置けばセット�
 起動方法などは webapp/README.md に書いた。
 
 ## portal, bench, proxy
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fgithub.com%2Fisucon%2Fisucon6-final%2Fraw%2Fmaster%2Fprovisioning%2Fdeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
+<a href="http://armviz.io/#/?load=https%3A%2F%2Fgithub.com%2Fisucon%2Fisucon6-final%2Fraw%2Fmaster%2Fprovisioning%2Fdeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
 
 ### portal
 
