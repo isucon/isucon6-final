@@ -7,7 +7,6 @@
         . /home/isucon/.profile
         go get github.com/jteeuwen/go-bindata/...
         go get github.com/Masterminds/glide
-        go get github.com/isucon/isucon6-final/portal/job
         go get github.com/braintree/manners
         go get github.com/go-sql-driver/mysql
         go get github.com/golang/gddo/httputil
