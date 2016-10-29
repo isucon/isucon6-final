@@ -1,0 +1,20 @@
+--- 
+- hosts: all
+  gather_facts: no
+  become: yes
+  tasks:
+    - shell: |
+        . /home/isucon/.profile
+        go get github.com/jteeuwen/go-bindata/... 
+        go get github.com/PuerkitoBio/goquery
+        go get golang.org/x/net/http2/hpack
+        go get golang.org/x/net/lex/httplex
+        go get github.com/Songmu/timeout
+        go get github.com/mitchellh/go-homedir
+      args:
+        chdir: ../../bench
+    - shell: |
+        . /home/isucon/.profile
+        make isucon6f
+      args:
+        chdir: ../../bench
