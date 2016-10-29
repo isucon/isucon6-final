@@ -1,0 +1,531 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "sshPublicKey": {
+      "defaultValue": null,
+      "type": "String",
+      "metadata": {
+        "description": "ssh public key for isucon user"
+      }
+    },
+    "prefix": {
+      "defaultValue": "isucon6f",
+      "type": "String",
+      "metadata": {
+        "description": "prefix name for vms"
+      }
+    },
+    "benchCount": {
+      "defaultValue": 1,
+      "type": "int",
+      "metadata": {
+        "description": "vm count for bench"
+      }
+    },
+    "proxyCount": {
+      "defaultValue": 2,
+      "type": "int",
+      "metadata": {
+        "description": "vm count for proxy"
+      }
+    }
+  },
+  "variables": {
+    "adminUsername": "isucon",
+    "portalName": "[concat(parameters('prefix'), '-portal')]",
+    "portalCount": 1,
+    "portalIpAddress": "10.0.1.4",
+    "benchName": "[concat(parameters('prefix'), '-bench')]",
+    "benchCount": "[parameters('benchCount')]",
+    "proxyName": "[concat(parameters('prefix'), '-proxy')]",
+    "proxyCount": "[parameters('proxyCount')]",
+    "location": "[resourceGroup().location]",
+    "commonName": "isucon6final",
+    "storageAccountsName": "[uniqueString(concat(resourceGroup().id, parameters('prefix')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('portalName'), copyIndex(1))]",
+      "apiVersion": "2015-06-15",
+      "copy": {
+        "name": "portalVirtualMachines",
+        "count": "[variables('portalCount')]"
+      },
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_DS2_v2"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "16.04.0-LTS",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('portalName'), copyIndex(1))]",
+            "createOption": "FromImage",
+            "vhd": {
+              "uri": "[concat('https', '://', variables('storageAccountsName'), '.blob.core.windows.net', '/', variables('commonName'), '/', variables('portalName'), copyIndex(1), '.vhd')]"
+            },
+            "caching": "None"
+          }
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('portalName'), copyIndex(1))]",
+          "adminUsername": "[variables('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', variables('adminUsername'), '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('sshPublicKey')]"
+                }
+              ]
+            }
+          },
+          "secrets": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('portalName'), copyIndex(1)))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('portalName'), copyIndex(1), '/Provisioning')]",
+          "apiVersion": "2015-06-15",
+          "location": "[variables('location')]",
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible aptitude git && apt-get remove -y snapd && mkdir -p /opt/go/src/github.com/isucon && cd /opt/go/src/github.com/isucon && git clone https://github.com/isucon/isucon6-final.git && ( cd isucon6-final/provisioning/portal && echo localhost > localhost && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i localhost -c local ansible/*.yml ) && rm -rf isucon6-final"
+            }
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('portalName'), copyIndex(1)))]"
+          ]
+        }
+      ],
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountsName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('portalName'), copyIndex(1)))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('benchName'), copyIndex(1))]",
+      "apiVersion": "2015-06-15",
+      "copy": {
+        "name": "benchVirtualMachines",
+        "count": "[variables('benchCount')]"
+      },
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_F2"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "16.04.0-LTS",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('benchName'), copyIndex(1))]",
+            "createOption": "FromImage",
+            "vhd": {
+              "uri": "[concat('https', '://', variables('storageAccountsName'), '.blob.core.windows.net', '/', variables('commonName'), '/', variables('benchName'), copyIndex(1), '.vhd')]"
+            },
+            "caching": "None"
+          }
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('benchName'), copyIndex(1))]",
+          "adminUsername": "[variables('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', variables('adminUsername'), '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('sshPublicKey')]"
+                }
+              ]
+            }
+          },
+          "secrets": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('benchName'), copyIndex(1)))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('benchName'), copyIndex(1), '/Provisioning')]",
+          "apiVersion": "2015-06-15",
+          "location": "[variables('location')]",
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible aptitude git && apt-get remove -y snapd && mkdir -p /opt/go/src/github.com/isucon && cd /opt/go/src/github.com/isucon && git clone https://github.com/isucon/isucon6-final.git && ( cd isucon6-final/provisioning/bench && echo localhost > localhost && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i localhost -c local ansible/*.yml ) && rm -rf isucon6-final"
+            }
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('benchName'), copyIndex(1)))]"
+          ]
+        }
+      ],
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountsName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('benchName'), copyIndex(1)))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "[concat(variables('proxyName'), copyIndex(1))]",
+      "apiVersion": "2015-06-15",
+      "copy": {
+        "name": "proxyVirtualMachines",
+        "count": "[variables('proxyCount')]"
+      },
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Standard_DS2_v2"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "Canonical",
+            "offer": "UbuntuServer",
+            "sku": "16.04.0-LTS",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "[concat(variables('proxyName'), copyIndex(1))]",
+            "createOption": "FromImage",
+            "vhd": {
+              "uri": "[concat('https', '://', variables('storageAccountsName'), '.blob.core.windows.net', '/', variables('commonName'), '/', variables('proxyName'), copyIndex(1), '.vhd')]"
+            },
+            "caching": "None"
+          }
+        },
+        "osProfile": {
+          "computerName": "[concat(variables('proxyName'), copyIndex(1))]",
+          "adminUsername": "[variables('adminUsername')]",
+          "linuxConfiguration": {
+            "disablePasswordAuthentication": true,
+            "ssh": {
+              "publicKeys": [
+                {
+                  "path": "[concat('/home/', variables('adminUsername'), '/.ssh/authorized_keys')]",
+                  "keyData": "[parameters('sshPublicKey')]"
+                }
+              ]
+            }
+          },
+          "secrets": []
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('proxyName'), copyIndex(1)))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "type": "Microsoft.Compute/virtualMachines/extensions",
+          "name": "[concat(variables('proxyName'), copyIndex(1), '/Provisioning')]",
+          "apiVersion": "2015-06-15",
+          "location": "[variables('location')]",
+          "properties": {
+            "publisher": "Microsoft.Azure.Extensions",
+            "type": "CustomScript",
+            "typeHandlerVersion": "2.0",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible aptitude git && apt-get remove -y snapd && mkdir -p /opt/go/src/github.com/isucon && cd /opt/go/src/github.com/isucon && git clone https://github.com/isucon/isucon6-final.git && ( cd isucon6-final/provisioning/proxy && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i localhost -c local ansible/*.yml ) && rm -rf isucon6-final"
+            }
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('proxyName'), copyIndex(1)))]"
+          ]
+        }
+      ],
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountsName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('proxyName'), copyIndex(1)))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('portalName'), copyIndex(1))]",
+      "apiVersion": "2016-03-30",
+      "copy": {
+        "name": "portalNetworkInterfaces",
+        "count": "[variables('portalCount')]"
+      },
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[concat(variables('portalName'), copyIndex(1))]",
+            "properties": {
+              "privateIPAllocationMethod": "Static",
+              "privateIpAddress": "[variables('portalIpAddress')]",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('portalName'), copyIndex(1)))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('commonName')), '/subnets/', variables('commonName'))]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false
+      },
+      "resources": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('portalName'), copyIndex(1)))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('commonName'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('benchName'), copyIndex(1))]",
+      "apiVersion": "2016-03-30",
+      "copy": {
+        "name": "benchNetworkInterfaces",
+        "count": "[variables('benchCount')]"
+      },
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[concat(variables('benchName'), copyIndex(1))]",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('benchName'), copyIndex(1)))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('commonName')), '/subnets/', variables('commonName'))]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false
+      },
+      "resources": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('benchName'), copyIndex(1)))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('commonName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('portalName'), '1'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "[concat(variables('proxyName'), copyIndex(1))]",
+      "apiVersion": "2016-03-30",
+      "copy": {
+        "name": "proxyNetworkInterfaces",
+        "count": "[variables('proxyCount')]"
+      },
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "[concat(variables('proxyName'), copyIndex(1))]",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('proxyName'), copyIndex(1)))]"
+              },
+              "subnet": {
+                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('commonName')), '/subnets/', variables('commonName'))]"
+              }
+            }
+          }
+        ],
+        "dnsSettings": {
+          "dnsServers": []
+        },
+        "enableIPForwarding": false
+      },
+      "resources": [],
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses', concat(variables('proxyName'), copyIndex(1)))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('commonName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('portalName'), '1'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('portalName'), copyIndex(1))]",
+      "apiVersion": "2016-03-30",
+      "copy": {
+        "name": "portalPublicIPAddresses",
+        "count": "[variables('portalCount')]"
+      },
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('benchName'), copyIndex(1))]",
+      "apiVersion": "2016-03-30",
+      "copy": {
+        "name": "benchPublicIPAddresses",
+        "count": "[variables('benchCount')]"
+      },
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "name": "[concat(variables('proxyName'), copyIndex(1))]",
+      "apiVersion": "2016-03-30",
+      "copy": {
+        "name": "proxyPublicIPAddresses",
+        "count": "[variables('proxyCount')]"
+      },
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "publicIPAllocationMethod": "Static",
+        "idleTimeoutInMinutes": 4
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "name": "[variables('commonName')]",
+      "apiVersion": "2016-03-30",
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.0.0.0/16"
+          ]
+        },
+        "dhcpOptions": {
+          "dnsServers": []
+        },
+        "subnets": [
+          {
+            "name": "[variables('commonName')]",
+            "properties": {
+              "addressPrefix": "10.0.1.0/24"
+            },
+            "networkSecurityGroup": {
+              "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('commonName'))]"
+            }
+          }
+        ]
+      },
+      "resources": [],
+      "dependsOn": []
+    },
+    {
+      "apiVersion": "2016-03-30",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "name": "[variables('commonName')]",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "allow_http",
+            "properties": {
+              "description": "allow http access",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "80",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound"
+            }
+          },
+          {
+            "name": "allow_ssh",
+            "properties": {
+              "description": "allow ssh access",
+              "protocol": "Tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "*",
+              "destinationAddressPrefix": "*",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "sku": {
+        "name": "Standard_LRS",
+        "tier": "Standard"
+      },
+      "kind": "Storage",
+      "name": "[variables('storageAccountsName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[variables('location')]",
+      "tags": {},
+      "properties": {},
+      "resources": [],
+      "dependsOn": []
+    }
+  ]
+}
