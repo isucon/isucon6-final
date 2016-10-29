@@ -273,7 +273,8 @@
             }
           },
           "dependsOn": [
-            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('proxyName'), copyIndex(1)))]"
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('proxyName'), copyIndex(1)))]",
+            "[resourceId('Microsoft.Compute/virtualMachines/extensions', concat(variables('portalName'), '1'), 'Provisioning')]"
           ]
         }
       ],
