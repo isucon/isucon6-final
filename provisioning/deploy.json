@@ -111,7 +111,7 @@
             "typeHandlerVersion": "2.0",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible aptitude git && apt-get remove -y snapd && mkdir -p /opt/go/src/github.com/isucon && cd /opt/go/src/github.com/isucon && git clone https://github.com/isucon/isucon6-final.git && ( cd isucon6-final/provisioning/portal && echo localhost > localhost && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i localhost -c local ansible/*.yml ) && rm -rf isucon6-final"
+              "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible aptitude git && apt-get remove -y snapd && mkdir -p /home/isucon/go/src/github.com/isucon && cd /home/isucon/go/src/github.com/isucon && git clone https://github.com/isucon/isucon6-final.git && ( cd isucon6-final/provisioning/portal && echo localhost > localhost && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i localhost -c local ansible/*.yml ) && rm -rf isucon6-final"
             }
           },
           "dependsOn": [
@@ -190,7 +190,7 @@
             "typeHandlerVersion": "2.0",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible aptitude git && apt-get remove -y snapd && mkdir -p /opt/go/src/github.com/isucon && cd /opt/go/src/github.com/isucon && git clone https://github.com/isucon/isucon6-final.git && ( cd isucon6-final/provisioning/bench && echo localhost > localhost && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i localhost -c local ansible/*.yml ) && rm -rf isucon6-final"
+              "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible aptitude git && apt-get remove -y snapd && mkdir -p /home/isucon/go/src/github.com/isucon && cd /home/isucon/go/src/github.com/isucon && git clone https://github.com/isucon/isucon6-final.git && ( cd isucon6-final/provisioning/bench && echo localhost > localhost && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i localhost -c local ansible/*.yml ) && rm -rf isucon6-final"
             }
           },
           "dependsOn": [
@@ -269,7 +269,7 @@
             "typeHandlerVersion": "2.0",
             "autoUpgradeMinorVersion": true,
             "settings": {
-              "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible aptitude git && apt-get remove -y snapd && mkdir -p /opt/go/src/github.com/isucon && cd /opt/go/src/github.com/isucon && git clone https://github.com/isucon/isucon6-final.git && ( cd isucon6-final/provisioning/proxy && echo localhost > localhost && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i localhost -c local ansible/*.yml ) && rm -rf isucon6-final"
+              "commandToExecute": "export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y ansible aptitude git && apt-get remove -y snapd && mkdir -p /home/isucon/go/src/github.com/isucon && cd /home/isucon/go/src/github.com/isucon && git clone https://github.com/isucon/isucon6-final.git && ( cd isucon6-final/provisioning/proxy && echo localhost > localhost && PYTHONUNBUFFERED=1 ANSIBLE_FORCE_COLOR=true ansible-playbook -i localhost -c local ansible/*.yml ) && rm -rf isucon6-final"
             }
           },
           "dependsOn": [
