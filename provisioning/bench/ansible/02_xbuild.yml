@@ -8,10 +8,6 @@
         repo=https://github.com/tagomoris/xbuild.git
         dest=/home/isucon/.xbuild
         update=yes
-    # perl
-    - command: /home/isucon/.xbuild/perl-install 5.24.0 /home/isucon/.local/perl
-      args:
-        creates: /home/isucon/.local/perl/bin/perl
     # golang
     - command: /home/isucon/.xbuild/go-install 1.7.3 /home/isucon/.local/go
       args:
