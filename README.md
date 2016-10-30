@@ -1,6 +1,19 @@
 # ISUCON6 final
 
-## 競技用アプリケーション
+[当日のレギュレーション](/regulation.md)も参照してください。
+
+## ディレクトリ構成
+
+```
+├── ansible      # 競技者用インスタンスのセットアップ用ansble
+├── azure        # 競技者用インスタンスのdeploy to Azure
+├── bench        # ベンチマーカーのソースコード
+├── portal       # ポータルサイトのソースコード
+├── provisioning # 運営側（portal/bench/proxy）のセットアップ用ansible
+└── webapp       # 各言語の参考実装
+```
+
+## 競技者用アプリケーション
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fgithub.com%2Fisucon%2Fisucon6-final%2Fraw%2Fmaster%2Fazure%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fmatsuu%2Fisucon6-final%2Ffeature%2Fupdate-readme%2Fazure%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
@@ -9,30 +22,14 @@ DockerだけインストールされていればOS等は問わない。
 
 webapp 以下を競技用マシンの /home/isucon/webapp に置けばセットアップ完成。
 
-起動方法などは webapp/README.md に書いた。
+起動方法などは [webapp/README.md](/webapp/README.md) に書いた。
 
 ## portal, bench, proxy
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fgithub.com%2Fisucon%2Fisucon6-final%2Fraw%2Fmaster%2Fprovisioning%2Fdeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fmatsuu%2Fisucon6-final%2Ffeature%2Fupdate-readme%2Fprovisioning%2Fdeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
 
-### portal
-
-最初に起動する必要がある。
-
-  * [/provisioning/portal/deploy.sh](/provisioning/portal/deploy.sh)を適切な環境変数を渡して実行
-    * VM名にはportalと含む
-  * portalディレクトリ以下で `make portal_linux_amd64` `make importteams_linux_amd64` をする
-  * 立てたサーバーにsshできるように`~/.ssh/config`に書く
-  * [/provisioning/portal/](/provisioning/portal/)ディレクトリ以下で`production`というファイル名で、`~/.ssh/config`に設定したホスト名を書いておく
-  * `ansible-playbook -i production ansible/*.yml`を実行する
-
-デプロイしたい場合
-
-  * portalディレクトリ以下で `make portal_linux_amd64` をする
-  * `ansible-playbook -i production ansible/*deploy.yml`を実行する
-
-試しにログインしたい
+portalに試しにログインしたい
 
   * 一般アカウント
     * user: 1 pass: y8aaZLdAXAXn
@@ -41,28 +38,17 @@ webapp 以下を競技用マシンの /home/isucon/webapp に置けばセット�
 
 編集する場合は、[/portal/cmd/importteams/main.go](/portal/cmd/importteams/main.go) と [/portal/data/teams.tsv](/portal/data/teams.tsv) を参照のこと
 
+### portal
+
+最初に起動する必要がある。consulが起動している。
+
 ### bench
 
-  * `provisioning/external_vars.yml`の`portal_private_ip`をportalのprivate ipにする
-    * VM名にはbenchと含む
-  * [/provisioning/bench/deploy.sh](/provisioning/bench/deploy.sh)を適切な環境変数を渡して実行
-  * benchディレクトリ以下で `make isucon6f` をする
-  * 立てたサーバーにsshできるように`~/.ssh/config`に書く
-  * [/provisioning/bench/](/provisioning/bench/)ディレクトリ以下で`production`というファイル名で、`~/.ssh/config`に設定したホスト名を書いておく
-  * `ansible-playbook -i production ansible/*.yml`を実行する
-
-デプロイしたい場合
-
-  * benchディレクトリ以下で `make isucon6f` をする
-  * `ansible-playbook -i production ansible/*deploy.yml`を実行する
+最低1台起動している必要がある。
 
 ### proxy
 
-  * `provisioning/external_vars.yml`の`portal_private_ip`をportalのprivate ipにする
-    * VM名にはproxyと含む（必須）
-  * [/provisioning/proxy/deploy.sh](/provisioning/proxy/deploy.sh)を適切な環境変数を渡して実行
-
-proxyは以下のような挙動をする。
+VM名にはproxyと含む必要がある。consulが動くために最低3台必要なので、proxyは2台以上起動する必要がある。proxyは以下のような挙動をする。
 
   * portalと同じconsulのクラスタの一員になる
   * proxyはセットアップ時に、portalからnginxの設定を取得して設定を反映する
