@@ -52,7 +52,7 @@ Azureアカウントに対する各種制限に関しては参加者の責任と
 
 ### 1. サーバー起動
 
-__サブスクリプションの制限がデフォルトで合計20コアまでなので、あらかじめすべてのVMを落とした上で競技用VMを起動する（競技に使うリソースグループだけでなく、同じサブスクリプションの他のリソースグループも）こと。__
+__サブスクリプションの制限がデフォルトで合計10コアまでなので、あらかじめすべてのVMを落とした上で競技用VMを起動する（競技に使うリソースグループだけでなく、同じサブスクリプションの他のリソースグループも）こと。__
 
 <a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fgithub.com%2Fisucon%2Fisucon6-final%2Fraw%2Fmaster%2Fazure%2Fazuredeploy.json" target="_blank"><img src="http://azuredeploy.net/deploybutton.png"/></a>
 <a href="http://armviz.io/#/?load=https%3A%2F%2Fraw.githubusercontent.com%2Fmatsuu%2Fisucon6-final%2Ffeature%2Fupdate-readme%2Fazure%2Fazuredeploy.json" target="_blank"><img src="http://armviz.io/visualizebutton.png"/></a>
