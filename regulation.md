@@ -1,7 +1,11 @@
 # ISUCON6 本選レギュレーション
 
-
 （変更があった場合は変更内容をここに記す）
+
+## 補足説明
+
+  * [ISUCON6本選オープニングプレゼン #isucon /isucon6-final // Speaker Deck](https://speakerdeck.com/kamikosan/isucon6-final)
+  * [ISUCON6本選 レギュレーション説明 // Speaker Deck](https://speakerdeck.com/edvakf/isucon6ben-xuan-regiyuresiyonshuo-ming)
 
 ## スケジュール
 
