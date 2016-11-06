@@ -44,7 +44,7 @@
       "tags": {},
       "properties": {
         "hardwareProfile": {
-          "vmSize": "Standard_F2"
+          "vmSize": "Standard_DS3_v2"
         },
         "storageProfile": {
           "imageReference": {
