@@ -12,6 +12,6 @@ RUN npm install && npm cache clean
 
 COPY . /react
 
-RUN NODE_ENV=production npm run build
+RUN NODE_ENV=production npm run build && cp build/bundle.js public/
 
 CMD ["node", "build/server.js"]
