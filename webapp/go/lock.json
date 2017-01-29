@@ -1,0 +1,38 @@
+{
+    "memo": "2323c988a28a6ac07529986b1639373f68865a06e5a75f861dd3f735199151f2",
+    "projects": [
+        {
+            "name": "github.com/go-sql-driver/mysql",
+            "branch": "master",
+            "revision": "a732e14c62dde3285440047bba97581bc472ae18",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "github.com/jmoiron/sqlx",
+            "branch": "master",
+            "revision": "05b81a7d5d38058e42148dc01f17daf4acba4640",
+            "packages": [
+                "."
+            ]
+        },
+        {
+            "name": "goji.io",
+            "branch": "master",
+            "revision": "e1741450ad80d2837134e32ac7b1d0a7a2b11c51",
+            "packages": [
+                ".",
+                "pat"
+            ]
+        },
+        {
+            "name": "golang.org/x/net",
+            "branch": "master",
+            "revision": "f09c4662a0bd6bd8943ac7b4931e185df9471da4",
+            "packages": [
+                "context"
+            ]
+        }
+    ]
+}

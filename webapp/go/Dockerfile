@@ -3,14 +3,14 @@ FROM golang:1.7.3-alpine
 RUN apk update \
   && apk --update add git
 
-RUN go get github.com/Masterminds/glide
+RUN go get github.com/golang/dep/...
 
 # キャッシュ効率を上げるためにglideだけ先にcopyしてインストールする
-COPY ./glide.yaml /go/src/github.com/isucon/isucon6-final/webapp/go/
-COPY ./glide.lock /go/src/github.com/isucon/isucon6-final/webapp/go/
+COPY ./lock.json /go/src/github.com/isucon/isucon6-final/webapp/go/
+COPY ./manifest.json /go/src/github.com/isucon/isucon6-final/webapp/go/
 WORKDIR /go/src/github.com/isucon/isucon6-final/webapp/go
 
-RUN glide install
+RUN dep ensure
 
 COPY ./ /go/src/github.com/isucon/isucon6-final/webapp/go/
 
