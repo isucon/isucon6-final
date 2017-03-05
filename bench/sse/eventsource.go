@@ -4,12 +4,11 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-
-	"github.com/isucon/isucon6-final/bench/http"
 )
 
 type Listener func(data string)

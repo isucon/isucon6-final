@@ -3,11 +3,12 @@ package session
 import (
 	"crypto/tls"
 	"fmt"
+	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"time"
 
-	"github.com/isucon/isucon6-final/bench/http"
-	"github.com/isucon/isucon6-final/bench/http/cookiejar"
+	"golang.org/x/net/http2"
 )
 
 const (
@@ -31,6 +32,12 @@ func New(baseURL string) *Session {
 			InsecureSkipVerify: true,
 		},
 		MaxIdleConnsPerHost: MaxIdleConnsPerHost,
+	}
+
+	// TLSClientConfigを渡すとhttp2が使えないので、強制的にhttp2も使えるようにする
+	// Transportを外から渡すことでコネクションを共有させない
+	if err := http2.ConfigureTransport(s.Transport); err != nil {
+		panic(fmt.Errorf("Failed to configure h2 transport: %s", err))
 	}
 
 	jar, _ := cookiejar.New(nil)
