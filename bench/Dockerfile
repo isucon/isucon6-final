@@ -5,8 +5,8 @@ RUN \
   go get -u github.com/jteeuwen/go-bindata/... && \
   go get -u github.com/Masterminds/glide
 
-WORKDIR ${GOPATH}/src/github.com/isucon/isucon6-final/bench
-COPY . ${GOPATH}/src/github.com/isucon/isucon6-final/bench
+WORKDIR ${GOPATH}/src/github.com/sesta/isucon6-final/bench
+COPY . ${GOPATH}/src/github.com/sesta/isucon6-final/bench
 
 RUN \
   glide install && \
