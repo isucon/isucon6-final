@@ -1,1 +1,1 @@
-deb [arch=amd64] https://download.docker.com/linux/debian jessie stable
+deb [arch=amd64] https://download.docker.com/linux/debian xenial stable
