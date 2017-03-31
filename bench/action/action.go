@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/isucon/isucon6-final/bench/fails"
-	"github.com/isucon/isucon6-final/bench/score"
-	"github.com/isucon/isucon6-final/bench/session"
-	"github.com/isucon/isucon6-final/bench/sse"
+	"github.com/sesta/isucon6-final/bench/fails"
+	"github.com/sesta/isucon6-final/bench/score"
+	"github.com/sesta/isucon6-final/bench/session"
+	"github.com/sesta/isucon6-final/bench/sse"
 )
 
 const (

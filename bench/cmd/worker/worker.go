@@ -20,7 +20,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/Songmu/timeout"
-	"github.com/isucon/isucon6-final/portal/job"
+	"github.com/sesta/isucon6-final/portal/job"
 	"github.com/mitchellh/go-homedir"
 )
 
