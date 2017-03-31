@@ -12,10 +12,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/isucon/isucon6-final/bench/fails"
-	"github.com/isucon/isucon6-final/bench/scenario"
-	"github.com/isucon/isucon6-final/bench/score"
-	"github.com/isucon/isucon6-final/portal/job"
+	"github.com/sesta/isucon6-final/bench/fails"
+	"github.com/sesta/isucon6-final/bench/scenario"
+	"github.com/sesta/isucon6-final/bench/score"
+	"github.com/sesta/isucon6-final/portal/job"
 )
 
 var BenchmarkTimeout int

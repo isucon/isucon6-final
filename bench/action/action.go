@@ -2,19 +2,17 @@ package action
 
 import (
 	"bytes"
+	"errors"
+	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"net/url"
 
-	"fmt"
-
-	"errors"
-
-	"github.com/isucon/isucon6-final/bench/fails"
-	"github.com/isucon/isucon6-final/bench/http"
-	"github.com/isucon/isucon6-final/bench/score"
-	"github.com/isucon/isucon6-final/bench/session"
-	"github.com/isucon/isucon6-final/bench/sse"
+	"github.com/sesta/isucon6-final/bench/fails"
+	"github.com/sesta/isucon6-final/bench/score"
+	"github.com/sesta/isucon6-final/bench/session"
+	"github.com/sesta/isucon6-final/bench/sse"
 )
 
 const (

@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/isucon/isucon6-final/bench/action"
-	"github.com/isucon/isucon6-final/bench/fails"
-	"github.com/isucon/isucon6-final/bench/session"
-	"github.com/isucon/isucon6-final/bench/sse"
+	"github.com/sesta/isucon6-final/bench/action"
+	"github.com/sesta/isucon6-final/bench/fails"
+	"github.com/sesta/isucon6-final/bench/session"
+	"github.com/sesta/isucon6-final/bench/sse"
 )
 
 type StrokeLog struct {
