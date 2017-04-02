@@ -1,20 +1,20 @@
-hash: 22b04034143d423370c71ba3a47ba13a26eac995fccd95d1e4aa73c10ca8dc53
-updated: 2016-09-25T00:33:13.232793673+09:00
+hash: 16fc5a1fe2ce6c03e69cf992f995c0a72508e4a9813f07fa695b0324f2a77651
+updated: 2017-04-02T19:27:37.829209998+09:00
 imports:
 - name: github.com/go-sql-driver/mysql
-  version: a732e14c62dde3285440047bba97581bc472ae18
+  version: a0583e0143b1624142adab07e0e97fe106d99561
 - name: github.com/jmoiron/sqlx
   version: 05b81a7d5d38058e42148dc01f17daf4acba4640
   subpackages:
   - reflectx
 - name: goji.io
-  version: e1741450ad80d2837134e32ac7b1d0a7a2b11c51
+  version: 0d89ff54b2c18c9c4ba530e32496aef902d3c6cd
   subpackages:
   - internal
   - pat
   - pattern
 - name: golang.org/x/net
-  version: f09c4662a0bd6bd8943ac7b4931e185df9471da4
+  version: f4b625ec9b21d620bb5ce57f2dfc3e08ca97fce6
   subpackages:
   - context
 testImports: []

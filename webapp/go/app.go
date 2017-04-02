@@ -15,7 +15,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"goji.io"
 	"goji.io/pat"
-	"golang.org/x/net/context"
 )
 
 var (
@@ -326,8 +325,8 @@ func postAPIRooms(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-func getAPIRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) {
-	idStr := pat.Param(ctx, "id")
+func getAPIRoomsID(w http.ResponseWriter, r *http.Request) {
+	idStr := pat.Param(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		outputErrorMsg(w, http.StatusNotFound, "この部屋は存在しません。")
@@ -375,10 +374,10 @@ func getAPIRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) 
 	w.Write(b)
 }
 
-func getAPIStreamRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func getAPIStreamRoomsID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 
-	idStr := pat.Param(ctx, "id")
+	idStr := pat.Param(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		return
@@ -470,7 +469,7 @@ func getAPIStreamRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Req
 	}
 }
 
-func postAPIStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+func postAPIStrokesRoomsID(w http.ResponseWriter, r *http.Request) {
 	t, err := checkToken(r.Header.Get("x-csrf-token"))
 
 	if err != nil {
@@ -482,7 +481,7 @@ func postAPIStrokesRoomsID(ctx context.Context, w http.ResponseWriter, r *http.R
 		return
 	}
 
-	idStr := pat.Param(ctx, "id")
+	idStr := pat.Param(r, "id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		outputErrorMsg(w, http.StatusNotFound, "この部屋は存在しません。")
@@ -628,9 +627,9 @@ func main() {
 	mux.HandleFunc(pat.Post("/api/csrf_token"), postAPICsrfToken)
 	mux.HandleFunc(pat.Get("/api/rooms"), getAPIRooms)
 	mux.HandleFunc(pat.Post("/api/rooms"), postAPIRooms)
-	mux.HandleFuncC(pat.Get("/api/rooms/:id"), getAPIRoomsID)
-	mux.HandleFuncC(pat.Get("/api/stream/rooms/:id"), getAPIStreamRoomsID)
-	mux.HandleFuncC(pat.Post("/api/strokes/rooms/:id"), postAPIStrokesRoomsID)
+	mux.HandleFunc(pat.Get("/api/rooms/:id"), getAPIRoomsID)
+	mux.HandleFunc(pat.Get("/api/stream/rooms/:id"), getAPIStreamRoomsID)
+	mux.HandleFunc(pat.Post("/api/strokes/rooms/:id"), postAPIStrokesRoomsID)
 
 	log.Fatal(http.ListenAndServe("0.0.0.0:80", mux))
 }
