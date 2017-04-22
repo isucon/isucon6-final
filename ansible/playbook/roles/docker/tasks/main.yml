@@ -5,7 +5,7 @@
     dest=/etc/apt/sources.list.d/docker.list
 - name: apt key for docker
   apt_key:
-    url: https://download.docker.com/linux/debian/gpg
+    url: https://download.docker.com/linux/ubuntu/gpg
 - name: apt-get update again
   apt: update_cache=yes
 - name: install docker
